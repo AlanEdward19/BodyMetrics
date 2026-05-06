@@ -171,6 +171,76 @@ export function ReportModal({
     </div>
   );
 
+  const renderSymmetryTableSection = () => {
+    if (!currentMetrics) return null;
+    const { coxa, pantu, braco } = currentMetrics.simetria;
+    const items = [
+      { label: 'Coxa', data: coxa },
+      { label: 'Panturrilha', data: pantu },
+      { label: 'Braço', data: braco }
+    ];
+    return (
+      <div className="report-section">
+        <h3 className="report-section-title">Índices de Simetria (Medidas Corrigidas)</h3>
+        <table className="report-table">
+          <thead>
+            <tr>
+              <th>Região</th>
+              <th>Lado Direito</th>
+              <th>Lado Esquerdo</th>
+              <th>Diferença</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, idx) => (
+              <tr key={idx}>
+                <td><strong>{item.label}</strong></td>
+                <td>{item.data.d.toFixed(2).replace('.', ',')} cm</td>
+                <td>{item.data.e.toFixed(2).replace('.', ',')} cm</td>
+                <td>{item.data.diff.toFixed(2).replace('.', ',')} cm</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  const renderRelationTableSection = () => {
+    if (!currentMetrics) return null;
+    const r = currentMetrics.relacao;
+    const items = [
+      { label: 'Coxa / Fêmur', media: r.ccCoxa, osso: r.diamJoelho, relacao: r.coxa },
+      { label: 'Panturrilha / Tornozelo', media: r.ccPantu, osso: r.diamTornozelo, relacao: r.pantu },
+      { label: 'Braço / Úmero', media: r.ccBraco, osso: r.diamPunho, relacao: r.braco }
+    ];
+    return (
+      <div className="report-section">
+        <h3 className="report-section-title">Relação Cineantropométrica</h3>
+        <table className="report-table">
+          <thead>
+            <tr>
+              <th>Relação</th>
+              <th>Média Corrigida</th>
+              <th>Diâmetro Ósseo</th>
+              <th>Índice</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, idx) => (
+              <tr key={idx}>
+                <td><strong>{item.label}</strong></td>
+                <td>{item.media.toFixed(2).replace('.', ',')} cm</td>
+                <td>{item.osso > 0 ? `${item.osso.toFixed(2).replace('.', ',')} cm` : '-'}</td>
+                <td>{item.relacao > 0 ? item.relacao.toFixed(2).replace('.', ',') : '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
     <div className="report-modal-overlay">
       <div className="report-modal-container">
@@ -259,16 +329,32 @@ export function ReportModal({
                     <span className="report-metric-value">{currentMetrics.peso.toFixed(1).replace('.', ',')} kg</span>
                   </div>
                   <div className="report-metric-box">
+                    <span className="report-metric-label">Altura</span>
+                    <span className="report-metric-value">{currentMetrics.altura.toFixed(1).replace('.', ',')} cm</span>
+                  </div>
+                  <div className="report-metric-box">
                     <span className="report-metric-label">% Gordura</span>
                     <span className="report-metric-value">{currentMetrics.percentualGordura.toFixed(1).replace('.', ',')} %</span>
                   </div>
                   <div className="report-metric-box">
-                    <span className="report-metric-label">Massa Livre Gordura</span>
+                    <span className="report-metric-label">Soma das Dobras</span>
+                    <span className="report-metric-value">{currentMetrics.sumDobras.toFixed(1).replace('.', ',')} mm</span>
+                  </div>
+                  <div className="report-metric-box">
+                    <span className="report-metric-label">Massa Gorda</span>
+                    <span className="report-metric-value">{currentMetrics.gordura.toFixed(1).replace('.', ',')} kg</span>
+                  </div>
+                  <div className="report-metric-box">
+                    <span className="report-metric-label">Massa Livre Gord.</span>
                     <span className="report-metric-value">{currentMetrics.mlg.toFixed(1).replace('.', ',')} kg</span>
                   </div>
                   <div className="report-metric-box">
-                    <span className="report-metric-label">Soma das Dobras</span>
-                    <span className="report-metric-value">{currentMetrics.sumDobras.toFixed(1).replace('.', ',')} mm</span>
+                    <span className="report-metric-label">Massa Óssea</span>
+                    <span className="report-metric-value">{currentMetrics.ossos.toFixed(1).replace('.', ',')} kg</span>
+                  </div>
+                  <div className="report-metric-box">
+                    <span className="report-metric-label">Massa Muscular</span>
+                    <span className="report-metric-value">{currentMetrics.massaMuscular.toFixed(1).replace('.', ',')} kg</span>
                   </div>
                 </div>
               )}
@@ -305,8 +391,12 @@ export function ReportModal({
                 { label: 'Panturrilha Dir.', cur: currentEval?.circumferences?.calfRight, cmp: compareEval?.circumferences?.calfRight, unit: 'cm' },
                 { label: 'Panturrilha Esq.', cur: currentEval?.circumferences?.calfLeft, cmp: compareEval?.circumferences?.calfLeft, unit: 'cm' },
                 { label: 'D. Punho', cur: currentEval?.circumferences?.wristRight, cmp: compareEval?.circumferences?.wristRight, unit: 'cm' },
-                { label: 'D. Joelho', cur: currentEval?.circumferences?.kneeRight, cmp: compareEval?.circumferences?.kneeRight, unit: 'cm' }
+                { label: 'D. Joelho', cur: currentEval?.circumferences?.kneeRight, cmp: compareEval?.circumferences?.kneeRight, unit: 'cm' },
+                { label: 'D. Tornozelo', cur: (currentEval?.circumferences as any)?.ankle, cmp: (compareEval?.circumferences as any)?.ankle, unit: 'cm' }
               ])}
+
+              {renderSymmetryTableSection()}
+              {renderRelationTableSection()}
 
             </div>
           </div>
