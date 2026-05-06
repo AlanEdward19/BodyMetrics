@@ -14,11 +14,13 @@ export default function AddAthlete() {
   const [formData, setFormData] = useState({
     name: '',
     photoUrl: '',
-    sport: 'Futebol',
+    sport: '',
     sportObservation: '',
     category: 'Profissional',
-    competitivePhase: 'Competição',
+    competitivePhase: '',
     birthDate: '',
+    gender: 'Masculino',
+    race: 'Branco',
   });
 
   useEffect(() => {
@@ -28,11 +30,13 @@ export default function AddAthlete() {
         setFormData({
           name: athlete.name,
           photoUrl: athlete.photoUrl || '',
-          sport: (athlete as any).sport || 'Futebol',
+          sport: (athlete as any).sport || '',
           sportObservation: (athlete as any).sportObservation || (athlete as any).position || (athlete as any).sector || '',
           category: athlete.category,
           competitivePhase: athlete.competitivePhase,
           birthDate: athlete.birthDate,
+          gender: athlete.gender || 'Masculino',
+          race: athlete.race || 'Branco',
         });
       }
     }
@@ -49,6 +53,8 @@ export default function AddAthlete() {
       category: formData.category,
       competitivePhase: formData.competitivePhase,
       birthDate: formData.birthDate,
+      gender: formData.gender,
+      race: formData.race,
     };
 
     if (isEditing && athleteId) {
@@ -140,12 +146,43 @@ export default function AddAthlete() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="competitivePhase">Fase Competitiva</label>
-              <select id="competitivePhase" name="competitivePhase" value={formData.competitivePhase} onChange={handleChange}>
-                <option value="Pré-temporada">Pré-temporada</option>
-                <option value="Competição">Competição</option>
-                <option value="Transição">Transição</option>
-                <option value="Férias">Férias</option>
+              <label htmlFor="competitivePhase">Fase / Objetivo</label>
+              <input 
+                list="phases"
+                id="competitivePhase" 
+                name="competitivePhase" 
+                required 
+                placeholder="Ex: Ganho de peso, Competição..."
+                value={formData.competitivePhase}
+                onChange={handleChange}
+              />
+              <datalist id="phases">
+                <option value="Pré-temporada" />
+                <option value="Competição" />
+                <option value="Transição" />
+                <option value="Férias" />
+                <option value="Ganho de peso" />
+                <option value="Perda de peso" />
+                <option value="Manutenção" />
+              </datalist>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="gender">Sexo</label>
+              <select id="gender" name="gender" value={formData.gender} onChange={handleChange}>
+                <option value="Masculino">Masculino</option>
+                <option value="Feminino">Feminino</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="race">Raça / Etnia</label>
+              <select id="race" name="race" value={formData.race} onChange={handleChange}>
+                <option value="Branco">Branco</option>
+                <option value="Negro">Negro</option>
+                <option value="Asiático">Asiático</option>
               </select>
             </div>
           </div>

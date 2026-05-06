@@ -240,8 +240,13 @@ export function ReportModal({
                   <div className="info-item"><strong>Atleta:</strong> {athlete.name}</div>
                   <div className="info-item"><strong>Esporte:</strong> {(athlete as any).sport || 'Futebol'} {((athlete as any).sportObservation || (athlete as any).position || (athlete as any).sector) && `(${(athlete as any).sportObservation || (athlete as any).position || (athlete as any).sector})`}</div>
                   <div className="info-item"><strong>Categoria:</strong> {athlete.category}</div>
+                  
                   <div className="info-item"><strong>Idade Atual:</strong> {currentAge} anos</div>
-                  <div className="info-item"><strong>Idade Comp.:</strong> {compareAge} anos</div>
+                  <div className="info-item"><strong>Fase / Obj.:</strong> {athlete.competitivePhase || '-'}</div>
+                  <div className="info-item"><strong>Sexo:</strong> {athlete.gender || '-'}</div>
+                  
+                  <div className="info-item"><strong>Raça / Etnia:</strong> {athlete.race || '-'}</div>
+                  <div className="info-item"><strong>Alt. Sentado:</strong> {currentEval?.sittingHeight ? `${currentEval.sittingHeight} cm` : '-'}</div>
                   <div className="info-item"><strong>Fórmula:</strong> {formula === 'pollock' ? 'Pollock 7 Dobras' : 'Faulkner'}</div>
                 </div>
               </div>

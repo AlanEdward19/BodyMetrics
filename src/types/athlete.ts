@@ -7,4 +7,6 @@ export interface Athlete {
   category: string;
   competitivePhase: string;
   birthDate: string;
+  gender?: string;
+  race?: string;
 }

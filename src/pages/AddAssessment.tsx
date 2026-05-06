@@ -25,6 +25,7 @@ export default function AddAssessment() {
     date: new Date().toISOString().split('T')[0],
     weight: '',
     height: '',
+    sittingHeight: '',
     bodyWater: '',
     visceralFat: '',
     proteinMass: '',
@@ -44,7 +45,8 @@ export default function AddAssessment() {
     waist: '', hip: '',
     thighMidRight: '', thighMidLeft: '',
     calfRight: '', calfLeft: '',
-    wristRight: '', kneeRight: ''
+    wristRight: '', kneeRight: '',
+    ankle: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -65,6 +67,7 @@ export default function AddAssessment() {
       date: formData.date,
       weight: parseNum(formData.weight),
       height: parseNum(formData.height),
+      sittingHeight: parseNum(formData.sittingHeight) || undefined,
       bodyWater: parseNum(formData.bodyWater),
       visceralFat: parseNum(formData.visceralFat),
       proteinMass: parseNum(formData.proteinMass),
@@ -95,6 +98,7 @@ export default function AddAssessment() {
         calfLeft: parseNum(formData.calfLeft),
         wristRight: parseNum(formData.wristRight),
         kneeRight: parseNum(formData.kneeRight),
+        ankle: parseNum(formData.ankle),
       }
     });
 
@@ -200,6 +204,7 @@ export default function AddAssessment() {
           <div className="grid-3-cols">
             {renderInput('weight', 'Peso', 'kg')}
             {renderInput('height', 'Altura', 'cm')}
+            {renderInput('sittingHeight', 'Alt. Sentado', 'cm')}
             {renderInput('bodyWater', 'Água Corporal', 'kg')}
             {renderInput('visceralFat', 'G. Visceral', 'kg')}
             {renderInput('proteinMass', 'Massa Prot.', 'kg')}
@@ -250,6 +255,7 @@ export default function AddAssessment() {
               {renderInput('calfLeft', 'Pantu Esq.', 'cm')}
               {renderInput('wristRight', 'D. Punho', 'cm')}
               {renderInput('kneeRight', 'D. Joelho', 'cm')}
+              {renderInput('ankle', 'D. Tornozelo', 'cm')}
             </div>
           </Card>
         </div>

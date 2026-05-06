@@ -4,6 +4,7 @@ export interface Assessment {
   date: string;
   weight: number;
   height: number;
+  sittingHeight?: number;
   bodyWater: number;
   visceralFat: number;
   proteinMass: number;
@@ -34,5 +35,6 @@ export interface Assessment {
     calfLeft: number;
     wristRight: number;
     kneeRight: number;
+    ankle: number;
   };
 }

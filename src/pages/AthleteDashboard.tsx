@@ -26,6 +26,8 @@ export default function AthleteDashboard() {
   const [compareEvalId, setCompareEvalId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'gerais' | 'dobras' | 'circunferencias'>('gerais');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [metricsPage, setMetricsPage] = useState<1 | 2 | 3>(1);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
@@ -36,10 +38,9 @@ export default function AthleteDashboard() {
 
   const handleDeleteAthlete = () => {
     if (!athlete) return;
-    if (window.confirm(`Tem certeza que deseja excluir o atleta ${athlete.name}? Esta ação não pode ser desfeita.`)) {
-      deleteAthlete(athlete.id);
-      navigate('/dashboard');
-    }
+    deleteAthlete(athlete.id);
+    setIsDeleteModalOpen(false);
+    navigate('/dashboard');
   };
 
   useEffect(() => {
@@ -107,8 +108,9 @@ export default function AthleteDashboard() {
 
     const gordura = (peso * percentualGordura) / 100;
 
-    const punhoM = evalData.circumferences?.wristRight / 100 || 0;
-    const joelhoM = evalData.circumferences?.kneeRight / 100 || 0;
+    const circ = evalData.circumferences || {};
+    const punhoM = (circ.wristRight || 0) / 100;
+    const joelhoM = (circ.kneeRight || 0) / 100;
     const alturaM = altura / 100;
 
     let ossos = 0;
@@ -118,6 +120,36 @@ export default function AthleteDashboard() {
 
     const mlg = peso - gordura - ossos;
 
+    // Fatores
+    const fatorSexo = athlete?.gender === 'Feminino' ? 0 : 1;
+    const fatorRaca = athlete?.race === 'Negro' ? 1.1 : athlete?.race === 'Asiático' ? -2 : 0;
+
+    // Medidas Corrigidas
+    const coxaD_C = (circ.thighMidRight || 0) - (((sf.thighRight || 0) / 10) * 3.16);
+    const coxaE_C = (circ.thighMidLeft || 0) - (((sf.thighLeft || 0) / 10) * 3.16);
+    const pantuD_C = (circ.calfRight || 0) - (((sf.calfRight || 0) / 10) * 3.16);
+    const pantuE_C = (circ.calfLeft || 0) - (((sf.calfLeft || 0) / 10) * 3.16);
+    const bracoD_C = (circ.armRight || 0) - (((sf.tricepsRight || 0) / 10) * 3.16);
+    const bracoE_C = (circ.armLeft || 0) - (((sf.tricepsLeft || 0) / 10) * 3.16);
+
+    const ccBraco = (bracoD_C + bracoE_C) / 2;
+    const ccCoxa = (coxaD_C + coxaE_C) / 2;
+    const ccPantu = (pantuD_C + pantuE_C) / 2;
+
+    // Massa Muscular
+    const mmBraco = 0.00744 * Math.pow(ccBraco, 2);
+    const mmCoxa = 0.00088 * Math.pow(ccCoxa, 2);
+    const mmPantu = 0.00441 * Math.pow(ccPantu, 2);
+    let massaMuscular = 0;
+    if (alturaM > 0) {
+      massaMuscular = (alturaM * 100 / 100) * (mmBraco + mmCoxa + mmPantu) + (2.4 * fatorSexo) - (0.048 * idade) + fatorRaca + 7.8;
+    }
+
+    // Diametros (Página 3)
+    const diamJoelho = circ.kneeRight || 0;
+    const diamPunho = circ.wristRight || 0;
+    const diamTornozelo = (circ as any).ankle || 0;
+
     return {
       peso,
       altura,
@@ -125,7 +157,20 @@ export default function AthleteDashboard() {
       sumDobras,
       ossos,
       mlg,
-      percentualGordura
+      percentualGordura,
+      massaMuscular,
+      simetria: {
+        coxa: { d: coxaD_C, e: coxaE_C, diff: Math.abs(coxaD_C - coxaE_C) },
+        pantu: { d: pantuD_C, e: pantuE_C, diff: Math.abs(pantuD_C - pantuE_C) },
+        braco: { d: bracoD_C, e: bracoE_C, diff: Math.abs(bracoD_C - bracoE_C) }
+      },
+      relacao: {
+        coxa: diamJoelho > 0 ? ccCoxa / diamJoelho : 0,
+        pantu: diamTornozelo > 0 ? ccPantu / diamTornozelo : 0,
+        braco: diamPunho > 0 ? ccBraco / diamPunho : 0,
+        ccCoxa, ccPantu, ccBraco,
+        diamJoelho, diamTornozelo, diamPunho
+      }
     };
   };
 
@@ -156,6 +201,81 @@ export default function AthleteDashboard() {
         <Icon size={16} />
         {sign}{diff.toFixed(1).replace('.', ',')}
       </span>
+    );
+  };
+
+  const renderSymmetryCards = () => {
+    if (!currentMetrics) return null;
+    const { coxa, pantu, braco } = currentMetrics.simetria;
+
+    const renderRow = (title: string, data: { d: number, e: number, diff: number }) => {
+      const diffSign = data.d > data.e ? '+' : data.d < data.e ? '-' : '';
+      return (
+        <div className="metrics-grid" style={{ marginBottom: '1.5rem' }}>
+          <MetricCard
+            icon={<Ruler size={24} />}
+            title={`C/C ${title} D`}
+            value={data.d.toFixed(2).replace('.', ',')}
+            unit="cm"
+          />
+          <MetricCard
+            icon={<Ruler size={24} />}
+            title={`C/C ${title} E`}
+            value={data.e.toFixed(2).replace('.', ',')}
+            unit="cm"
+          />
+          <MetricCard
+            icon={<Activity size={24} />}
+            title="DIF D/E"
+            value={`${diffSign}${data.diff.toFixed(2).replace('.', ',')}`}
+            unit="cm"
+          />
+        </div>
+      );
+    };
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {renderRow('Coxa', coxa)}
+        {renderRow('Panturrilha', pantu)}
+        {renderRow('Braço', braco)}
+      </div>
+    );
+  };
+
+  const renderRelationCards = () => {
+    if (!currentMetrics) return null;
+    const r = currentMetrics.relacao;
+
+    const renderRow = (titleObj: string, titleOsso: string, media: number, osso: number, relacao: number) => (
+      <div className="metrics-grid" style={{ marginBottom: '1.5rem' }}>
+        <MetricCard
+          icon={<Ruler size={24} />}
+          title={`Média ${titleObj}`}
+          value={media.toFixed(2).replace('.', ',')}
+          unit="cm"
+        />
+        <MetricCard
+          icon={<Shield size={24} />}
+          title={`Osso ${titleOsso}`}
+          value={osso > 0 ? osso.toFixed(2).replace('.', ',') : '-'}
+          unit="cm"
+        />
+        <MetricCard
+          icon={<Activity size={24} />}
+          title="Relação"
+          value={relacao > 0 ? relacao.toFixed(2).replace('.', ',') : '-'}
+          unit="índice"
+        />
+      </div>
+    );
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {renderRow('Coxa', 'Fêmur', r.ccCoxa, r.diamJoelho, r.coxa)}
+        {renderRow('Panturrilha', 'Tornozelo', r.ccPantu, r.diamTornozelo, r.pantu)}
+        {renderRow('Braço', 'Úmero', r.ccBraco, r.diamPunho, r.braco)}
+      </div>
     );
   };
 
@@ -273,7 +393,7 @@ export default function AthleteDashboard() {
                       <Pencil size={18} />
                     </button>
                     <button
-                      onClick={handleDeleteAthlete}
+                      onClick={() => setIsDeleteModalOpen(true)}
                       className="btn btn-secondary"
                       style={{ padding: '0.4rem', border: 'none', backgroundColor: '#fef2f2', color: '#dc2626' }}
                       title="Excluir Atleta"
@@ -294,6 +414,8 @@ export default function AthleteDashboard() {
                   )}
                   <div className="badge-divider"></div>
                   <Badge icon={Shield} label="CATEGORIA" value={athlete.category} />
+                  <div className="badge-divider"></div>
+                  <Badge icon={User2} label="SEXO" value={athlete.gender || '-'} />
                   <div className="badge-divider"></div>
                   <Badge icon={Calendar} label="DATA NASC." value={formatDate(athlete.birthDate)} />
                 </div>
@@ -368,80 +490,124 @@ export default function AthleteDashboard() {
             <div className="dashboard-content-layout">
               {/* Left Column: Metrics Grid */}
               <div className="dashboard-metrics-column">
-                <div className="metrics-grid">
-                  <MetricCard
-                    icon={<Scale size={24} />}
-                    title="PESO CORPORAL"
-                    value={currentMetrics.peso.toFixed(1).replace('.', ',')}
-                    unit="kg"
-                    trend={{
-                      direction: currentMetrics.peso > compareMetrics.peso ? 'up' : currentMetrics.peso < compareMetrics.peso ? 'down' : 'neutral',
-                      value: `${Math.abs(currentMetrics.peso - compareMetrics.peso).toFixed(1).replace('.', ',')} kg`,
-                      text: 'vs. comparação',
-                      isGood: currentMetrics.peso === compareMetrics.peso ? undefined : isCompositionGood
-                    }}
-                  />
-                  <MetricCard
-                    icon={<Percent size={24} />}
-                    title="% GORDURA"
-                    value={currentMetrics.percentualGordura.toFixed(1).replace('.', ',')}
-                    unit="%"
-                    trend={{
-                      direction: currentMetrics.percentualGordura > compareMetrics.percentualGordura ? 'up' : currentMetrics.percentualGordura < compareMetrics.percentualGordura ? 'down' : 'neutral',
-                      value: `${Math.abs(currentMetrics.percentualGordura - compareMetrics.percentualGordura).toFixed(1).replace('.', ',')} %`,
-                      text: 'vs. comparação',
-                      isGood: currentMetrics.percentualGordura < compareMetrics.percentualGordura
-                    }}
-                  />
-                  <MetricCard
-                    icon={<Dumbbell size={24} />}
-                    title="MASSA LIVRE DE GORDURA"
-                    value={currentMetrics.mlg.toFixed(1).replace('.', ',')}
-                    unit="kg"
-                    trend={{
-                      direction: currentMetrics.mlg > compareMetrics.mlg ? 'up' : currentMetrics.mlg < compareMetrics.mlg ? 'down' : 'neutral',
-                      value: `${Math.abs(currentMetrics.mlg - compareMetrics.mlg).toFixed(1).replace('.', ',')} kg`,
-                      text: 'vs. comparação',
-                      isGood: currentMetrics.mlg > compareMetrics.mlg
-                    }}
-                  />
-                  <MetricCard
-                    icon={<Activity size={24} />}
-                    title="SOMA DAS DOBRAS"
-                    value={currentMetrics.sumDobras.toFixed(1).replace('.', ',')}
-                    unit="mm"
-                    trend={{
-                      direction: currentMetrics.sumDobras > compareMetrics.sumDobras ? 'up' : currentMetrics.sumDobras < compareMetrics.sumDobras ? 'down' : 'neutral',
-                      value: `${Math.abs(currentMetrics.sumDobras - compareMetrics.sumDobras).toFixed(1).replace('.', ',')} mm`,
-                      text: 'vs. comparação',
-                      isGood: currentMetrics.sumDobras < compareMetrics.sumDobras
-                    }}
-                  />
-                  <MetricCard
-                    icon={<Shield size={24} />}
-                    title="GORDURA ABSOLUTA"
-                    value={currentMetrics.gordura.toFixed(1).replace('.', ',')}
-                    unit="kg"
-                    trend={{
-                      direction: currentMetrics.gordura > compareMetrics.gordura ? 'up' : currentMetrics.gordura < compareMetrics.gordura ? 'down' : 'neutral',
-                      value: `${Math.abs(currentMetrics.gordura - compareMetrics.gordura).toFixed(1).replace('.', ',')} kg`,
-                      text: 'vs. comparação',
-                      isGood: currentMetrics.gordura < compareMetrics.gordura
-                    }}
-                  />
-                  <MetricCard
-                    icon={<Shield size={24} />}
-                    title="MASSA ÓSSEA"
-                    value={currentMetrics.ossos.toFixed(1).replace('.', ',')}
-                    unit="kg"
-                    trend={{
-                      direction: currentMetrics.ossos > compareMetrics.ossos ? 'up' : currentMetrics.ossos < compareMetrics.ossos ? 'down' : 'neutral',
-                      value: `${Math.abs(currentMetrics.ossos - compareMetrics.ossos).toFixed(1).replace('.', ',')} kg`,
-                      text: 'vs. comparação',
-                      isGood: currentMetrics.ossos > compareMetrics.ossos
-                    }}
-                  />
+                <div className="tabs-header" style={{ marginBottom: '1rem', backgroundColor: 'transparent', padding: 0 }}>
+                  <button className={`tab-btn ${metricsPage === 1 ? 'active' : ''}`} onClick={() => setMetricsPage(1)}>Composição Corporal</button>
+                  <button className={`tab-btn ${metricsPage === 2 ? 'active' : ''}`} onClick={() => setMetricsPage(2)}>Índices de Simetria</button>
+                  <button className={`tab-btn ${metricsPage === 3 ? 'active' : ''}`} onClick={() => setMetricsPage(3)}>Rel. Cineantropométrica</button>
                 </div>
+
+                {metricsPage === 1 && (
+                  <div className="metrics-grid">
+                    <MetricCard
+                      icon={<Scale size={24} />}
+                      title="PESO CORPORAL"
+                      value={currentMetrics.peso.toFixed(1).replace('.', ',')}
+                      unit="kg"
+                      trend={{
+                        direction: currentMetrics.peso > compareMetrics.peso ? 'up' : currentMetrics.peso < compareMetrics.peso ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.peso - compareMetrics.peso).toFixed(1).replace('.', ',')} kg`,
+                        text: 'vs. comparação',
+                        isGood: currentMetrics.peso === compareMetrics.peso ? undefined : isCompositionGood
+                      }}
+                    />
+                    <MetricCard
+                      icon={<Ruler size={24} />}
+                      title="ALTURA"
+                      value={currentMetrics.altura.toFixed(1).replace('.', ',')}
+                      unit="cm"
+                      trend={{
+                        direction: currentMetrics.altura > compareMetrics.altura ? 'up' : currentMetrics.altura < compareMetrics.altura ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.altura - compareMetrics.altura).toFixed(1).replace('.', ',')} cm`,
+                        text: 'vs. comparação',
+                        isGood: currentMetrics.altura > compareMetrics.altura
+                      }}
+                    />
+                    <MetricCard
+                      icon={<Percent size={24} />}
+                      title="% GORDURA"
+                      value={currentMetrics.percentualGordura.toFixed(1).replace('.', ',')}
+                      unit="%"
+                      trend={{
+                        direction: currentMetrics.percentualGordura > compareMetrics.percentualGordura ? 'up' : currentMetrics.percentualGordura < compareMetrics.percentualGordura ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.percentualGordura - compareMetrics.percentualGordura).toFixed(1).replace('.', ',')} %`,
+                        text: 'vs. comparação',
+                        isGood: currentMetrics.percentualGordura < compareMetrics.percentualGordura
+                      }}
+                    />
+                    <MetricCard
+                      icon={<Activity size={24} />}
+                      title="SOMA DAS DOBRAS"
+                      value={currentMetrics.sumDobras.toFixed(1).replace('.', ',')}
+                      unit="mm"
+                      trend={{
+                        direction: currentMetrics.sumDobras > compareMetrics.sumDobras ? 'up' : currentMetrics.sumDobras < compareMetrics.sumDobras ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.sumDobras - compareMetrics.sumDobras).toFixed(1).replace('.', ',')} mm`,
+                        text: 'vs. comparação',
+                        isGood: currentMetrics.sumDobras < compareMetrics.sumDobras
+                      }}
+                    />
+                    <MetricCard
+                      icon={<Shield size={24} />}
+                      title="MASSA GORDA"
+                      value={currentMetrics.gordura.toFixed(1).replace('.', ',')}
+                      unit="kg"
+                      trend={{
+                        direction: currentMetrics.gordura > compareMetrics.gordura ? 'up' : currentMetrics.gordura < compareMetrics.gordura ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.gordura - compareMetrics.gordura).toFixed(1).replace('.', ',')} kg`,
+                        text: 'vs. comparação',
+                        isGood: currentMetrics.gordura < compareMetrics.gordura
+                      }}
+                    />
+                    <MetricCard
+                      icon={<Dumbbell size={24} />}
+                      title="MASSA LIVRE DE GORDURA"
+                      value={currentMetrics.mlg.toFixed(1).replace('.', ',')}
+                      unit="kg"
+                      trend={{
+                        direction: currentMetrics.mlg > compareMetrics.mlg ? 'up' : currentMetrics.mlg < compareMetrics.mlg ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.mlg - compareMetrics.mlg).toFixed(1).replace('.', ',')} kg`,
+                        text: 'vs. comparação',
+                        isGood: currentMetrics.mlg > compareMetrics.mlg
+                      }}
+                    />
+                    <MetricCard
+                      icon={<Shield size={24} />}
+                      title="MASSA ÓSSEA"
+                      value={currentMetrics.ossos.toFixed(1).replace('.', ',')}
+                      unit="kg"
+                      trend={{
+                        direction: currentMetrics.ossos > compareMetrics.ossos ? 'up' : currentMetrics.ossos < compareMetrics.ossos ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.ossos - compareMetrics.ossos).toFixed(1).replace('.', ',')} kg`,
+                        text: 'vs. comparação',
+                        isGood: currentMetrics.ossos > compareMetrics.ossos
+                      }}
+                    />
+                    <MetricCard
+                      icon={<Dumbbell size={24} />}
+                      title="MASSA MUSCULAR"
+                      value={currentMetrics.massaMuscular.toFixed(1).replace('.', ',')}
+                      unit="kg"
+                      trend={{
+                        direction: currentMetrics.massaMuscular > compareMetrics.massaMuscular ? 'up' : currentMetrics.massaMuscular < compareMetrics.massaMuscular ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.massaMuscular - compareMetrics.massaMuscular).toFixed(1).replace('.', ',')} kg`,
+                        text: 'vs. comparação',
+                        isGood: currentMetrics.massaMuscular > compareMetrics.massaMuscular
+                      }}
+                    />
+                  </div>
+                )}
+
+                {metricsPage === 2 && (
+                  <div style={{ width: '100%' }}>
+                    {renderSymmetryCards()}
+                  </div>
+                )}
+
+                {metricsPage === 3 && (
+                  <div style={{ width: '100%' }}>
+                    {renderRelationCards()}
+                  </div>
+                )}
               </div>
 
               {/* Right Column: Data Tables Tabs */}
@@ -510,6 +676,36 @@ export default function AthleteDashboard() {
             compareMetrics={compareMetrics}
             formula={selectedFormula}
           />
+
+          {/* Delete Confirmation Modal */}
+          {isDeleteModalOpen && (
+            <div className="delete-modal-overlay">
+              <div className="delete-modal-content">
+                <div className="delete-modal-icon">
+                  <Trash2 size={32} />
+                </div>
+                <h2 className="delete-modal-title">Excluir Atleta</h2>
+                <p className="delete-modal-text">
+                  Tem certeza que deseja excluir <strong>{athlete.name}</strong>? Esta ação removerá também todas as avaliações dele e não poderá ser desfeita.
+                </p>
+                <div className="delete-modal-actions">
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setIsDeleteModalOpen(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
+                    onClick={handleDeleteAthlete}
+                  >
+                    Sim, Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
