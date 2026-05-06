@@ -1,0 +1,28 @@
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.badge-icon {
+  color: var(--color-primary);
+}
+
+.badge-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.badge-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--color-text-light);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.badge-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+}

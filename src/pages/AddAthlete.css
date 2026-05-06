@@ -1,0 +1,106 @@
+.add-athlete-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 800px;
+}
+
+.add-athlete-header h1 {
+  font-size: 2rem;
+  color: var(--color-text-main);
+  margin-bottom: 0.5rem;
+}
+
+.add-athlete-header p {
+  color: var(--color-text-muted);
+}
+
+.add-athlete-card {
+  padding: 2.5rem;
+}
+
+.add-athlete-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.form-group input,
+.form-group select {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--color-text-main);
+  background-color: var(--color-bg-page);
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.btn-secondary {
+  background-color: transparent !important;
+  color: var(--color-text-muted) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-bg-page) !important;
+  color: var(--color-text-main) !important;
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
