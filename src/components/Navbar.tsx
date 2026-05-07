@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Activity, LayoutDashboard, UserPlus } from 'lucide-react';
 import './Navbar.css';

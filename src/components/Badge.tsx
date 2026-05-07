@@ -1,4 +1,3 @@
-import React from 'react';
 import './Badge.css';
 import type { LucideIcon } from 'lucide-react';
 

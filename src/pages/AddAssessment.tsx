@@ -4,7 +4,7 @@ import { useAssessments } from '../hooks/useAssessments';
 import { useAthletes } from '../hooks/useAthletes';
 import { Card } from '../components/Card';
 import { DatePicker } from '../components/DatePicker';
-import { Activity, Calendar, Scale, Ruler, Droplets, User2 } from 'lucide-react';
+import { Activity, Scale, Ruler, Droplets, User2 } from 'lucide-react';
 import './AddAssessment.css';
 
 export default function AddAssessment() {

@@ -13,7 +13,6 @@ interface ReportModalProps {
   currentEval?: Assessment;
   compareEval?: Assessment;
   currentMetrics: any;
-  compareMetrics: any;
   formula: string;
 }
 
@@ -24,7 +23,6 @@ export function ReportModal({
   currentEval,
   compareEval,
   currentMetrics,
-  compareMetrics,
   formula
 }: ReportModalProps) {
   const [logos, setLogos] = useState<string[]>([]);
@@ -136,7 +134,7 @@ export function ReportModal({
   };
 
   const currentAge = calculateAge(athlete.birthDate, currentEval?.date);
-  const compareAge = calculateAge(athlete.birthDate, compareEval?.date);
+
 
   const getDiff = (cur?: number, cmp?: number, unit?: string) => {
     if (cur === undefined || cmp === undefined) return '-';

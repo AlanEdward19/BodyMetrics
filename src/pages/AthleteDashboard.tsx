@@ -701,7 +701,6 @@ export default function AthleteDashboard() {
             currentEval={currentEval}
             compareEval={compareEval}
             currentMetrics={currentMetrics}
-            compareMetrics={compareMetrics}
             formula={selectedFormula}
           />
 

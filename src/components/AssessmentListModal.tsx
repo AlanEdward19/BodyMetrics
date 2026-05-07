@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Pencil, Trash2, ChevronDown, ChevronUp, Plus, ClipboardList } from 'lucide-react';
 import type { Assessment } from '../types/assessment';
