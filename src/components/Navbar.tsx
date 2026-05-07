@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { Activity, LayoutDashboard, UserPlus } from 'lucide-react';
 import './Navbar.css';
 
@@ -7,12 +7,12 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="container navbar-container">
-        <div className="navbar-brand">
+        <Link to="/dashboard" className="navbar-brand" style={{ textDecoration: 'none' }}>
           <div className="navbar-logo-wrapper">
             <Activity className="navbar-logo" size={24} strokeWidth={2.5} />
           </div>
           <span className="navbar-title">BodyMetrics</span>
-        </div>
+        </Link>
         <ul className="navbar-menu">
           <li>
             <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>

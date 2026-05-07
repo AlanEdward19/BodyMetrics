@@ -346,10 +346,14 @@ export default function AthleteDashboard() {
         <select
           id="athlete-select"
           value={currentAthleteId || ''}
-          onChange={(e) => navigate(`/dashboard/${e.target.value}`)}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === '') navigate('/dashboard');
+            else navigate(`/dashboard/${val}`);
+          }}
           className="main-athlete-select"
         >
-          <option value="" disabled>Selecione um atleta...</option>
+          <option value="">-- Nenhum atleta --</option>
           {athletes.map(a => (
             <option key={a.id} value={a.id}>{a.name}</option>
           ))}
@@ -398,14 +402,7 @@ export default function AthleteDashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <h1 className="athlete-name" style={{ margin: 0 }}>{athlete.name}</h1>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => setIsImportModalOpen(true)}
-                      className="btn btn-secondary"
-                      style={{ padding: '0.4rem 0.8rem', border: 'none', backgroundColor: 'var(--color-bg-page)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500, fontSize: '0.875rem' }}
-                      title="Importar Dados de Excel"
-                    >
-                      <FileSpreadsheet size={18} /> Importar Excel
-                    </button>
+
                     <button
                       onClick={() => setIsReportModalOpen(true)}
                       className="btn btn-secondary"
