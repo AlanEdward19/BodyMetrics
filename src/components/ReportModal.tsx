@@ -185,7 +185,7 @@ export function ReportModal({
     </div>
   );
 
-  const renderSymmetryTableSection = () => {
+  const renderSymmetrySection = () => {
     if (!currentMetrics) return null;
     const { coxa, pantu, braco } = currentMetrics.simetria;
     const items = [
@@ -196,31 +196,33 @@ export function ReportModal({
     return (
       <div className="report-section">
         <h3 className="report-section-title">Índices de Simetria (Medidas Corrigidas)</h3>
-        <table className="report-table">
-          <thead>
-            <tr>
-              <th>Região</th>
-              <th>Lado Direito</th>
-              <th>Lado Esquerdo</th>
-              <th>Diferença</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, idx) => (
-              <tr key={idx}>
-                <td><strong>{item.label}</strong></td>
-                <td>{item.data.d.toFixed(2).replace('.', ',')} cm</td>
-                <td>{item.data.e.toFixed(2).replace('.', ',')} cm</td>
-                <td>{item.data.diff.toFixed(2).replace('.', ',')} cm</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="report-cards-grid">
+          {items.map((item, idx) => (
+            <div key={idx} className="report-card">
+              <div className="report-card-header">{item.label}</div>
+              <div className="report-card-body">
+                <div className="report-card-row">
+                  <span>Lado Direito:</span>
+                  <strong>{item.data.d.toFixed(2).replace('.', ',')} cm</strong>
+                </div>
+                <div className="report-card-row">
+                  <span>Lado Esquerdo:</span>
+                  <strong>{item.data.e.toFixed(2).replace('.', ',')} cm</strong>
+                </div>
+                <div className="report-card-divider"></div>
+                <div className="report-card-row diff">
+                  <span>Diferença D/E:</span>
+                  <strong>{item.data.d > item.data.e ? '+' : ''}{item.data.diff.toFixed(2).replace('.', ',')} cm</strong>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
 
-  const renderRelationTableSection = () => {
+  const renderRelationSection = () => {
     if (!currentMetrics) return null;
     const r = currentMetrics.relacao;
     const items = [
@@ -231,26 +233,28 @@ export function ReportModal({
     return (
       <div className="report-section">
         <h3 className="report-section-title">Relação Cineantropométrica</h3>
-        <table className="report-table">
-          <thead>
-            <tr>
-              <th>Relação</th>
-              <th>Média Corrigida</th>
-              <th>Diâmetro Ósseo</th>
-              <th>Índice</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, idx) => (
-              <tr key={idx}>
-                <td><strong>{item.label}</strong></td>
-                <td>{item.media.toFixed(2).replace('.', ',')} cm</td>
-                <td>{item.osso > 0 ? `${item.osso.toFixed(2).replace('.', ',')} cm` : '-'}</td>
-                <td>{item.relacao > 0 ? item.relacao.toFixed(2).replace('.', ',') : '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="report-cards-grid">
+          {items.map((item, idx) => (
+            <div key={idx} className="report-card">
+              <div className="report-card-header">{item.label}</div>
+              <div className="report-card-body">
+                <div className="report-card-row">
+                  <span>Média Corrigida:</span>
+                  <strong>{item.media.toFixed(2).replace('.', ',')} cm</strong>
+                </div>
+                <div className="report-card-row">
+                  <span>Diâmetro Ósseo:</span>
+                  <strong>{item.osso > 0 ? `${item.osso.toFixed(2).replace('.', ',')} cm` : '-'}</strong>
+                </div>
+                <div className="report-card-divider"></div>
+                <div className="report-card-row relation">
+                  <span>Índice:</span>
+                  <strong>{item.relacao > 0 ? item.relacao.toFixed(2).replace('.', ',') : '-'}</strong>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
@@ -335,72 +339,81 @@ export function ReportModal({
                 </div>
               </div>
 
-              {/* METRICS SUMMARY */}
-              {currentMetrics && (
-                <div className="report-metrics-summary">
-                  {[
-                    { label: 'Peso Corporal', key: 'peso', unit: 'kg' },
-                    { label: 'Altura', key: 'altura', unit: 'cm' },
-                    { label: '% Gordura', key: 'percentualGordura', unit: '%' },
-                    { label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm' },
-                    { label: 'Massa Gorda', key: 'gordura', unit: 'kg' },
-                    { label: 'Massa Livre Gord.', key: 'mlg', unit: 'kg' },
-                    { label: 'Massa Óssea', key: 'ossos', unit: 'kg' },
-                    { label: 'Massa Muscular', key: 'massaMuscular', unit: 'kg' },
-                  ].map((m) => {
-                    const curVal = currentMetrics[m.key];
-                    const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
-                    const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
-                    const sign = diff > 0 ? '+' : '';
-                    const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
-                    
-                    return (
-                      <div key={m.key} className="report-metric-box">
-                        <span className="report-metric-label">{m.label}</span>
-                        <span className="report-metric-value">{curVal.toFixed(2).replace('.', ',')} <small>{m.unit}</small></span>
-                        {compareMetrics && (
-                          <span className={`report-metric-trend ${trendClass}`}>
-                            {sign}{diff.toFixed(2).replace('.', ',')} {m.unit}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {/* COMPOSIÇÃO CORPORAL (PAG 1) */}
+              <div className="report-section">
+                <h3 className="report-section-title">Composição Corporal</h3>
+                {currentMetrics && (
+                  <div className="report-metrics-summary">
+                    {[
+                      { label: 'Peso Corporal', key: 'peso', unit: 'kg' },
+                      { label: 'Altura', key: 'altura', unit: 'cm' },
+                      { label: '% Gordura', key: 'percentualGordura', unit: '%' },
+                      { label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm' },
+                      { label: 'Massa Gorda', key: 'gordura', unit: 'kg' },
+                      { label: 'Massa Livre Gord.', key: 'mlg', unit: 'kg' },
+                      { label: 'Massa Óssea', key: 'ossos', unit: 'kg' },
+                      { label: 'Massa Muscular', key: 'massaMuscular', unit: 'kg' },
+                    ].map((m) => {
+                      const curVal = currentMetrics[m.key];
+                      const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
+                      const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
+                      const sign = diff > 0 ? '+' : '';
+                      const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
+                      
+                      return (
+                        <div key={m.key} className="report-metric-box">
+                          <span className="report-metric-label">{m.label}</span>
+                          <span className="report-metric-value">{curVal.toFixed(2).replace('.', ',')} <small>{m.unit}</small></span>
+                          {compareMetrics && (
+                            <span className={`report-metric-trend ${trendClass}`}>
+                              {sign}{diff.toFixed(2).replace('.', ',')} {m.unit}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
-              {/* TABLES */}
+              {/* SIMETRIA (PAG 2) */}
+              {renderSymmetrySection()}
 
-              {renderTableSection('Dobras Cutâneas', [
-                { label: 'Tríceps Dir.', cur: currentEval?.skinfolds?.tricepsRight, cmp: compareEval?.skinfolds?.tricepsRight, unit: 'mm' },
-                { label: 'Tríceps Esq.', cur: currentEval?.skinfolds?.tricepsLeft, cmp: compareEval?.skinfolds?.tricepsLeft, unit: 'mm' },
-                { label: 'Subescapular', cur: currentEval?.skinfolds?.subscapular, cmp: compareEval?.skinfolds?.subscapular, unit: 'mm' },
-                { label: 'Tórax', cur: currentEval?.skinfolds?.chest, cmp: compareEval?.skinfolds?.chest, unit: 'mm' },
-                { label: 'Subaxilar', cur: currentEval?.skinfolds?.midaxillary, cmp: compareEval?.skinfolds?.midaxillary, unit: 'mm' },
-                { label: 'Supra-ilíaca', cur: currentEval?.skinfolds?.suprailiac, cmp: compareEval?.skinfolds?.suprailiac, unit: 'mm' },
-                { label: 'Abdominal', cur: currentEval?.skinfolds?.abdominal, cmp: compareEval?.skinfolds?.abdominal, unit: 'mm' },
-                { label: 'Panturrilha Dir.', cur: currentEval?.skinfolds?.calfRight, cmp: compareEval?.skinfolds?.calfRight, unit: 'mm' },
-                { label: 'Panturrilha Esq.', cur: currentEval?.skinfolds?.calfLeft, cmp: compareEval?.skinfolds?.calfLeft, unit: 'mm' }
-              ])}
+              {/* RELAÇÕES (PAG 3) */}
+              {renderRelationSection()}
 
-              {renderTableSection('Circunferências', [
-                { label: 'Ombro', cur: currentEval?.circumferences?.shoulder, cmp: compareEval?.circumferences?.shoulder, unit: 'cm' },
-                { label: 'Peitoral', cur: currentEval?.circumferences?.chest, cmp: compareEval?.circumferences?.chest, unit: 'cm' },
-                { label: 'Braço Dir.', cur: currentEval?.circumferences?.armRight, cmp: compareEval?.circumferences?.armRight, unit: 'cm' },
-                { label: 'Braço Esq.', cur: currentEval?.circumferences?.armLeft, cmp: compareEval?.circumferences?.armLeft, unit: 'cm' },
-                { label: 'Cintura', cur: currentEval?.circumferences?.waist, cmp: compareEval?.circumferences?.waist, unit: 'cm' },
-                { label: 'Quadril', cur: currentEval?.circumferences?.hip, cmp: compareEval?.circumferences?.hip, unit: 'cm' },
-                { label: 'Medial Dir.', cur: currentEval?.circumferences?.thighMidRight, cmp: compareEval?.circumferences?.thighMidRight, unit: 'cm' },
-                { label: 'Medial Esq.', cur: currentEval?.circumferences?.thighMidLeft, cmp: compareEval?.circumferences?.thighMidLeft, unit: 'cm' },
-                { label: 'Panturrilha Dir.', cur: currentEval?.circumferences?.calfRight, cmp: compareEval?.circumferences?.calfRight, unit: 'cm' },
-                { label: 'Panturrilha Esq.', cur: currentEval?.circumferences?.calfLeft, cmp: compareEval?.circumferences?.calfLeft, unit: 'cm' },
-                { label: 'D. Punho', cur: currentEval?.circumferences?.wristRight, cmp: compareEval?.circumferences?.wristRight, unit: 'cm' },
-                { label: 'D. Joelho', cur: currentEval?.circumferences?.kneeRight, cmp: compareEval?.circumferences?.kneeRight, unit: 'cm' },
-                { label: 'D. Tornozelo', cur: (currentEval?.circumferences as any)?.ankle, cmp: (compareEval?.circumferences as any)?.ankle, unit: 'cm' }
-              ])}
+              {/* TABLES (END) */}
+              <div className="report-section">
+                {renderTableSection('Dobras Cutâneas', [
+                  { label: 'Tríceps Dir.', cur: currentEval?.skinfolds?.tricepsRight, cmp: compareEval?.skinfolds?.tricepsRight, unit: 'mm' },
+                  { label: 'Tríceps Esq.', cur: currentEval?.skinfolds?.tricepsLeft, cmp: compareEval?.skinfolds?.tricepsLeft, unit: 'mm' },
+                  { label: 'Subescapular', cur: currentEval?.skinfolds?.subscapular, cmp: compareEval?.skinfolds?.subscapular, unit: 'mm' },
+                  { label: 'Tórax', cur: currentEval?.skinfolds?.chest, cmp: compareEval?.skinfolds?.chest, unit: 'mm' },
+                  { label: 'Subaxilar', cur: currentEval?.skinfolds?.midaxillary, cmp: compareEval?.skinfolds?.midaxillary, unit: 'mm' },
+                  { label: 'Supra-ilíaca', cur: currentEval?.skinfolds?.suprailiac, cmp: compareEval?.skinfolds?.suprailiac, unit: 'mm' },
+                  { label: 'Abdominal', cur: currentEval?.skinfolds?.abdominal, cmp: compareEval?.skinfolds?.abdominal, unit: 'mm' },
+                  { label: 'Coxa Dir.', cur: currentEval?.skinfolds?.thighRight, cmp: compareEval?.skinfolds?.thighRight, unit: 'mm' },
+                  { label: 'Coxa Esq.', cur: currentEval?.skinfolds?.thighLeft, cmp: compareEval?.skinfolds?.thighLeft, unit: 'mm' },
+                  { label: 'Panturrilha Dir.', cur: currentEval?.skinfolds?.calfRight, cmp: compareEval?.skinfolds?.calfRight, unit: 'mm' },
+                  { label: 'Panturrilha Esq.', cur: currentEval?.skinfolds?.calfLeft, cmp: compareEval?.skinfolds?.calfLeft, unit: 'mm' }
+                ])}
 
-              {renderSymmetryTableSection()}
-              {renderRelationTableSection()}
+                {renderTableSection('Circunferências', [
+                  { label: 'Ombro', cur: currentEval?.circumferences?.shoulder, cmp: compareEval?.circumferences?.shoulder, unit: 'cm' },
+                  { label: 'Peitoral', cur: currentEval?.circumferences?.chest, cmp: compareEval?.circumferences?.chest, unit: 'cm' },
+                  { label: 'Braço Dir.', cur: currentEval?.circumferences?.armRight, cmp: compareEval?.circumferences?.armRight, unit: 'cm' },
+                  { label: 'Braço Esq.', cur: currentEval?.circumferences?.armLeft, cmp: compareEval?.circumferences?.armLeft, unit: 'cm' },
+                  { label: 'Cintura', cur: currentEval?.circumferences?.waist, cmp: compareEval?.circumferences?.waist, unit: 'cm' },
+                  { label: 'Quadril', cur: currentEval?.circumferences?.hip, cmp: compareEval?.circumferences?.hip, unit: 'cm' },
+                  { label: 'Medial Dir.', cur: currentEval?.circumferences?.thighMidRight, cmp: compareEval?.circumferences?.thighMidRight, unit: 'cm' },
+                  { label: 'Medial Esq.', cur: currentEval?.circumferences?.thighMidLeft, cmp: compareEval?.circumferences?.thighMidLeft, unit: 'cm' },
+                  { label: 'Panturrilha Dir.', cur: currentEval?.circumferences?.calfRight, cmp: compareEval?.circumferences?.calfRight, unit: 'cm' },
+                  { label: 'Panturrilha Esq.', cur: currentEval?.circumferences?.calfLeft, cmp: compareEval?.circumferences?.calfLeft, unit: 'cm' },
+                  { label: 'D. Punho', cur: currentEval?.circumferences?.wristRight, cmp: compareEval?.circumferences?.wristRight, unit: 'cm' },
+                  { label: 'D. Joelho', cur: currentEval?.circumferences?.kneeRight, cmp: compareEval?.circumferences?.kneeRight, unit: 'cm' },
+                  { label: 'D. Tornozelo', cur: (currentEval?.circumferences as any)?.ankle, cmp: (compareEval?.circumferences as any)?.ankle, unit: 'cm' }
+                ])}
+              </div>
 
             </div>
           </div>
