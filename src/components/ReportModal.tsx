@@ -32,7 +32,78 @@ export function ReportModal({
   const reportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [selections, setSelections] = useState({
+    composition: { 
+      items: { 
+        peso: true, altura: true, percentualGordura: true, sumDobras: true, 
+        gordura: true, mlg: true, ossos: true, massaMuscular: true 
+      } 
+    },
+    symmetry: { 
+      items: { Coxa: true, Panturrilha: true, Braço: true } 
+    },
+    relations: { 
+      items: { 'Coxa / Fêmur': true, 'Panturrilha / Tornozelo': true, 'Braço / Úmero': true } 
+    },
+    skinfolds: {
+      items: { 
+        tricepsRight: true, tricepsLeft: true, subscapular: true, chest: true, 
+        midaxillary: true, suprailiac: true, abdominal: true, thighRight: true, 
+        thighLeft: true, calfRight: true, calfLeft: true 
+      }
+    },
+    circumferences: {
+      items: {
+        shoulder: true, chest: true, armRight: true, armLeft: true, waist: true, 
+        hip: true, thighMidRight: true, thighMidLeft: true, calfRight: true, 
+        calfLeft: true, wristRight: true, kneeRight: true, ankle: true
+      }
+    }
+  });
+
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    composition: true,
+    symmetry: true,
+    relations: true,
+    skinfolds: false,
+    circumferences: false
+  });
+
   if (!isOpen) return null;
+
+  const toggleSectionExpand = (section: string) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const toggleAllInSection = (section: keyof typeof selections, value: boolean) => {
+    setSelections(prev => {
+      const newItems = { ...prev[section].items };
+      Object.keys(newItems).forEach(key => {
+        (newItems as any)[key] = value;
+      });
+      return {
+        ...prev,
+        [section]: { ...prev[section], items: newItems }
+      };
+    });
+  };
+
+  const toggleItem = (section: keyof typeof selections, itemKey: string) => {
+    setSelections(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        items: {
+          ...prev[section].items,
+          [itemKey]: !(prev[section].items as any)[itemKey]
+        }
+      }
+    }));
+  };
+
+  const isAnySelected = (section: keyof typeof selections) => {
+    return Object.values(selections[section].items).some(v => v);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -298,6 +369,160 @@ export function ReportModal({
               </button>
             </div>
 
+            <div className="report-sections-manager">
+              <h3>Conteúdo do Relatório</h3>
+              
+              {/* Composição Corporal */}
+              <div className={`section-control ${expandedSections.composition ? 'expanded' : ''}`}>
+                <div className="section-control-header" onClick={() => toggleSectionExpand('composition')}>
+                  <div className="section-title-with-badge">
+                    <strong>Composição Corporal</strong>
+                    {isAnySelected('composition') && <span className="selection-badge">{Object.values(selections.composition.items).filter(v => v).length}</span>}
+                  </div>
+                  <div className="section-header-actions">
+                    <button className="btn-text" onClick={e => { e.stopPropagation(); toggleAllInSection('composition', !Object.values(selections.composition.items).every(v => v)); }}>
+                      {Object.values(selections.composition.items).every(v => v) ? 'Nenhum' : 'Todos'}
+                    </button>
+                    {expandedSections.composition ? <ChevronRight size={16} className="rotate-90" /> : <ChevronRight size={16} />}
+                  </div>
+                </div>
+                {expandedSections.composition && (
+                  <div className="items-control">
+                    {[
+                      { id: 'peso', label: 'Peso' }, { id: 'altura', label: 'Altura' },
+                      { id: 'percentualGordura', label: '% Gordura' }, { id: 'sumDobras', label: 'Soma Dobras' },
+                      { id: 'gordura', label: 'Massa Gorda' }, { id: 'mlg', label: 'MLG' },
+                      { id: 'ossos', label: 'Massa Óssea' }, { id: 'massaMuscular', label: 'Massa Muscular' }
+                    ].map(item => (
+                      <label key={item.id} className="item-checkbox">
+                        <input type="checkbox" checked={(selections.composition.items as any)[item.id]} onChange={() => toggleItem('composition', item.id)} />
+                        {item.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Simetria */}
+              <div className={`section-control ${expandedSections.symmetry ? 'expanded' : ''}`}>
+                <div className="section-control-header" onClick={() => toggleSectionExpand('symmetry')}>
+                  <div className="section-title-with-badge">
+                    <strong>Simetria</strong>
+                    {isAnySelected('symmetry') && <span className="selection-badge">{Object.values(selections.symmetry.items).filter(v => v).length}</span>}
+                  </div>
+                  <div className="section-header-actions">
+                    <button className="btn-text" onClick={e => { e.stopPropagation(); toggleAllInSection('symmetry', !Object.values(selections.symmetry.items).every(v => v)); }}>
+                      {Object.values(selections.symmetry.items).every(v => v) ? 'Nenhum' : 'Todos'}
+                    </button>
+                    {expandedSections.symmetry ? <ChevronRight size={16} className="rotate-90" /> : <ChevronRight size={16} />}
+                  </div>
+                </div>
+                {expandedSections.symmetry && (
+                  <div className="items-control">
+                    {['Coxa', 'Panturrilha', 'Braço'].map(item => (
+                      <label key={item} className="item-checkbox">
+                        <input type="checkbox" checked={(selections.symmetry.items as any)[item]} onChange={() => toggleItem('symmetry', item)} />
+                        {item}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Relações */}
+              <div className={`section-control ${expandedSections.relations ? 'expanded' : ''}`}>
+                <div className="section-control-header" onClick={() => toggleSectionExpand('relations')}>
+                  <div className="section-title-with-badge">
+                    <strong>Relações</strong>
+                    {isAnySelected('relations') && <span className="selection-badge">{Object.values(selections.relations.items).filter(v => v).length}</span>}
+                  </div>
+                  <div className="section-header-actions">
+                    <button className="btn-text" onClick={e => { e.stopPropagation(); toggleAllInSection('relations', !Object.values(selections.relations.items).every(v => v)); }}>
+                      {Object.values(selections.relations.items).every(v => v) ? 'Nenhum' : 'Todos'}
+                    </button>
+                    {expandedSections.relations ? <ChevronRight size={16} className="rotate-90" /> : <ChevronRight size={16} />}
+                  </div>
+                </div>
+                {expandedSections.relations && (
+                  <div className="items-control">
+                    {['Coxa / Fêmur', 'Panturrilha / Tornozelo', 'Braço / Úmero'].map(item => (
+                      <label key={item} className="item-checkbox">
+                        <input type="checkbox" checked={(selections.relations.items as any)[item]} onChange={() => toggleItem('relations', item)} />
+                        {item}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Dobras */}
+              <div className={`section-control ${expandedSections.skinfolds ? 'expanded' : ''}`}>
+                <div className="section-control-header" onClick={() => toggleSectionExpand('skinfolds')}>
+                  <div className="section-title-with-badge">
+                    <strong>Dobras Cutâneas</strong>
+                    {isAnySelected('skinfolds') && <span className="selection-badge">{Object.values(selections.skinfolds.items).filter(v => v).length}</span>}
+                  </div>
+                  <div className="section-header-actions">
+                    <button className="btn-text" onClick={e => { e.stopPropagation(); toggleAllInSection('skinfolds', !Object.values(selections.skinfolds.items).every(v => v)); }}>
+                      {Object.values(selections.skinfolds.items).every(v => v) ? 'Nenhum' : 'Todos'}
+                    </button>
+                    {expandedSections.skinfolds ? <ChevronRight size={16} className="rotate-90" /> : <ChevronRight size={16} />}
+                  </div>
+                </div>
+                {expandedSections.skinfolds && (
+                  <div className="items-control">
+                    {[
+                      { id: 'tricepsRight', label: 'Tríceps D.' }, { id: 'tricepsLeft', label: 'Tríceps E.' },
+                      { id: 'subscapular', label: 'Subesc.' }, { id: 'chest', label: 'Tórax' },
+                      { id: 'midaxillary', label: 'Subax.' }, { id: 'suprailiac', label: 'Supra-ilí.' },
+                      { id: 'abdominal', label: 'Abd.' }, { id: 'thighRight', label: 'Coxa D.' },
+                      { id: 'thighLeft', label: 'Coxa E.' }, { id: 'calfRight', label: 'Pantu. D.' },
+                      { id: 'calfLeft', label: 'Pantu. E.' }
+                    ].map(item => (
+                      <label key={item.id} className="item-checkbox">
+                        <input type="checkbox" checked={(selections.skinfolds.items as any)[item.id]} onChange={() => toggleItem('skinfolds', item.id)} />
+                        {item.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Circunferências */}
+              <div className={`section-control ${expandedSections.circumferences ? 'expanded' : ''}`}>
+                <div className="section-control-header" onClick={() => toggleSectionExpand('circumferences')}>
+                  <div className="section-title-with-badge">
+                    <strong>Circunferências</strong>
+                    {isAnySelected('circumferences') && <span className="selection-badge">{Object.values(selections.circumferences.items).filter(v => v).length}</span>}
+                  </div>
+                  <div className="section-header-actions">
+                    <button className="btn-text" onClick={e => { e.stopPropagation(); toggleAllInSection('circumferences', !Object.values(selections.circumferences.items).every(v => v)); }}>
+                      {Object.values(selections.circumferences.items).every(v => v) ? 'Nenhum' : 'Todos'}
+                    </button>
+                    {expandedSections.circumferences ? <ChevronRight size={16} className="rotate-90" /> : <ChevronRight size={16} />}
+                  </div>
+                </div>
+                {expandedSections.circumferences && (
+                  <div className="items-control">
+                    {[
+                      { id: 'shoulder', label: 'Ombro' }, { id: 'chest', label: 'Peitoral' },
+                      { id: 'armRight', label: 'Braço D.' }, { id: 'armLeft', label: 'Braço E.' },
+                      { id: 'waist', label: 'Cintura' }, { id: 'hip', label: 'Quadril' },
+                      { id: 'thighMidRight', label: 'Medial D.' }, { id: 'thighMidLeft', label: 'Medial E.' },
+                      { id: 'calfRight', label: 'Pantu. D.' }, { id: 'calfLeft', label: 'Pantu. E.' },
+                      { id: 'wristRight', label: 'D. Punho' }, { id: 'kneeRight', label: 'D. Joelho' },
+                      { id: 'ankle', label: 'D. Torno.' }
+                    ].map(item => (
+                      <label key={item.id} className="item-checkbox">
+                        <input type="checkbox" checked={(selections.circumferences.items as any)[item.id]} onChange={() => toggleItem('circumferences', item.id)} />
+                        {item.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="report-actions">
               <button className="btn btn-primary w-full" onClick={generatePDF} disabled={isGenerating}>
                 {isGenerating ? 'Gerando...' : <><Download size={18} /> Baixar PDF</>}
@@ -339,78 +564,144 @@ export function ReportModal({
               </div>
 
               {/* COMPOSIÇÃO CORPORAL (PAG 1) */}
-              <div className="report-section">
-                <h3 className="report-section-title">Composição Corporal</h3>
-                {currentMetrics && (
-                  <div className="report-metrics-summary">
-                    {[
-                      { label: 'Peso Corporal', key: 'peso', unit: 'kg' },
-                      { label: 'Altura', key: 'altura', unit: 'cm' },
-                      { label: '% Gordura', key: 'percentualGordura', unit: '%' },
-                      { label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm' },
-                      { label: 'Massa Gorda', key: 'gordura', unit: 'kg' },
-                      { label: 'Massa Livre Gord.', key: 'mlg', unit: 'kg' },
-                      { label: 'Massa Óssea', key: 'ossos', unit: 'kg' },
-                      { label: 'Massa Muscular', key: 'massaMuscular', unit: 'kg' },
-                    ].map((m) => {
-                      const curVal = currentMetrics[m.key];
-                      const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
-                      const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
-                      const sign = diff > 0 ? '+' : '';
-                      const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
-                      
-                      return (
-                        <div key={m.key} className="report-metric-box">
-                          <span className="report-metric-label">{m.label}</span>
-                          <span className="report-metric-value">{curVal.toFixed(2).replace('.', ',')} <small>{m.unit}</small></span>
-                          {compareMetrics && (
-                            <span className={`report-metric-trend ${trendClass}`}>
-                              {sign}{diff.toFixed(2).replace('.', ',')} {m.unit}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+              {isAnySelected('composition') && (
+                <div className="report-section">
+                  <h3 className="report-section-title">Composição Corporal</h3>
+                  {currentMetrics && (
+                    <div className="report-metrics-summary">
+                      {[
+                        { id: 'peso', label: 'Peso Corporal', key: 'peso', unit: 'kg' },
+                        { id: 'altura', label: 'Altura', key: 'altura', unit: 'cm' },
+                        { id: 'percentualGordura', label: '% Gordura', key: 'percentualGordura', unit: '%' },
+                        { id: 'sumDobras', label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm' },
+                        { id: 'gordura', label: 'Massa Gorda', key: 'gordura', unit: 'kg' },
+                        { id: 'mlg', label: 'Massa Livre Gord.', key: 'mlg', unit: 'kg' },
+                        { id: 'ossos', label: 'Massa Óssea', key: 'ossos', unit: 'kg' },
+                        { id: 'massaMuscular', label: 'Massa Muscular', key: 'massaMuscular', unit: 'kg' },
+                      ].filter(m => (selections.composition.items as any)[m.id]).map((m) => {
+                        const curVal = currentMetrics[m.key];
+                        const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
+                        const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
+                        const sign = diff > 0 ? '+' : '';
+                        const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
+                        
+                        return (
+                          <div key={m.key} className="report-metric-box">
+                            <span className="report-metric-label">{m.label}</span>
+                            <span className="report-metric-value">{curVal.toFixed(2).replace('.', ',')} <small>{m.unit}</small></span>
+                            {compareMetrics && (
+                              <span className={`report-metric-trend ${trendClass}`}>
+                                {sign}{diff.toFixed(2).replace('.', ',')} {m.unit}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* SIMETRIA (PAG 2) */}
-              {renderSymmetrySection()}
+              {isAnySelected('symmetry') && (
+                <div className="report-section">
+                  <h3 className="report-section-title">Índices de Simetria (Medidas Corrigidas)</h3>
+                  <div className="report-cards-grid">
+                    {[
+                      { label: 'Coxa', data: currentMetrics?.simetria?.coxa },
+                      { label: 'Panturrilha', data: currentMetrics?.simetria?.pantu },
+                      { label: 'Braço', data: currentMetrics?.simetria?.braco }
+                    ].filter(item => (selections.symmetry.items as any)[item.label]).map((item, idx) => (
+                      <div key={idx} className="report-card">
+                        <div className="report-card-header">{item.label}</div>
+                        <div className="report-card-body">
+                          <div className="report-card-row">
+                            <span>Lado Direito:</span>
+                            <strong>{item.data?.d.toFixed(2).replace('.', ',')} cm</strong>
+                          </div>
+                          <div className="report-card-row">
+                            <span>Lado Esquerdo:</span>
+                            <strong>{item.data?.e.toFixed(2).replace('.', ',')} cm</strong>
+                          </div>
+                          <div className="report-card-divider"></div>
+                          <div className="report-card-row diff">
+                            <span>Diferença D/E:</span>
+                            <strong>{item.data?.d > item.data?.e ? '+' : ''}{item.data?.diff.toFixed(2).replace('.', ',')} cm</strong>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* RELAÇÕES (PAG 3) */}
-              {renderRelationSection()}
+              {isAnySelected('relations') && (
+                <div className="report-section">
+                  <h3 className="report-section-title">Relação Cineantropométrica</h3>
+                  <div className="report-cards-grid">
+                    {[
+                      { label: 'Coxa / Fêmur', media: currentMetrics?.relacao?.ccCoxa, osso: currentMetrics?.relacao?.diamJoelho, relacao: currentMetrics?.relacao?.coxa },
+                      { label: 'Panturrilha / Tornozelo', media: currentMetrics?.relacao?.ccPantu, osso: currentMetrics?.relacao?.diamTornozelo, relacao: currentMetrics?.relacao?.pantu },
+                      { label: 'Braço / Úmero', media: currentMetrics?.relacao?.ccBraco, osso: currentMetrics?.relacao?.diamPunho, relacao: currentMetrics?.relacao?.braco }
+                    ].filter(item => (selections.relations.items as any)[item.label]).map((item, idx) => (
+                      <div key={idx} className="report-card">
+                        <div className="report-card-header">{item.label}</div>
+                        <div className="report-card-body">
+                          <div className="report-card-row">
+                            <span>Média Corrigida:</span>
+                            <strong>{item.media?.toFixed(2).replace('.', ',')} cm</strong>
+                          </div>
+                          <div className="report-card-row">
+                            <span>Diâmetro Ósseo:</span>
+                            <strong>{item.osso > 0 ? `${item.osso.toFixed(2).replace('.', ',')} cm` : '-'}</strong>
+                          </div>
+                          <div className="report-card-divider"></div>
+                          <div className="report-card-row relation">
+                            <span>Índice:</span>
+                            <strong>{item.relacao > 0 ? item.relacao.toFixed(2).replace('.', ',') : '-'}</strong>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* TABLES (END) */}
-              {renderTableSection('Dobras Cutâneas', [
-                { label: 'Tríceps Dir.', cur: currentEval?.skinfolds?.tricepsRight, cmp: compareEval?.skinfolds?.tricepsRight, unit: 'mm' },
-                { label: 'Tríceps Esq.', cur: currentEval?.skinfolds?.tricepsLeft, cmp: compareEval?.skinfolds?.tricepsLeft, unit: 'mm' },
-                { label: 'Subescapular', cur: currentEval?.skinfolds?.subscapular, cmp: compareEval?.skinfolds?.subscapular, unit: 'mm' },
-                { label: 'Tórax', cur: currentEval?.skinfolds?.chest, cmp: compareEval?.skinfolds?.chest, unit: 'mm' },
-                { label: 'Subaxilar', cur: currentEval?.skinfolds?.midaxillary, cmp: compareEval?.skinfolds?.midaxillary, unit: 'mm' },
-                { label: 'Supra-ilíaca', cur: currentEval?.skinfolds?.suprailiac, cmp: compareEval?.skinfolds?.suprailiac, unit: 'mm' },
-                { label: 'Abdominal', cur: currentEval?.skinfolds?.abdominal, cmp: compareEval?.skinfolds?.abdominal, unit: 'mm' },
-                { label: 'Coxa Dir.', cur: currentEval?.skinfolds?.thighRight, cmp: compareEval?.skinfolds?.thighRight, unit: 'mm' },
-                { label: 'Coxa Esq.', cur: currentEval?.skinfolds?.thighLeft, cmp: compareEval?.skinfolds?.thighLeft, unit: 'mm' },
-                { label: 'Panturrilha Dir.', cur: currentEval?.skinfolds?.calfRight, cmp: compareEval?.skinfolds?.calfRight, unit: 'mm' },
-                { label: 'Panturrilha Esq.', cur: currentEval?.skinfolds?.calfLeft, cmp: compareEval?.skinfolds?.calfLeft, unit: 'mm' }
-              ])}
+              {(isAnySelected('skinfolds') || isAnySelected('circumferences')) && (
+                <div className="report-section">
+                  {isAnySelected('skinfolds') && renderTableSection('Dobras Cutâneas', [
+                    { id: 'tricepsRight', label: 'Tríceps Dir.', cur: currentEval?.skinfolds?.tricepsRight, cmp: compareEval?.skinfolds?.tricepsRight, unit: 'mm' },
+                    { id: 'tricepsLeft', label: 'Tríceps Esq.', cur: currentEval?.skinfolds?.tricepsLeft, cmp: compareEval?.skinfolds?.tricepsLeft, unit: 'mm' },
+                    { id: 'subscapular', label: 'Subescapular', cur: currentEval?.skinfolds?.subscapular, cmp: compareEval?.skinfolds?.subscapular, unit: 'mm' },
+                    { id: 'chest', label: 'Tórax', cur: currentEval?.skinfolds?.chest, cmp: compareEval?.skinfolds?.chest, unit: 'mm' },
+                    { id: 'midaxillary', label: 'Subaxilar', cur: currentEval?.skinfolds?.midaxillary, cmp: compareEval?.skinfolds?.midaxillary, unit: 'mm' },
+                    { id: 'suprailiac', label: 'Supra-ilíaca', cur: currentEval?.skinfolds?.suprailiac, cmp: compareEval?.skinfolds?.suprailiac, unit: 'mm' },
+                    { id: 'abdominal', label: 'Abdominal', cur: currentEval?.skinfolds?.abdominal, cmp: compareEval?.skinfolds?.abdominal, unit: 'mm' },
+                    { id: 'thighRight', label: 'Coxa Dir.', cur: currentEval?.skinfolds?.thighRight, cmp: compareEval?.skinfolds?.thighRight, unit: 'mm' },
+                    { id: 'thighLeft', label: 'Coxa Esq.', cur: currentEval?.skinfolds?.thighLeft, cmp: compareEval?.skinfolds?.thighLeft, unit: 'mm' },
+                    { id: 'calfRight', label: 'Panturrilha Dir.', cur: currentEval?.skinfolds?.calfRight, cmp: compareEval?.skinfolds?.calfRight, unit: 'mm' },
+                    { id: 'calfLeft', label: 'Panturrilha Esq.', cur: currentEval?.skinfolds?.calfLeft, cmp: compareEval?.skinfolds?.calfLeft, unit: 'mm' }
+                  ].filter(item => (selections.skinfolds.items as any)[item.id]))}
 
-              {renderTableSection('Circunferências', [
-                { label: 'Ombro', cur: currentEval?.circumferences?.shoulder, cmp: compareEval?.circumferences?.shoulder, unit: 'cm' },
-                { label: 'Peitoral', cur: currentEval?.circumferences?.chest, cmp: compareEval?.circumferences?.chest, unit: 'cm' },
-                { label: 'Braço Dir.', cur: currentEval?.circumferences?.armRight, cmp: compareEval?.circumferences?.armRight, unit: 'cm' },
-                { label: 'Braço Esq.', cur: currentEval?.circumferences?.armLeft, cmp: compareEval?.circumferences?.armLeft, unit: 'cm' },
-                { label: 'Cintura', cur: currentEval?.circumferences?.waist, cmp: compareEval?.circumferences?.waist, unit: 'cm' },
-                { label: 'Quadril', cur: currentEval?.circumferences?.hip, cmp: compareEval?.circumferences?.hip, unit: 'cm' },
-                { label: 'Medial Dir.', cur: currentEval?.circumferences?.thighMidRight, cmp: compareEval?.circumferences?.thighMidRight, unit: 'cm' },
-                { label: 'Medial Esq.', cur: currentEval?.circumferences?.thighMidLeft, cmp: compareEval?.circumferences?.thighMidLeft, unit: 'cm' },
-                { label: 'Panturrilha Dir.', cur: currentEval?.circumferences?.calfRight, cmp: compareEval?.circumferences?.calfRight, unit: 'cm' },
-                { label: 'Panturrilha Esq.', cur: currentEval?.circumferences?.calfLeft, cmp: compareEval?.circumferences?.calfLeft, unit: 'cm' },
-                { label: 'D. Punho', cur: currentEval?.circumferences?.wristRight, cmp: compareEval?.circumferences?.wristRight, unit: 'cm' },
-                { label: 'D. Joelho', cur: currentEval?.circumferences?.kneeRight, cmp: compareEval?.circumferences?.kneeRight, unit: 'cm' },
-                { label: 'D. Tornozelo', cur: (currentEval?.circumferences as any)?.ankle, cmp: (compareEval?.circumferences as any)?.ankle, unit: 'cm' }
-              ])}
+                  {isAnySelected('circumferences') && renderTableSection('Circunferências', [
+                    { id: 'shoulder', label: 'Ombro', cur: currentEval?.circumferences?.shoulder, cmp: compareEval?.circumferences?.shoulder, unit: 'cm' },
+                    { id: 'chest', label: 'Peitoral', cur: currentEval?.circumferences?.chest, cmp: compareEval?.circumferences?.chest, unit: 'cm' },
+                    { id: 'armRight', label: 'Braço Dir.', cur: currentEval?.circumferences?.armRight, cmp: compareEval?.circumferences?.armRight, unit: 'cm' },
+                    { id: 'armLeft', label: 'Braço Esq.', cur: currentEval?.circumferences?.armLeft, cmp: compareEval?.circumferences?.armLeft, unit: 'cm' },
+                    { id: 'waist', label: 'Cintura', cur: currentEval?.circumferences?.waist, cmp: compareEval?.circumferences?.waist, unit: 'cm' },
+                    { id: 'hip', label: 'Quadril', cur: currentEval?.circumferences?.hip, cmp: compareEval?.circumferences?.hip, unit: 'cm' },
+                    { id: 'thighMidRight', label: 'Medial Dir.', cur: currentEval?.circumferences?.thighMidRight, cmp: compareEval?.circumferences?.thighMidRight, unit: 'cm' },
+                    { id: 'thighMidLeft', label: 'Medial Esq.', cur: currentEval?.circumferences?.thighMidLeft, cmp: compareEval?.circumferences?.thighMidLeft, unit: 'cm' },
+                    { id: 'calfRight', label: 'Panturrilha Dir.', cur: currentEval?.circumferences?.calfRight, cmp: compareEval?.circumferences?.calfRight, unit: 'cm' },
+                    { id: 'calfLeft', label: 'Panturrilha Esq.', cur: currentEval?.circumferences?.calfLeft, cmp: compareEval?.circumferences?.calfLeft, unit: 'cm' },
+                    { id: 'wristRight', label: 'D. Punho', cur: currentEval?.circumferences?.wristRight, cmp: compareEval?.circumferences?.wristRight, unit: 'cm' },
+                    { id: 'kneeRight', label: 'D. Joelho', cur: currentEval?.circumferences?.kneeRight, cmp: compareEval?.circumferences?.kneeRight, unit: 'cm' },
+                    { id: 'ankle', label: 'D. Tornozelo', cur: (currentEval?.circumferences as any)?.ankle, cmp: (compareEval?.circumferences as any)?.ankle, unit: 'cm' }
+                  ].filter(item => (selections.circumferences.items as any)[item.id]))}
+                </div>
+              )}
 
             </div>
           </div>
