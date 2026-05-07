@@ -6,10 +6,11 @@ import { useAssessments } from '../hooks/useAssessments';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { MetricCard } from '../components/MetricCard';
+import { SearchableSelect } from '../components/SearchableSelect';
 import { ReportModal } from '../components/ReportModal';
 import { ImportExcelModal } from '../components/ImportExcelModal';
 import { AssessmentListModal } from '../components/AssessmentListModal';
-import { User2, Calendar, Target, Shield, Scale, Percent, Dumbbell, Activity, Plus, Ruler, ArrowUpRight, ArrowDownRight, Minus, Pencil, Trash2, Download, FileSpreadsheet, ClipboardList } from 'lucide-react';
+import { User2, Calendar, Target, Shield, Scale, Percent, Dumbbell, Activity, Plus, Ruler, ArrowUpRight, ArrowDownRight, Minus, Pencil, Trash2, Download, FileSpreadsheet, ClipboardList, Search } from 'lucide-react';
 import type { Assessment } from '../types/assessment';
 import './AthleteDashboard.css';
 
@@ -342,26 +343,13 @@ export default function AthleteDashboard() {
         </Card>
       ) : (
         <>
-      {/* Athlete Selector */}
       <div className="athlete-selector-container">
-        <label htmlFor="athlete-select" className="athlete-selector-label">
-          Atleta Selecionado
-        </label>
-        <select
-          id="athlete-select"
+        <SearchableSelect 
+          options={athletes}
           value={currentAthleteId || ''}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === '') navigate('/dashboard');
-            else navigate(`/dashboard/${val}`);
-          }}
-          className="main-athlete-select"
-        >
-          <option value="">-- Nenhum atleta --</option>
-          {athletes.map(a => (
-            <option key={a.id} value={a.id}>{a.name}</option>
-          ))}
-        </select>
+          onChange={(id) => navigate(id ? `/dashboard/${id}` : '/dashboard')}
+          placeholder="Selecione um Atleta..."
+        />
       </div>
 
       {!athlete ? (
