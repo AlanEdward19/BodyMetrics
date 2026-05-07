@@ -77,33 +77,47 @@ export function ReportModal({
     
     try {
       if (!reportRef.current) return;
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2, // Higher quality
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: reportRef.current.scrollWidth,
-        windowHeight: reportRef.current.scrollHeight
-      });
       
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15; // mm
+      const innerWidth = pdfWidth - (margin * 2);
       
-      let heightLeft = imgHeight;
-      let position = 0;
-      
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pageHeight;
+      let yPosition = margin;
 
-      while (heightLeft > 1) { // > 1 to avoid rounding creating an empty page
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pageHeight;
+      // Elementos que queremos capturar individualmente para evitar quebra de página no meio deles
+      const selectors = [
+        '.report-header',
+        '.report-athlete-info',
+        '.report-metrics-summary',
+        '.report-section'
+      ];
+
+      const elements = reportRef.current.querySelectorAll(selectors.join(','));
+      
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i] as HTMLElement;
+        
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const imgHeight = (canvas.height * innerWidth) / canvas.width;
+
+        // Se o elemento não couber na página atual, pula para a próxima
+        if (yPosition + imgHeight > pdfHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+
+        pdf.addImage(imgData, 'PNG', margin, yPosition, innerWidth, imgHeight);
+        yPosition += imgHeight + 5; // 5mm de espaçamento entre seções
       }
       
       pdf.save(`Relatorio_${athlete.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
