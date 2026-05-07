@@ -3,7 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
 import { Card } from '../components/Card';
 import { DatePicker } from '../components/DatePicker';
+import { ImageCropperModal } from '../components/ImageCropperModal';
+import { AthletePhoto } from '../components/AthletePhoto';
+import { Scissors, Link as LinkIcon } from 'lucide-react';
 import './AddAthlete.css';
+import type { Athlete } from '../types/athlete';
 
 export default function AddAthlete() {
   const { addAthlete, updateAthlete, getAthleteById } = useAthletes();
@@ -21,7 +25,12 @@ export default function AddAthlete() {
     birthDate: '',
     gender: 'Masculino',
     race: 'Branco',
+    cropSettings: undefined as Athlete['cropSettings'],
   });
+
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState('');
+  const [urlInput, setUrlInput] = useState('');
 
   useEffect(() => {
     if (isEditing && athleteId) {
@@ -38,6 +47,7 @@ export default function AddAthlete() {
         setFormData({
           name: athlete.name,
           photoUrl: athlete.photoUrl || '',
+          cropSettings: athlete.cropSettings,
           sport: (athlete as any).sport || '',
           sportObservation: (athlete as any).sportObservation || (athlete as any).position || (athlete as any).sector || '',
           category: athlete.category,
@@ -46,6 +56,7 @@ export default function AddAthlete() {
           gender: athlete.gender || 'Masculino',
           race: athlete.race || 'Branco',
         });
+        setUrlInput(athlete.photoUrl || '');
       }
     }
   }, [isEditing, athleteId]);
@@ -53,9 +64,10 @@ export default function AddAthlete() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const athleteData = {
+    const athleteData: Omit<Athlete, 'id'> = {
       name: formData.name,
-      photoUrl: formData.photoUrl,
+      photoUrl: urlInput || formData.photoUrl || '',
+      cropSettings: formData.cropSettings,
       sport: formData.sport,
       sportObservation: formData.sportObservation,
       category: formData.category,
@@ -81,6 +93,18 @@ export default function AddAthlete() {
       [e.target.name]: e.target.value
     });
   };
+
+  const handleUrlBlur = () => {
+    if (urlInput && urlInput.startsWith('http')) {
+      setImageToCrop(urlInput);
+      setIsCropModalOpen(true);
+    }
+  };
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUrlInput(e.target.value);
+  };
+
 
   return (
     <div className="container add-athlete-container">
@@ -206,17 +230,61 @@ export default function AddAthlete() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="photoUrl">URL da Foto (Opcional)</label>
-              <input 
-                type="url" 
-                id="photoUrl" 
-                name="photoUrl" 
-                placeholder="https://exemplo.com/foto.jpg"
-                value={formData.photoUrl}
-                onChange={handleChange}
-              />
+              <label htmlFor="photoUrl">URL da Foto do Atleta</label>
+              <div className="url-input-container">
+                <div className="input-with-icon">
+                  <LinkIcon size={18} className="input-icon" />
+                  <input 
+                    type="url" 
+                    id="photoUrl" 
+                    placeholder="Cole o link da imagem aqui (ex: https://...)"
+                    value={urlInput}
+                    onChange={handleUrlChange}
+                    onBlur={handleUrlBlur}
+                  />
+                </div>
+                
+                {formData.photoUrl && (
+                  <div className="photo-preview-box">
+                    <div className="photo-preview-avatar">
+                      <AthletePhoto 
+                        athlete={{ ...formData, id: 'temp' } as Athlete} 
+                        size={72} 
+                      />
+                    </div>
+                    <div className="photo-preview-info">
+                      <span>Imagem Ajustada</span>
+                      <button 
+                        type="button" 
+                        className="btn-link"
+                        onClick={() => {
+                          setImageToCrop(urlInput || formData.photoUrl);
+                          setIsCropModalOpen(true);
+                        }}
+                      >
+                        <Scissors size={14} /> Reajustar Recorte
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          {isCropModalOpen && (
+            <ImageCropperModal
+              image={imageToCrop}
+              initialSettings={formData.cropSettings}
+              onClose={() => setIsCropModalOpen(false)}
+              onCropComplete={(settings) => {
+                setFormData(prev => ({ 
+                  ...prev, 
+                  photoUrl: imageToCrop,
+                  cropSettings: settings 
+                }));
+              }}
+            />
+          )}
 
           <div className="form-actions">
             <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>

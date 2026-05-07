@@ -23,10 +23,15 @@ export function useAthletes() {
   }, []);
 
   const persistAthletes = (updated: Athlete[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    // Dispatcha evento manual para sincronizar outras instâncias na mesma aba
-    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
-    setAthletes(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      // Dispatcha evento manual para sincronizar outras instâncias na mesma aba
+      window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
+      setAthletes(updated);
+    } catch (error) {
+      console.error('Erro ao salvar no localStorage:', error);
+      alert('Não foi possível salvar os dados. O limite de armazenamento pode ter sido atingido (comum com fotos muito grandes).');
+    }
   };
 
   const addAthlete = (athleteData: Omit<Athlete, 'id'>) => {

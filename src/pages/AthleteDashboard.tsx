@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
+import { AthletePhoto } from '../components/AthletePhoto';
 import { useAssessments } from '../hooks/useAssessments';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -355,7 +356,9 @@ export default function AthleteDashboard() {
         >
           <option value="">-- Nenhum atleta --</option>
           {athletes.map(a => (
-            <option key={a.id} value={a.id}>{a.name}</option>
+            <option key={a.id} value={a.id}>
+              {a.name} {a.photoUrl ? '📸' : ''}
+            </option>
           ))}
         </select>
       </div>
@@ -386,13 +389,7 @@ export default function AthleteDashboard() {
           <Card className="athlete-header-card">
             <div className="athlete-profile-section">
               <div className="athlete-photo-container">
-                {athlete.photoUrl ? (
-                  <img src={athlete.photoUrl} alt={athlete.name} className="athlete-photo" />
-                ) : (
-                  <div className="athlete-photo-placeholder">
-                    <User2 size={64} className="placeholder-icon" />
-                  </div>
-                )}
+                <AthletePhoto athlete={athlete} size={140} />
                 <div className="athlete-number-badge">
                   <span className="label">ATLETA</span>
                 </div>
