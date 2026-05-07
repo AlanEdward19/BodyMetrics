@@ -143,7 +143,7 @@ export default function AddAssessment() {
       addAssessment(dataToSave);
     }
 
-    navigate(`/dashboard`);
+    navigate(-1);
   };
 
   const renderInput = (name: string, label: string, unit: string = '') => (
@@ -299,7 +299,7 @@ export default function AddAssessment() {
         </div>
 
         <div className="sticky-form-actions">
-          <button type="button" className="btn btn-secondary" onClick={() => navigate('/dashboard')}>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary" disabled={athletes.length === 0}>

@@ -71,8 +71,8 @@ export default function AddAthlete() {
       addAthlete(athleteData);
     }
 
-    // Navigate to dashboard
-    navigate('/dashboard');
+    // Navigate back
+    navigate(-1);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -219,7 +219,7 @@ export default function AddAthlete() {
           </div>
 
           <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/dashboard')}>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
               Cancelar
             </button>
             <button type="submit" className="btn btn-primary">

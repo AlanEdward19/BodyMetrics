@@ -7,7 +7,8 @@ import { Badge } from '../components/Badge';
 import { MetricCard } from '../components/MetricCard';
 import { ReportModal } from '../components/ReportModal';
 import { ImportExcelModal } from '../components/ImportExcelModal';
-import { User2, Calendar, Target, Shield, Scale, Percent, Dumbbell, Activity, Plus, Ruler, ArrowUpRight, ArrowDownRight, Minus, Pencil, Trash2, Download, FileSpreadsheet } from 'lucide-react';
+import { AssessmentListModal } from '../components/AssessmentListModal';
+import { User2, Calendar, Target, Shield, Scale, Percent, Dumbbell, Activity, Plus, Ruler, ArrowUpRight, ArrowDownRight, Minus, Pencil, Trash2, Download, FileSpreadsheet, ClipboardList } from 'lucide-react';
 import type { Assessment } from '../types/assessment';
 import './AthleteDashboard.css';
 
@@ -28,7 +29,7 @@ export default function AthleteDashboard() {
   const [activeTab, setActiveTab] = useState<'dobras' | 'circunferencias'>('dobras');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDeleteEvalModalOpen, setIsDeleteEvalModalOpen] = useState(false);
+  const [isAssessmentListOpen, setIsAssessmentListOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [metricsPage, setMetricsPage] = useState<1 | 2 | 3>(1);
 
@@ -46,12 +47,7 @@ export default function AthleteDashboard() {
     navigate('/dashboard');
   };
 
-  const handleDeleteEval = () => {
-    if (currentEvalId) {
-      deleteAssessment(currentEvalId);
-      setIsDeleteEvalModalOpen(false);
-    }
-  };
+
 
   useEffect(() => {
     if (assessments.length > 0) {
@@ -455,25 +451,7 @@ export default function AthleteDashboard() {
                   <div className="eval-item">
                     <Calendar className="eval-icon" size={24} />
                     <div className="eval-data">
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                        <span className="eval-label">AVALIAÇÃO ATUAL</span>
-                        <div style={{ display: 'flex', gap: '0.2rem' }}>
-                          <button
-                            onClick={() => navigate(`/edit-assessment/${currentEvalId}`)}
-                            title="Editar Avaliação"
-                            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', padding: '0.2rem' }}
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            onClick={() => setIsDeleteEvalModalOpen(true)}
-                            title="Excluir Avaliação"
-                            style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '0.2rem' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
+                      <span className="eval-label">AVALIAÇÃO ATUAL</span>
                       <select
                         value={currentEvalId}
                         onChange={e => setCurrentEvalId(e.target.value)}
@@ -522,7 +500,14 @@ export default function AthleteDashboard() {
                   <p>Nenhuma avaliação cadastrada para este atleta.</p>
                 </div>
               )}
-              <div className="eval-actions" style={{ marginTop: '0.5rem', width: '100%' }}>
+              <div className="eval-actions" style={{ marginTop: '0.5rem', width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <button
+                  className="btn btn-secondary"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', border: 'none', backgroundColor: 'var(--color-bg-page)', color: 'var(--color-text-main)', fontWeight: 600 }}
+                  onClick={() => setIsAssessmentListOpen(true)}
+                >
+                  <ClipboardList size={18} /> Ver Avaliações
+                </button>
                 <Link to={`/add-assessment/${athlete.id}`} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none', width: '100%' }}>
                   <Plus size={18} /> Nova Avaliação
                 </Link>
@@ -746,36 +731,6 @@ export default function AthleteDashboard() {
               </div>
             </div>
           )}
-
-          {/* Delete Assessment Confirmation Modal */}
-          {isDeleteEvalModalOpen && (
-            <div className="delete-modal-overlay">
-              <div className="delete-modal-content">
-                <div className="delete-modal-icon">
-                  <Trash2 size={32} />
-                </div>
-                <h2 className="delete-modal-title">Excluir Avaliação</h2>
-                <p className="delete-modal-text">
-                  Tem certeza que deseja excluir esta avaliação? Esta ação não poderá ser desfeita.
-                </p>
-                <div className="delete-modal-actions">
-                  <button 
-                    className="btn btn-secondary" 
-                    onClick={() => setIsDeleteEvalModalOpen(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    className="btn btn-primary" 
-                    style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
-                    onClick={handleDeleteEval}
-                  >
-                    Sim, Excluir
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </>
       )}
       </>
@@ -786,6 +741,19 @@ export default function AthleteDashboard() {
         onClose={() => setIsImportModalOpen(false)}
         onSuccess={(id) => navigate(id ? `/dashboard/${id}` : '/dashboard')}
       />
+
+      {athlete && (
+        <AssessmentListModal
+          isOpen={isAssessmentListOpen}
+          onClose={() => setIsAssessmentListOpen(false)}
+          assessments={assessments}
+          athleteId={athlete.id}
+          onDelete={(id) => {
+            deleteAssessment(id);
+            if (currentEvalId === id) setCurrentEvalId(assessments.find(a => a.id !== id)?.id || '');
+          }}
+        />
+      )}
     </div>
   );
 }

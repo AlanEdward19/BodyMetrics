@@ -1,0 +1,296 @@
+/* Overlay */
+.al-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: alFadeIn 0.2s ease;
+}
+
+@keyframes alFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Modal */
+.al-modal {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 700px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  animation: alSlideUp 0.25s ease;
+  overflow: hidden;
+}
+
+@keyframes alSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+.al-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1.75rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.al-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text-main);
+}
+
+.al-header-title h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.al-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.al-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  padding: 0.45rem 0.9rem;
+}
+
+.al-close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  transition: all 0.15s ease;
+}
+
+.al-close-btn:hover {
+  background-color: var(--color-bg-page);
+  color: var(--color-text-main);
+}
+
+/* List */
+.al-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.75rem 0;
+}
+
+.al-empty {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--color-text-muted);
+}
+
+/* Item */
+.al-item {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.al-item:last-child {
+  border-bottom: none;
+}
+
+.al-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  gap: 1rem;
+}
+
+.al-item-row:hover {
+  background-color: var(--color-bg-page);
+}
+
+.al-item.expanded .al-item-row {
+  background-color: var(--color-bg-page);
+}
+
+.al-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.al-item-date {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.al-item-meta {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.al-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.al-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.al-action-btn.al-edit {
+  color: var(--color-primary);
+}
+
+.al-action-btn.al-edit:hover {
+  background-color: var(--color-primary-light);
+}
+
+.al-action-btn.al-delete {
+  color: #dc2626;
+}
+
+.al-action-btn.al-delete:hover {
+  background-color: #fef2f2;
+}
+
+.al-chevron {
+  color: var(--color-text-light);
+  display: flex;
+  align-items: center;
+  margin-left: 0.25rem;
+}
+
+/* Expanded Detail */
+.al-item-detail {
+  padding: 1.25rem 1.75rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg-page);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: alFadeIn 0.2s ease;
+}
+
+.al-detail-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-light);
+  margin: 0 0 0.75rem 0;
+}
+
+.al-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem 1rem;
+}
+
+.al-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.al-detail-label {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.al-detail-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+/* Confirm Delete Overlay */
+.al-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: alFadeIn 0.15s ease;
+}
+
+.al-confirm-box {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  animation: alSlideUp 0.2s ease;
+}
+
+.al-confirm-icon {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.al-confirm-box h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.al-confirm-box p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.al-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.al-confirm-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
