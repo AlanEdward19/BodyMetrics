@@ -33,10 +33,6 @@ export default function AddAssessment() {
           weight: existing.weight?.toString() || '',
           height: existing.height?.toString() || '',
           sittingHeight: existing.sittingHeight?.toString() || '',
-          bodyWater: existing.bodyWater?.toString() || '',
-          visceralFat: existing.visceralFat?.toString() || '',
-          proteinMass: existing.proteinMass?.toString() || '',
-          muscleMass: existing.muscleMass?.toString() || '',
           
           tricepsRight: existing.skinfolds?.tricepsRight?.toString() || '',
           tricepsLeft: existing.skinfolds?.tricepsLeft?.toString() || '',
@@ -73,10 +69,6 @@ export default function AddAssessment() {
     weight: '',
     height: '',
     sittingHeight: '',
-    bodyWater: '',
-    visceralFat: '',
-    proteinMass: '',
-    muscleMass: '',
     
     // Dobras
     tricepsRight: '', tricepsLeft: '',
@@ -115,10 +107,6 @@ export default function AddAssessment() {
       weight: parseNum(formData.weight),
       height: parseNum(formData.height),
       sittingHeight: parseNum(formData.sittingHeight) || undefined,
-      bodyWater: parseNum(formData.bodyWater),
-      visceralFat: parseNum(formData.visceralFat),
-      proteinMass: parseNum(formData.proteinMass),
-      muscleMass: parseNum(formData.muscleMass),
       skinfolds: {
         tricepsRight: parseNum(formData.tricepsRight),
         tricepsLeft: parseNum(formData.tricepsLeft),
@@ -259,10 +247,6 @@ export default function AddAssessment() {
             {renderInput('weight', 'Peso', 'kg')}
             {renderInput('height', 'Altura', 'cm')}
             {renderInput('sittingHeight', 'Alt. Sentado', 'cm')}
-            {renderInput('bodyWater', 'Água Corporal', 'kg')}
-            {renderInput('visceralFat', 'G. Visceral', 'kg')}
-            {renderInput('proteinMass', 'Massa Prot.', 'kg')}
-            {renderInput('muscleMass', 'Massa Muscular', 'kg')}
           </div>
         </Card>
 

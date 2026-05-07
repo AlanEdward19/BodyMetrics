@@ -124,6 +124,23 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
           return ''; 
         };
 
+        const normalizeGender = (val: string): string => {
+          const v = val.trim().toLowerCase();
+          if (v === 'h' || v === 'm') return 'Masculino';
+          if (v === 'f') return 'Feminino';
+          if (v === 'masculino') return 'Masculino';
+          if (v === 'feminino') return 'Feminino';
+          return val.trim();
+        };
+
+        const normalizeRace = (val: string): string => {
+          const v = val.trim().toLowerCase();
+          if (v === 'b') return 'Branco';
+          if (v === 'n') return 'Negro';
+          if (v === 'a') return 'Asiático';
+          return val.trim();
+        };
+
         const athletesMap = new Map<string, Omit<Athlete, 'id'>>();
         const assessmentsList: { athleteName: string, data: Omit<Assessment, 'id' | 'athleteId'> }[] = [];
 
@@ -149,8 +166,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
 
             athletesMap.set(name, {
               name: name,
-              gender: String(row['Sexo'] || ''),
-              race: String(row['Raça'] || ''),
+              gender: normalizeGender(String(row['Sexo'] || '')),
+              race: normalizeRace(String(row['Raça'] || '')),
               category: String(row['Categoria'] || ''),
               birthDate: excelDateToJSDate(row['Nascimento']),
               competitivePhase: phase,
@@ -170,10 +187,6 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
               weight: num(row['Peso']),
               height: num(row['Altura']),
               sittingHeight: num(row['Altura sentado']),
-              bodyWater: num(getRowVal(row, 'Agua Corporal')),
-              visceralFat: num(getRowVal(row, 'G.Visceral', 'Gordura Visceral')),
-              proteinMass: num(getRowVal(row, 'Massa prot.', 'Massa Proteica')),
-              muscleMass: num(getRowVal(row, 'Massa Muscular', 'Massa Mascular')),
               skinfolds: {
                 tricepsRight: num(getRowVal(row, 'Tricep D.', 'Triceps D', 'Tríceps Dir')),
                 tricepsLeft: num(getRowVal(row, 'Tricep E.', 'Triceps E', 'Tríceps Esq')),

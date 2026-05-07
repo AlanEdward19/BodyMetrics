@@ -25,7 +25,7 @@ export default function AthleteDashboard() {
   const [selectedFormula, setSelectedFormula] = useState<'pollock' | 'faulkner'>('pollock');
   const [currentEvalId, setCurrentEvalId] = useState<string>('');
   const [compareEvalId, setCompareEvalId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'gerais' | 'dobras' | 'circunferencias'>('gerais');
+  const [activeTab, setActiveTab] = useState<'dobras' | 'circunferencias'>('dobras');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteEvalModalOpen, setIsDeleteEvalModalOpen] = useState(false);
@@ -662,18 +662,12 @@ export default function AthleteDashboard() {
               <div className="dashboard-tables-column">
                 <Card className="data-table-card" style={{ height: '100%' }}>
                   <div className="tabs-header">
-                    <button className={`tab-btn ${activeTab === 'gerais' ? 'active' : ''}`} onClick={() => setActiveTab('gerais')}>M. Gerais</button>
                     <button className={`tab-btn ${activeTab === 'dobras' ? 'active' : ''}`} onClick={() => setActiveTab('dobras')}>Dobras</button>
                     <button className={`tab-btn ${activeTab === 'circunferencias' ? 'active' : ''}`} onClick={() => setActiveTab('circunferencias')}>Circunf.</button>
                   </div>
 
                   <div className="tab-content">
-                    {activeTab === 'gerais' && renderTableContent([
-                      { label: 'Água Corporal', cur: currentEval?.bodyWater, cmp: compareEval?.bodyWater, unit: 'kg', inverseGood: false },
-                      { label: 'Gordura Visceral', cur: currentEval?.visceralFat, cmp: compareEval?.visceralFat, unit: 'kg', inverseGood: true },
-                      { label: 'Massa Proteica', cur: currentEval?.proteinMass, cmp: compareEval?.proteinMass, unit: 'kg', inverseGood: false },
-                      { label: 'Massa Muscular', cur: currentEval?.muscleMass, cmp: compareEval?.muscleMass, unit: 'kg', inverseGood: false }
-                    ])}
+
 
                     {activeTab === 'dobras' && renderTableContent([
                       { label: 'Tríceps Dir.', cur: currentEval?.skinfolds?.tricepsRight, cmp: compareEval?.skinfolds?.tricepsRight, unit: 'mm', inverseGood: true },

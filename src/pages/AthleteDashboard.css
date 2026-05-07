@@ -438,3 +438,73 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Delete Confirmation Modal */
+.delete-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.delete-modal-content {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.delete-modal-icon {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.delete-modal-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.delete-modal-text {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.delete-modal-actions .btn {
+  flex: 1;
+  justify-content: center;
+}

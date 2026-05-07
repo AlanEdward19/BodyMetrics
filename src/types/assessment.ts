@@ -5,10 +5,6 @@ export interface Assessment {
   weight: number;
   height: number;
   sittingHeight?: number;
-  bodyWater: number;
-  visceralFat: number;
-  proteinMass: number;
-  muscleMass: number;
   skinfolds: {
     tricepsRight: number;
     tricepsLeft: number;

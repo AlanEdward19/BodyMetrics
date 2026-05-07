@@ -360,12 +360,6 @@ export function ReportModal({
               )}
 
               {/* TABLES */}
-              {renderTableSection('Medidas Gerais', [
-                { label: 'Água Corporal', cur: currentEval?.bodyWater, cmp: compareEval?.bodyWater, unit: 'kg' },
-                { label: 'Gordura Visceral', cur: currentEval?.visceralFat, cmp: compareEval?.visceralFat, unit: 'kg' },
-                { label: 'Massa Proteica', cur: currentEval?.proteinMass, cmp: compareEval?.proteinMass, unit: 'kg' },
-                { label: 'Massa Muscular', cur: currentEval?.muscleMass, cmp: compareEval?.muscleMass, unit: 'kg' }
-              ])}
 
               {renderTableSection('Dobras Cutâneas', [
                 { label: 'Tríceps Dir.', cur: currentEval?.skinfolds?.tricepsRight, cmp: compareEval?.skinfolds?.tricepsRight, unit: 'mm' },

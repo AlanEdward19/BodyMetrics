@@ -7,8 +7,7 @@ Representa um conjunto de medições antropométricas realizadas em um atleta em
 - **id**: Identificador único (UUID).
 - **athleteId**: ID do atleta a quem a avaliação pertence.
 - **date**: Data em que a avaliação foi realizada.
-- **Medidas Básicas**: Peso (kg) e Altura (cm).
-- **Medidas Gerais**: Água corporal (kg), Gordura Visceral (kg), Massa Proteica (kg), Massa Muscular (kg).
+- **Medidas Básicas**: Peso (kg), Altura (cm) e Altura Sentado (cm).
 - **Dobras Cutâneas (mm)**: Tríceps D, Tríceps E, Subescapular, Tórax, Subaxilar, Supra-ilíaca, Abdominal, Coxa D, Coxa E, Panturrilha D, Panturrilha E.
 - **Circunferências (cm)**: Ombro, Peitoral, Braço D, Braço E, Cintura, Quadril, Medial D, Medial E, Panturrilha D, Panturrilha E, Diâmetro Punho, Diâmetro Joelho.
 
