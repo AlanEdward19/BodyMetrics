@@ -124,30 +124,34 @@ export default function AthleteDashboard() {
       ossos = 3.02 * Math.pow(400 * punhoM * joelhoM * Math.pow(alturaM, 2), 0.712);
     }
 
-    const mlg = peso - gordura - ossos;
+    let mlg = 0;
+    if (gordura > 0 && ossos > 0) {
+      mlg = peso - gordura - ossos;
+    }
 
     // Fatores
     const fatorSexo = athlete?.gender === 'Feminino' ? 0 : 1;
     const fatorRaca = athlete?.race === 'Negro' ? 1.1 : athlete?.race === 'Asiático' ? -2 : 0;
 
     // Medidas Corrigidas
-    const coxaD_C = (circ.thighMidRight || 0) - (((sf.thighRight || 0) / 10) * 3.16);
-    const coxaE_C = (circ.thighMidLeft || 0) - (((sf.thighLeft || 0) / 10) * 3.16);
-    const pantuD_C = (circ.calfRight || 0) - (((sf.calfRight || 0) / 10) * 3.16);
-    const pantuE_C = (circ.calfLeft || 0) - (((sf.calfLeft || 0) / 10) * 3.16);
-    const bracoD_C = (circ.armRight || 0) - (((sf.tricepsRight || 0) / 10) * 3.16);
-    const bracoE_C = (circ.armLeft || 0) - (((sf.tricepsLeft || 0) / 10) * 3.16);
+    const coxaD_C = (circ.thighMidRight || 0) > 0 ? (circ.thighMidRight || 0) - (((sf.thighRight || 0) / 10) * 3.16) : 0;
+    const coxaE_C = (circ.thighMidLeft || 0) > 0 ? (circ.thighMidLeft || 0) - (((sf.thighLeft || 0) / 10) * 3.16) : 0;
+    const pantuD_C = (circ.calfRight || 0) > 0 ? (circ.calfRight || 0) - (((sf.calfRight || 0) / 10) * 3.16) : 0;
+    const pantuE_C = (circ.calfLeft || 0) > 0 ? (circ.calfLeft || 0) - (((sf.calfLeft || 0) / 10) * 3.16) : 0;
+    const bracoD_C = (circ.armRight || 0) > 0 ? (circ.armRight || 0) - (((sf.tricepsRight || 0) / 10) * 3.16) : 0;
+    const bracoE_C = (circ.armLeft || 0) > 0 ? (circ.armLeft || 0) - (((sf.tricepsLeft || 0) / 10) * 3.16) : 0;
 
     const ccBraco = (bracoD_C + bracoE_C) / 2;
     const ccCoxa = (coxaD_C + coxaE_C) / 2;
     const ccPantu = (pantuD_C + pantuE_C) / 2;
 
     // Massa Muscular
-    const mmBraco = 0.00744 * Math.pow(ccBraco, 2);
-    const mmCoxa = 0.00088 * Math.pow(ccCoxa, 2);
-    const mmPantu = 0.00441 * Math.pow(ccPantu, 2);
+    const mmBraco = ccBraco > 0 ? 0.00744 * Math.pow(ccBraco, 2) : 0;
+    const mmCoxa = ccCoxa > 0 ? 0.00088 * Math.pow(ccCoxa, 2) : 0;
+    const mmPantu = ccPantu > 0 ? 0.00441 * Math.pow(ccPantu, 2) : 0;
     let massaMuscular = 0;
-    if (alturaM > 0) {
+    // Só calcula massa muscular se tiver altura e pelo menos uma circunferência válida
+    if (alturaM > 0 && (mmBraco > 0 || mmCoxa > 0 || mmPantu > 0)) {
       massaMuscular = (alturaM * 100 / 100) * (mmBraco + mmCoxa + mmPantu) + (2.4 * fatorSexo) - (0.048 * idade) + fatorRaca + 7.8;
     }
 

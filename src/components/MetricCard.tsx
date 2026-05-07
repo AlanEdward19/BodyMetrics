@@ -21,8 +21,10 @@ interface MetricCardProps {
 }
 
 export function MetricCard({ icon, title, value, unit, trend, status }: MetricCardProps) {
+  const isNA = !value || value === '-' || value === '0,00' || value === 0 || value === '0' || value === '0,0';
+
   return (
-    <Card className="metric-card">
+    <Card className={`metric-card ${isNA ? 'is-na' : ''}`}>
       <div className="metric-header">
         <div className="metric-icon-wrapper">{icon}</div>
         <h3 className="metric-title">{title}</h3>
@@ -36,14 +38,14 @@ export function MetricCard({ icon, title, value, unit, trend, status }: MetricCa
           </div>
         ) : (
           <div className="metric-value-box">
-            <span className="metric-value">{value}</span>
-            <span className="metric-unit">{unit}</span>
+            <span className="metric-value">{isNA ? '-' : value}</span>
+            <span className="metric-unit">{isNA ? '' : unit}</span>
           </div>
         )}
       </div>
 
       <div className="metric-footer">
-        {trend && (
+        {trend && !isNA && (
           <div className="metric-trend">
             <div className={`trend-badge ${trend.isGood !== undefined ? (trend.isGood ? 'good' : 'bad') : trend.direction}`}>
               {trend.direction === 'up' && <ArrowUp size={14} strokeWidth={3} />}
@@ -63,7 +65,7 @@ export function MetricCard({ icon, title, value, unit, trend, status }: MetricCa
         )}
         
         {/* Placeholder for Sparkline Chart */}
-        {!status && (
+        {!status && !isNA && (
           <div className={`sparkline-placeholder ${trend?.isGood !== undefined ? (trend.isGood ? 'good' : 'bad') : trend?.direction || 'neutral'}`}>
             <svg viewBox="0 0 100 30" className="sparkline-svg" preserveAspectRatio="none">
               {trend?.direction === 'up' ? (
