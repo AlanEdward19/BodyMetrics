@@ -53,7 +53,8 @@ export default function AthleteDashboard() {
   useEffect(() => {
     if (assessments.length > 0) {
       setCurrentEvalId(assessments[0].id);
-      setCompareEvalId(assessments.length > 1 ? assessments[1].id : assessments[0].id);
+      // Only set compare ID if there's more than one assessment
+      setCompareEvalId(assessments.length > 1 ? assessments[1].id : '');
     } else {
       setCurrentEvalId('');
       setCompareEvalId('');
@@ -297,8 +298,8 @@ export default function AthleteDashboard() {
           <tr>
             <th>Medida</th>
             <th>Atual</th>
-            <th>Comparação</th>
-            <th>Evolução</th>
+            {compareEval && <th>Comparação</th>}
+            {compareEval && <th>Evolução</th>}
           </tr>
         </thead>
         <tbody>
@@ -306,8 +307,10 @@ export default function AthleteDashboard() {
             <tr key={idx}>
               <td>{item.label}</td>
               <td>{item.cur !== undefined ? `${item.cur.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
-              <td>{item.cmp !== undefined ? `${item.cmp.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
-              <td>{getTrendUi(item.cur || 0, item.cmp, item.inverseGood)}</td>
+              {compareEval && <td>{item.cmp !== undefined ? `${item.cmp.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>}
+              {compareEval && (
+                <td>{getTrendUi(item.cur || 0, item.cmp, item.inverseGood)}</td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -532,96 +535,96 @@ export default function AthleteDashboard() {
                       title="PESO CORPORAL"
                       value={currentMetrics.peso.toFixed(2).replace('.', ',')}
                       unit="kg"
-                      trend={{
+                      trend={compareEval ? {
                         direction: currentMetrics.peso > (compareMetrics || currentMetrics).peso ? 'up' : currentMetrics.peso < (compareMetrics || currentMetrics).peso ? 'down' : 'neutral',
                         value: `${Math.abs(currentMetrics.peso - (compareMetrics || currentMetrics).peso).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
                         isGood: currentMetrics.peso === (compareMetrics || currentMetrics).peso ? undefined : isCompositionGood
-                      }}
+                      } : undefined}
                     />
                     <MetricCard
                       icon={<Ruler size={24} />}
                       title="ALTURA"
                       value={currentMetrics.altura.toFixed(2).replace('.', ',')}
                       unit="cm"
-                      trend={{
+                      trend={compareEval ? {
                         direction: currentMetrics.altura > (compareMetrics || currentMetrics).altura ? 'up' : currentMetrics.altura < (compareMetrics || currentMetrics).altura ? 'down' : 'neutral',
                         value: `${Math.abs(currentMetrics.altura - (compareMetrics || currentMetrics).altura).toFixed(2).replace('.', ',')} cm`,
                         text: 'vs. comparação',
                         isGood: currentMetrics.altura > (compareMetrics || currentMetrics).altura
-                      }}
+                      } : undefined}
                     />
                     <MetricCard
                       icon={<Percent size={24} />}
                       title="% GORDURA"
                       value={currentMetrics.percentualGordura.toFixed(2).replace('.', ',')}
                       unit="%"
-                      trend={{
+                      trend={compareEval ? {
                         direction: currentMetrics.percentualGordura > (compareMetrics || currentMetrics).percentualGordura ? 'up' : currentMetrics.percentualGordura < (compareMetrics || currentMetrics).percentualGordura ? 'down' : 'neutral',
                         value: `${Math.abs(currentMetrics.percentualGordura - (compareMetrics || currentMetrics).percentualGordura).toFixed(2).replace('.', ',')} %`,
                         text: 'vs. comparação',
                         isGood: currentMetrics.percentualGordura < (compareMetrics || currentMetrics).percentualGordura
-                      }}
+                      } : undefined}
                     />
                     <MetricCard
                       icon={<Activity size={24} />}
                       title="SOMA DAS DOBRAS"
                       value={currentMetrics.sumDobras.toFixed(2).replace('.', ',')}
                       unit="mm"
-                      trend={{
+                      trend={compareEval ? {
                         direction: currentMetrics.sumDobras > (compareMetrics || currentMetrics).sumDobras ? 'up' : currentMetrics.sumDobras < (compareMetrics || currentMetrics).sumDobras ? 'down' : 'neutral',
                         value: `${Math.abs(currentMetrics.sumDobras - (compareMetrics || currentMetrics).sumDobras).toFixed(2).replace('.', ',')} mm`,
                         text: 'vs. comparação',
                         isGood: currentMetrics.sumDobras < (compareMetrics || currentMetrics).sumDobras
-                      }}
+                      } : undefined}
                     />
                     <MetricCard
                       icon={<Shield size={24} />}
                       title="MASSA GORDA"
                       value={currentMetrics.gordura.toFixed(2).replace('.', ',')}
                       unit="kg"
-                      trend={{
+                      trend={compareEval ? {
                         direction: currentMetrics.gordura > (compareMetrics || currentMetrics).gordura ? 'up' : currentMetrics.gordura < (compareMetrics || currentMetrics).gordura ? 'down' : 'neutral',
                         value: `${Math.abs(currentMetrics.gordura - (compareMetrics || currentMetrics).gordura).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
                         isGood: currentMetrics.gordura < (compareMetrics || currentMetrics).gordura
-                      }}
+                      } : undefined}
                     />
                     <MetricCard
                       icon={<Dumbbell size={24} />}
                       title="MASSA LIVRE DE GORDURA"
                       value={currentMetrics.mlg.toFixed(2).replace('.', ',')}
                       unit="kg"
-                      trend={{
+                      trend={compareEval ? {
                         direction: currentMetrics.mlg > (compareMetrics || currentMetrics).mlg ? 'up' : currentMetrics.mlg < (compareMetrics || currentMetrics).mlg ? 'down' : 'neutral',
                         value: `${Math.abs(currentMetrics.mlg - (compareMetrics || currentMetrics).mlg).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
                         isGood: currentMetrics.mlg > (compareMetrics || currentMetrics).mlg
-                      }}
+                      } : undefined}
                     />
                     <MetricCard
                       icon={<Shield size={24} />}
                       title="MASSA ÓSSEA"
                       value={currentMetrics.ossos.toFixed(2).replace('.', ',')}
                       unit="kg"
-                      trend={{
+                      trend={compareEval ? {
                         direction: currentMetrics.ossos > (compareMetrics || currentMetrics).ossos ? 'up' : currentMetrics.ossos < (compareMetrics || currentMetrics).ossos ? 'down' : 'neutral',
                         value: `${Math.abs(currentMetrics.ossos - (compareMetrics || currentMetrics).ossos).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
                         isGood: currentMetrics.ossos > (compareMetrics || currentMetrics).ossos
-                      }}
+                      } : undefined}
                     />
                     <MetricCard
                       icon={<Dumbbell size={24} />}
                       title="MASSA MUSCULAR"
                       value={currentMetrics.massaMuscular.toFixed(2).replace('.', ',')}
                       unit="kg"
-                      trend={{
+                      trend={compareEval ? {
                         direction: currentMetrics.massaMuscular > (compareMetrics || currentMetrics).massaMuscular ? 'up' : currentMetrics.massaMuscular < (compareMetrics || currentMetrics).massaMuscular ? 'down' : 'neutral',
                         value: `${Math.abs(currentMetrics.massaMuscular - (compareMetrics || currentMetrics).massaMuscular).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
                         isGood: currentMetrics.massaMuscular > (compareMetrics || currentMetrics).massaMuscular
-                      }}
+                      } : undefined}
                     />
                   </div>
                 )}
