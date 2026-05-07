@@ -13,6 +13,7 @@ interface ReportModalProps {
   currentEval?: Assessment;
   compareEval?: Assessment;
   currentMetrics: any;
+  compareMetrics: any;
   formula: string;
 }
 
@@ -23,6 +24,7 @@ export function ReportModal({
   currentEval,
   compareEval,
   currentMetrics,
+  compareMetrics,
   formula
 }: ReportModalProps) {
   const [logos, setLogos] = useState<string[]>([]);
@@ -135,8 +137,8 @@ export function ReportModal({
     return `${dd}/${mm}/${yyyy}`;
   };
 
-  const calculateAge = (birthDateStr: string, evalDateStr?: string) => {
-    if (!birthDateStr || !evalDateStr) return '-';
+  const calculateAge = (birthDateStr: string | undefined, evalDateStr: string | undefined) => {
+    if (!birthDateStr || !evalDateStr) return 0;
     const birthDate = new Date(birthDateStr);
     const evalDate = new Date(evalDateStr);
     let age = evalDate.getFullYear() - birthDate.getFullYear();
@@ -336,38 +338,34 @@ export function ReportModal({
               {/* METRICS SUMMARY */}
               {currentMetrics && (
                 <div className="report-metrics-summary">
-                  <div className="report-metric-box">
-                    <span className="report-metric-label">Peso Corporal</span>
-                    <span className="report-metric-value">{currentMetrics.peso.toFixed(2).replace('.', ',')} kg</span>
-                  </div>
-                  <div className="report-metric-box">
-                    <span className="report-metric-label">Altura</span>
-                    <span className="report-metric-value">{currentMetrics.altura.toFixed(2).replace('.', ',')} cm</span>
-                  </div>
-                  <div className="report-metric-box">
-                    <span className="report-metric-label">% Gordura</span>
-                    <span className="report-metric-value">{currentMetrics.percentualGordura.toFixed(2).replace('.', ',')} %</span>
-                  </div>
-                  <div className="report-metric-box">
-                    <span className="report-metric-label">Soma das Dobras</span>
-                    <span className="report-metric-value">{currentMetrics.sumDobras.toFixed(2).replace('.', ',')} mm</span>
-                  </div>
-                  <div className="report-metric-box">
-                    <span className="report-metric-label">Massa Gorda</span>
-                    <span className="report-metric-value">{currentMetrics.gordura.toFixed(2).replace('.', ',')} kg</span>
-                  </div>
-                  <div className="report-metric-box">
-                    <span className="report-metric-label">Massa Livre Gord.</span>
-                    <span className="report-metric-value">{currentMetrics.mlg.toFixed(2).replace('.', ',')} kg</span>
-                  </div>
-                  <div className="report-metric-box">
-                    <span className="report-metric-label">Massa Óssea</span>
-                    <span className="report-metric-value">{currentMetrics.ossos.toFixed(2).replace('.', ',')} kg</span>
-                  </div>
-                  <div className="report-metric-box">
-                    <span className="report-metric-label">Massa Muscular</span>
-                    <span className="report-metric-value">{currentMetrics.massaMuscular.toFixed(2).replace('.', ',')} kg</span>
-                  </div>
+                  {[
+                    { label: 'Peso Corporal', key: 'peso', unit: 'kg' },
+                    { label: 'Altura', key: 'altura', unit: 'cm' },
+                    { label: '% Gordura', key: 'percentualGordura', unit: '%' },
+                    { label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm' },
+                    { label: 'Massa Gorda', key: 'gordura', unit: 'kg' },
+                    { label: 'Massa Livre Gord.', key: 'mlg', unit: 'kg' },
+                    { label: 'Massa Óssea', key: 'ossos', unit: 'kg' },
+                    { label: 'Massa Muscular', key: 'massaMuscular', unit: 'kg' },
+                  ].map((m) => {
+                    const curVal = currentMetrics[m.key];
+                    const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
+                    const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
+                    const sign = diff > 0 ? '+' : '';
+                    const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
+                    
+                    return (
+                      <div key={m.key} className="report-metric-box">
+                        <span className="report-metric-label">{m.label}</span>
+                        <span className="report-metric-value">{curVal.toFixed(2).replace('.', ',')} <small>{m.unit}</small></span>
+                        {compareMetrics && (
+                          <span className={`report-metric-trend ${trendClass}`}>
+                            {sign}{diff.toFixed(2).replace('.', ',')} {m.unit}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
