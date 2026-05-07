@@ -265,6 +265,16 @@ export function ReportModal({
         </div>
 
         <div className="report-modal-content">
+          {isGenerating && (
+            <div className="report-loading-overlay">
+              <div className="report-loader-container">
+                <div className="report-spinner"></div>
+                <h3>Gerando Relatório PDF</h3>
+                <p>Processando imagens e tabelas... Isso pode levar alguns segundos.</p>
+              </div>
+            </div>
+          )}
+
           <div className="report-sidebar">
             <div className="logos-manager">
               <h3>Logos do Relatório</h3>
