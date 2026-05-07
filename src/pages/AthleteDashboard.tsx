@@ -10,7 +10,7 @@ import { SearchableSelect } from '../components/SearchableSelect';
 import { ReportModal } from '../components/ReportModal';
 import { ImportExcelModal } from '../components/ImportExcelModal';
 import { AssessmentListModal } from '../components/AssessmentListModal';
-import { User2, Calendar, Target, Shield, Scale, Percent, Dumbbell, Activity, Plus, Ruler, ArrowUpRight, ArrowDownRight, Minus, Pencil, Trash2, Download, FileSpreadsheet, ClipboardList, Search } from 'lucide-react';
+import { User2, Calendar, Target, Shield, Scale, Percent, Dumbbell, Activity, Plus, Ruler, ArrowUpRight, ArrowDownRight, Minus, Pencil, Trash2, Download, FileSpreadsheet, ClipboardList } from 'lucide-react';
 import type { Assessment } from '../types/assessment';
 import './AthleteDashboard.css';
 
