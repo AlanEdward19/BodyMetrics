@@ -15,7 +15,7 @@ interface ImportExcelModalProps {
 
 export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { athletes, addAthlete } = useAthletes();
-  const { addAssessment } = useAssessments();
+  const { assessments: existingAssessments, addAssessment, updateAssessment } = useAssessments();
   
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -301,10 +301,23 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
       parsedData.assessments.forEach(assessmentItem => {
         const athleteId = nameToIdMap.get(assessmentItem.athleteName);
         if (athleteId) {
-          addAssessment({
-            ...assessmentItem.data,
-            athleteId
-          });
+          const assessmentDate = assessmentItem.data.date;
+          
+          // Busca avaliação existente para o mesmo atleta na mesma data
+          const existingEval = existingAssessments.find(
+            ea => ea.athleteId === athleteId && ea.date === assessmentDate
+          );
+
+          if (existingEval) {
+            // Se já existe, atualiza
+            updateAssessment(existingEval.id, assessmentItem.data);
+          } else {
+            // Se não existe, cria nova
+            addAssessment({
+              ...assessmentItem.data,
+              athleteId
+            });
+          }
         }
       });
 
