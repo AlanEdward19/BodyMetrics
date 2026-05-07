@@ -3,38 +3,50 @@ import type { Athlete } from '../types/athlete';
 
 const STORAGE_KEY = '@BodyMetrics:athletes';
 
-
+const readFromStorage = (): Athlete[] => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored ? JSON.parse(stored) : [];
+};
 
 export function useAthletes() {
-  const [athletes, setAthletes] = useState<Athlete[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    // Set initial data if empty
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
-    return [];
-  });
+  const [athletes, setAthletes] = useState<Athlete[]>(readFromStorage);
 
+  // Sincroniza com outras insâtncias do hook (ex: ImportExcelModal e AthleteDashboard)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(athletes));
-  }, [athletes]);
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) {
+        setAthletes(readFromStorage());
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const persistAthletes = (updated: Athlete[]) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    // Dispatcha evento manual para sincronizar outras instâncias na mesma aba
+    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
+    setAthletes(updated);
+  };
 
   const addAthlete = (athleteData: Omit<Athlete, 'id'>) => {
     const newAthlete: Athlete = {
       ...athleteData,
       id: crypto.randomUUID(),
     };
-    setAthletes(prev => [...prev, newAthlete]);
+    const current = readFromStorage();
+    persistAthletes([...current, newAthlete]);
     return newAthlete.id;
   };
 
   const updateAthlete = (id: string, athleteData: Omit<Athlete, 'id'>) => {
-    setAthletes(prev => prev.map(a => a.id === id ? { ...athleteData, id } : a));
+    const current = readFromStorage();
+    persistAthletes(current.map(a => a.id === id ? { ...athleteData, id } : a));
   };
 
   const deleteAthlete = (id: string) => {
-    setAthletes(prev => prev.filter(a => a.id !== id));
+    const current = readFromStorage();
+    persistAthletes(current.filter(a => a.id !== id));
   };
 
   const getAthleteById = (id: string) => {

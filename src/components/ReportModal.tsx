@@ -142,7 +142,7 @@ export function ReportModal({
     if (cur === undefined || cmp === undefined) return '-';
     const diff = cur - cmp;
     const sign = diff > 0 ? '+' : '';
-    return `${sign}${diff.toFixed(1).replace('.', ',')} ${unit || ''}`.trim();
+    return `${sign}${diff.toFixed(2).replace('.', ',')} ${unit || ''}`.trim();
   };
 
   const renderTableSection = (title: string, items: { label: string, cur?: number, cmp?: number, unit: string }[]) => (
@@ -161,8 +161,8 @@ export function ReportModal({
           {items.map((item, idx) => (
             <tr key={idx}>
               <td>{item.label}</td>
-              <td>{item.cur !== undefined ? `${item.cur.toFixed(1).replace('.', ',')} ${item.unit}` : '-'}</td>
-              <td>{item.cmp !== undefined ? `${item.cmp.toFixed(1).replace('.', ',')} ${item.unit}` : '-'}</td>
+              <td>{item.cur !== undefined ? `${item.cur.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
+              <td>{item.cmp !== undefined ? `${item.cmp.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
               <td>{getDiff(item.cur, item.cmp, item.unit)}</td>
             </tr>
           ))}
@@ -326,35 +326,35 @@ export function ReportModal({
                 <div className="report-metrics-summary">
                   <div className="report-metric-box">
                     <span className="report-metric-label">Peso Corporal</span>
-                    <span className="report-metric-value">{currentMetrics.peso.toFixed(1).replace('.', ',')} kg</span>
+                    <span className="report-metric-value">{currentMetrics.peso.toFixed(2).replace('.', ',')} kg</span>
                   </div>
                   <div className="report-metric-box">
                     <span className="report-metric-label">Altura</span>
-                    <span className="report-metric-value">{currentMetrics.altura.toFixed(1).replace('.', ',')} cm</span>
+                    <span className="report-metric-value">{currentMetrics.altura.toFixed(2).replace('.', ',')} cm</span>
                   </div>
                   <div className="report-metric-box">
                     <span className="report-metric-label">% Gordura</span>
-                    <span className="report-metric-value">{currentMetrics.percentualGordura.toFixed(1).replace('.', ',')} %</span>
+                    <span className="report-metric-value">{currentMetrics.percentualGordura.toFixed(2).replace('.', ',')} %</span>
                   </div>
                   <div className="report-metric-box">
                     <span className="report-metric-label">Soma das Dobras</span>
-                    <span className="report-metric-value">{currentMetrics.sumDobras.toFixed(1).replace('.', ',')} mm</span>
+                    <span className="report-metric-value">{currentMetrics.sumDobras.toFixed(2).replace('.', ',')} mm</span>
                   </div>
                   <div className="report-metric-box">
                     <span className="report-metric-label">Massa Gorda</span>
-                    <span className="report-metric-value">{currentMetrics.gordura.toFixed(1).replace('.', ',')} kg</span>
+                    <span className="report-metric-value">{currentMetrics.gordura.toFixed(2).replace('.', ',')} kg</span>
                   </div>
                   <div className="report-metric-box">
                     <span className="report-metric-label">Massa Livre Gord.</span>
-                    <span className="report-metric-value">{currentMetrics.mlg.toFixed(1).replace('.', ',')} kg</span>
+                    <span className="report-metric-value">{currentMetrics.mlg.toFixed(2).replace('.', ',')} kg</span>
                   </div>
                   <div className="report-metric-box">
                     <span className="report-metric-label">Massa Óssea</span>
-                    <span className="report-metric-value">{currentMetrics.ossos.toFixed(1).replace('.', ',')} kg</span>
+                    <span className="report-metric-value">{currentMetrics.ossos.toFixed(2).replace('.', ',')} kg</span>
                   </div>
                   <div className="report-metric-box">
                     <span className="report-metric-label">Massa Muscular</span>
-                    <span className="report-metric-value">{currentMetrics.massaMuscular.toFixed(1).replace('.', ',')} kg</span>
+                    <span className="report-metric-value">{currentMetrics.massaMuscular.toFixed(2).replace('.', ',')} kg</span>
                   </div>
                 </div>
               )}

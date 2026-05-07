@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
 import { useAssessments } from '../hooks/useAssessments';
@@ -6,7 +6,8 @@ import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { MetricCard } from '../components/MetricCard';
 import { ReportModal } from '../components/ReportModal';
-import { User2, Calendar, Target, Shield, Clock, Scale, Percent, Dumbbell, Activity, Plus, ChevronDown, Droplets, Ruler, ArrowUpRight, ArrowDownRight, Minus, Pencil, Trash2, Download } from 'lucide-react';
+import { ImportExcelModal } from '../components/ImportExcelModal';
+import { User2, Calendar, Target, Shield, Scale, Percent, Dumbbell, Activity, Plus, Ruler, ArrowUpRight, ArrowDownRight, Minus, Pencil, Trash2, Download, FileSpreadsheet } from 'lucide-react';
 import type { Assessment } from '../types/assessment';
 import './AthleteDashboard.css';
 
@@ -14,7 +15,7 @@ export default function AthleteDashboard() {
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId?: string }>();
   const { athletes, getAthleteById, deleteAthlete } = useAthletes();
-  const { getAssessmentsByAthleteId } = useAssessments();
+  const { getAssessmentsByAthleteId, deleteAssessment } = useAssessments();
 
   // Don't auto-select athlete, require explicit selection
   const currentAthleteId = athleteId || null;
@@ -27,6 +28,8 @@ export default function AthleteDashboard() {
   const [activeTab, setActiveTab] = useState<'gerais' | 'dobras' | 'circunferencias'>('gerais');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleteEvalModalOpen, setIsDeleteEvalModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [metricsPage, setMetricsPage] = useState<1 | 2 | 3>(1);
 
   const formatDate = (dateStr: string) => {
@@ -41,6 +44,13 @@ export default function AthleteDashboard() {
     deleteAthlete(athlete.id);
     setIsDeleteModalOpen(false);
     navigate('/dashboard');
+  };
+
+  const handleDeleteEval = () => {
+    if (currentEvalId) {
+      deleteAssessment(currentEvalId);
+      setIsDeleteEvalModalOpen(false);
+    }
   };
 
   useEffect(() => {
@@ -72,7 +82,7 @@ export default function AthleteDashboard() {
     const altura = evalData.height;
 
     // Somatorio das dobras (Tricep D.,Tricep E.,Sub esc,Torax,Sub. Axi,Supra. Ili,Abd,Coxa D)
-    const sf = evalData.skinfolds || {};
+    const sf: Partial<Assessment['skinfolds']> = evalData.skinfolds || {};
     const sumDobras = (sf.tricepsRight || 0) +
       (sf.tricepsLeft || 0) +
       (sf.subscapular || 0) +
@@ -108,7 +118,7 @@ export default function AthleteDashboard() {
 
     const gordura = (peso * percentualGordura) / 100;
 
-    const circ = evalData.circumferences || {};
+    const circ: Partial<Assessment['circumferences']> = evalData.circumferences || {};
     const punhoM = (circ.wristRight || 0) / 100;
     const joelhoM = (circ.kneeRight || 0) / 100;
     const alturaM = altura / 100;
@@ -199,7 +209,7 @@ export default function AthleteDashboard() {
     return (
       <span className={className}>
         <Icon size={16} />
-        {sign}{diff.toFixed(1).replace('.', ',')}
+        {sign}{diff.toFixed(2).replace('.', ',')}
       </span>
     );
   };
@@ -294,8 +304,8 @@ export default function AthleteDashboard() {
           {items.map((item, idx) => (
             <tr key={idx}>
               <td>{item.label}</td>
-              <td>{item.cur !== undefined ? `${item.cur.toFixed(1).replace('.', ',')} ${item.unit}` : '-'}</td>
-              <td>{item.cmp !== undefined ? `${item.cmp.toFixed(1).replace('.', ',')} ${item.unit}` : '-'}</td>
+              <td>{item.cur !== undefined ? `${item.cur.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
+              <td>{item.cmp !== undefined ? `${item.cmp.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
               <td>{getTrendUi(item.cur || 0, item.cmp, item.inverseGood)}</td>
             </tr>
           ))}
@@ -304,9 +314,9 @@ export default function AthleteDashboard() {
     </div>
   );
 
-  if (athletes.length === 0) {
-    return (
-      <div className="container dashboard-container">
+  return (
+    <div className="container dashboard-container">
+      {athletes.length === 0 ? (
         <Card style={{ textAlign: 'center', padding: '4rem 2rem', marginTop: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div style={{ backgroundColor: 'var(--color-bg-page)', padding: '1rem', borderRadius: '50%', display: 'inline-flex', marginBottom: '0.5rem' }}>
             <User2 size={48} color="var(--color-primary)" />
@@ -315,17 +325,19 @@ export default function AthleteDashboard() {
           <p style={{ color: 'var(--color-text-muted)', maxWidth: '400px', margin: '0 auto 1rem', lineHeight: 1.5 }}>
             Para visualizar o dashboard e acompanhar as avaliações antropométricas, você precisa primeiro cadastrar um atleta no sistema.
           </p>
-          <Link to="/add" className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={20} />
-            Cadastrar Primeiro Atleta
-          </Link>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link to="/add" className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Plus size={20} />
+              Cadastrar Primeiro Atleta
+            </Link>
+            <button onClick={() => setIsImportModalOpen(true)} className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', backgroundColor: 'var(--color-bg-page)', border: 'none', color: 'var(--color-primary)' }}>
+              <FileSpreadsheet size={20} />
+              Importar Planilha
+            </button>
+          </div>
         </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container dashboard-container">
+      ) : (
+        <>
       {/* Athlete Selector */}
       <div className="athlete-selector-container">
         <label htmlFor="athlete-select" className="athlete-selector-label">
@@ -350,9 +362,19 @@ export default function AthleteDashboard() {
             <User2 size={48} color="var(--color-primary)" />
           </div>
           <h2 style={{ fontSize: '1.5rem', color: 'var(--color-text-main)', margin: 0 }}>Selecione um Atleta</h2>
-          <p style={{ color: 'var(--color-text-muted)', maxWidth: '400px', margin: '0 auto', lineHeight: 1.5 }}>
+          <p style={{ color: 'var(--color-text-muted)', maxWidth: '400px', margin: '0 auto 1rem', lineHeight: 1.5 }}>
             Utilize o menu acima para selecionar um atleta e visualizar seu dashboard de evolução antropométrica.
           </p>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link to="/add" className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Plus size={20} />
+              Cadastrar Novo Atleta
+            </Link>
+            <button onClick={() => setIsImportModalOpen(true)} className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', backgroundColor: 'var(--color-bg-page)', border: 'none', color: 'var(--color-primary)' }}>
+              <FileSpreadsheet size={20} />
+              Importar Planilha
+            </button>
+          </div>
         </Card>
       ) : (
         <>
@@ -376,6 +398,14 @@ export default function AthleteDashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <h1 className="athlete-name" style={{ margin: 0 }}>{athlete.name}</h1>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => setIsImportModalOpen(true)}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.4rem 0.8rem', border: 'none', backgroundColor: 'var(--color-bg-page)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500, fontSize: '0.875rem' }}
+                      title="Importar Dados de Excel"
+                    >
+                      <FileSpreadsheet size={18} /> Importar Excel
+                    </button>
                     <button
                       onClick={() => setIsReportModalOpen(true)}
                       className="btn btn-secondary"
@@ -428,7 +458,25 @@ export default function AthleteDashboard() {
                   <div className="eval-item">
                     <Calendar className="eval-icon" size={24} />
                     <div className="eval-data">
-                      <span className="eval-label">AVALIAÇÃO ATUAL</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                        <span className="eval-label">AVALIAÇÃO ATUAL</span>
+                        <div style={{ display: 'flex', gap: '0.2rem' }}>
+                          <button
+                            onClick={() => navigate(`/edit-assessment/${currentEvalId}`)}
+                            title="Editar Avaliação"
+                            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', padding: '0.2rem' }}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => setIsDeleteEvalModalOpen(true)}
+                            title="Excluir Avaliação"
+                            style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '0.2rem' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
                       <select
                         value={currentEvalId}
                         onChange={e => setCurrentEvalId(e.target.value)}
@@ -496,102 +544,102 @@ export default function AthleteDashboard() {
                   <button className={`tab-btn ${metricsPage === 3 ? 'active' : ''}`} onClick={() => setMetricsPage(3)}>Rel. Cineantropométrica</button>
                 </div>
 
-                {metricsPage === 1 && (
+                {metricsPage === 1 && currentMetrics && (
                   <div className="metrics-grid">
                     <MetricCard
                       icon={<Scale size={24} />}
                       title="PESO CORPORAL"
-                      value={currentMetrics.peso.toFixed(1).replace('.', ',')}
+                      value={currentMetrics.peso.toFixed(2).replace('.', ',')}
                       unit="kg"
                       trend={{
-                        direction: currentMetrics.peso > compareMetrics.peso ? 'up' : currentMetrics.peso < compareMetrics.peso ? 'down' : 'neutral',
-                        value: `${Math.abs(currentMetrics.peso - compareMetrics.peso).toFixed(1).replace('.', ',')} kg`,
+                        direction: currentMetrics.peso > (compareMetrics || currentMetrics).peso ? 'up' : currentMetrics.peso < (compareMetrics || currentMetrics).peso ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.peso - (compareMetrics || currentMetrics).peso).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
-                        isGood: currentMetrics.peso === compareMetrics.peso ? undefined : isCompositionGood
+                        isGood: currentMetrics.peso === (compareMetrics || currentMetrics).peso ? undefined : isCompositionGood
                       }}
                     />
                     <MetricCard
                       icon={<Ruler size={24} />}
                       title="ALTURA"
-                      value={currentMetrics.altura.toFixed(1).replace('.', ',')}
+                      value={currentMetrics.altura.toFixed(2).replace('.', ',')}
                       unit="cm"
                       trend={{
-                        direction: currentMetrics.altura > compareMetrics.altura ? 'up' : currentMetrics.altura < compareMetrics.altura ? 'down' : 'neutral',
-                        value: `${Math.abs(currentMetrics.altura - compareMetrics.altura).toFixed(1).replace('.', ',')} cm`,
+                        direction: currentMetrics.altura > (compareMetrics || currentMetrics).altura ? 'up' : currentMetrics.altura < (compareMetrics || currentMetrics).altura ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.altura - (compareMetrics || currentMetrics).altura).toFixed(2).replace('.', ',')} cm`,
                         text: 'vs. comparação',
-                        isGood: currentMetrics.altura > compareMetrics.altura
+                        isGood: currentMetrics.altura > (compareMetrics || currentMetrics).altura
                       }}
                     />
                     <MetricCard
                       icon={<Percent size={24} />}
                       title="% GORDURA"
-                      value={currentMetrics.percentualGordura.toFixed(1).replace('.', ',')}
+                      value={currentMetrics.percentualGordura.toFixed(2).replace('.', ',')}
                       unit="%"
                       trend={{
-                        direction: currentMetrics.percentualGordura > compareMetrics.percentualGordura ? 'up' : currentMetrics.percentualGordura < compareMetrics.percentualGordura ? 'down' : 'neutral',
-                        value: `${Math.abs(currentMetrics.percentualGordura - compareMetrics.percentualGordura).toFixed(1).replace('.', ',')} %`,
+                        direction: currentMetrics.percentualGordura > (compareMetrics || currentMetrics).percentualGordura ? 'up' : currentMetrics.percentualGordura < (compareMetrics || currentMetrics).percentualGordura ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.percentualGordura - (compareMetrics || currentMetrics).percentualGordura).toFixed(2).replace('.', ',')} %`,
                         text: 'vs. comparação',
-                        isGood: currentMetrics.percentualGordura < compareMetrics.percentualGordura
+                        isGood: currentMetrics.percentualGordura < (compareMetrics || currentMetrics).percentualGordura
                       }}
                     />
                     <MetricCard
                       icon={<Activity size={24} />}
                       title="SOMA DAS DOBRAS"
-                      value={currentMetrics.sumDobras.toFixed(1).replace('.', ',')}
+                      value={currentMetrics.sumDobras.toFixed(2).replace('.', ',')}
                       unit="mm"
                       trend={{
-                        direction: currentMetrics.sumDobras > compareMetrics.sumDobras ? 'up' : currentMetrics.sumDobras < compareMetrics.sumDobras ? 'down' : 'neutral',
-                        value: `${Math.abs(currentMetrics.sumDobras - compareMetrics.sumDobras).toFixed(1).replace('.', ',')} mm`,
+                        direction: currentMetrics.sumDobras > (compareMetrics || currentMetrics).sumDobras ? 'up' : currentMetrics.sumDobras < (compareMetrics || currentMetrics).sumDobras ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.sumDobras - (compareMetrics || currentMetrics).sumDobras).toFixed(2).replace('.', ',')} mm`,
                         text: 'vs. comparação',
-                        isGood: currentMetrics.sumDobras < compareMetrics.sumDobras
+                        isGood: currentMetrics.sumDobras < (compareMetrics || currentMetrics).sumDobras
                       }}
                     />
                     <MetricCard
                       icon={<Shield size={24} />}
                       title="MASSA GORDA"
-                      value={currentMetrics.gordura.toFixed(1).replace('.', ',')}
+                      value={currentMetrics.gordura.toFixed(2).replace('.', ',')}
                       unit="kg"
                       trend={{
-                        direction: currentMetrics.gordura > compareMetrics.gordura ? 'up' : currentMetrics.gordura < compareMetrics.gordura ? 'down' : 'neutral',
-                        value: `${Math.abs(currentMetrics.gordura - compareMetrics.gordura).toFixed(1).replace('.', ',')} kg`,
+                        direction: currentMetrics.gordura > (compareMetrics || currentMetrics).gordura ? 'up' : currentMetrics.gordura < (compareMetrics || currentMetrics).gordura ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.gordura - (compareMetrics || currentMetrics).gordura).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
-                        isGood: currentMetrics.gordura < compareMetrics.gordura
+                        isGood: currentMetrics.gordura < (compareMetrics || currentMetrics).gordura
                       }}
                     />
                     <MetricCard
                       icon={<Dumbbell size={24} />}
                       title="MASSA LIVRE DE GORDURA"
-                      value={currentMetrics.mlg.toFixed(1).replace('.', ',')}
+                      value={currentMetrics.mlg.toFixed(2).replace('.', ',')}
                       unit="kg"
                       trend={{
-                        direction: currentMetrics.mlg > compareMetrics.mlg ? 'up' : currentMetrics.mlg < compareMetrics.mlg ? 'down' : 'neutral',
-                        value: `${Math.abs(currentMetrics.mlg - compareMetrics.mlg).toFixed(1).replace('.', ',')} kg`,
+                        direction: currentMetrics.mlg > (compareMetrics || currentMetrics).mlg ? 'up' : currentMetrics.mlg < (compareMetrics || currentMetrics).mlg ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.mlg - (compareMetrics || currentMetrics).mlg).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
-                        isGood: currentMetrics.mlg > compareMetrics.mlg
+                        isGood: currentMetrics.mlg > (compareMetrics || currentMetrics).mlg
                       }}
                     />
                     <MetricCard
                       icon={<Shield size={24} />}
                       title="MASSA ÓSSEA"
-                      value={currentMetrics.ossos.toFixed(1).replace('.', ',')}
+                      value={currentMetrics.ossos.toFixed(2).replace('.', ',')}
                       unit="kg"
                       trend={{
-                        direction: currentMetrics.ossos > compareMetrics.ossos ? 'up' : currentMetrics.ossos < compareMetrics.ossos ? 'down' : 'neutral',
-                        value: `${Math.abs(currentMetrics.ossos - compareMetrics.ossos).toFixed(1).replace('.', ',')} kg`,
+                        direction: currentMetrics.ossos > (compareMetrics || currentMetrics).ossos ? 'up' : currentMetrics.ossos < (compareMetrics || currentMetrics).ossos ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.ossos - (compareMetrics || currentMetrics).ossos).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
-                        isGood: currentMetrics.ossos > compareMetrics.ossos
+                        isGood: currentMetrics.ossos > (compareMetrics || currentMetrics).ossos
                       }}
                     />
                     <MetricCard
                       icon={<Dumbbell size={24} />}
                       title="MASSA MUSCULAR"
-                      value={currentMetrics.massaMuscular.toFixed(1).replace('.', ',')}
+                      value={currentMetrics.massaMuscular.toFixed(2).replace('.', ',')}
                       unit="kg"
                       trend={{
-                        direction: currentMetrics.massaMuscular > compareMetrics.massaMuscular ? 'up' : currentMetrics.massaMuscular < compareMetrics.massaMuscular ? 'down' : 'neutral',
-                        value: `${Math.abs(currentMetrics.massaMuscular - compareMetrics.massaMuscular).toFixed(1).replace('.', ',')} kg`,
+                        direction: currentMetrics.massaMuscular > (compareMetrics || currentMetrics).massaMuscular ? 'up' : currentMetrics.massaMuscular < (compareMetrics || currentMetrics).massaMuscular ? 'down' : 'neutral',
+                        value: `${Math.abs(currentMetrics.massaMuscular - (compareMetrics || currentMetrics).massaMuscular).toFixed(2).replace('.', ',')} kg`,
                         text: 'vs. comparação',
-                        isGood: currentMetrics.massaMuscular > compareMetrics.massaMuscular
+                        isGood: currentMetrics.massaMuscular > (compareMetrics || currentMetrics).massaMuscular
                       }}
                     />
                   </div>
@@ -677,6 +725,7 @@ export default function AthleteDashboard() {
             formula={selectedFormula}
           />
 
+
           {/* Delete Confirmation Modal */}
           {isDeleteModalOpen && (
             <div className="delete-modal-overlay">
@@ -706,8 +755,46 @@ export default function AthleteDashboard() {
               </div>
             </div>
           )}
+
+          {/* Delete Assessment Confirmation Modal */}
+          {isDeleteEvalModalOpen && (
+            <div className="delete-modal-overlay">
+              <div className="delete-modal-content">
+                <div className="delete-modal-icon">
+                  <Trash2 size={32} />
+                </div>
+                <h2 className="delete-modal-title">Excluir Avaliação</h2>
+                <p className="delete-modal-text">
+                  Tem certeza que deseja excluir esta avaliação? Esta ação não poderá ser desfeita.
+                </p>
+                <div className="delete-modal-actions">
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setIsDeleteEvalModalOpen(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
+                    onClick={handleDeleteEval}
+                  >
+                    Sim, Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
+      </>
+      )}
+
+      <ImportExcelModal 
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={(id) => navigate(id ? `/dashboard/${id}` : '/dashboard')}
+      />
     </div>
   );
 }

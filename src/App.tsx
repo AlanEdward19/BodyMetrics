@@ -20,6 +20,7 @@ function App() {
             <Route path="/edit/:athleteId" element={<AddAthlete />} />
             <Route path="/add-assessment" element={<AddAssessment />} />
             <Route path="/add-assessment/:athleteId" element={<AddAssessment />} />
+            <Route path="/edit-assessment/:assessmentId" element={<AddAssessment />} />
           </Routes>
         </main>
       </div>

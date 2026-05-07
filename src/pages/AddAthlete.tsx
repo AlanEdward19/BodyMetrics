@@ -27,13 +27,21 @@ export default function AddAthlete() {
     if (isEditing && athleteId) {
       const athlete = getAthleteById(athleteId);
       if (athlete) {
+        let phase = athlete.competitivePhase || '';
+        const phaseLower = phase.toLowerCase();
+        if (phaseLower === 'competitiva') {
+          phase = 'Competição';
+        } else if (phaseLower === 'pre-competitiva' || phaseLower === 'pré-competitiva') {
+          phase = 'Pré-temporada';
+        }
+
         setFormData({
           name: athlete.name,
           photoUrl: athlete.photoUrl || '',
           sport: (athlete as any).sport || '',
           sportObservation: (athlete as any).sportObservation || (athlete as any).position || (athlete as any).sector || '',
           category: athlete.category,
-          competitivePhase: athlete.competitivePhase,
+          competitivePhase: phase,
           birthDate: athlete.birthDate,
           gender: athlete.gender || 'Masculino',
           race: athlete.race || 'Branco',
@@ -147,24 +155,22 @@ export default function AddAthlete() {
 
             <div className="form-group">
               <label htmlFor="competitivePhase">Fase / Objetivo</label>
-              <input 
-                list="phases"
+              <select 
                 id="competitivePhase" 
                 name="competitivePhase" 
                 required 
-                placeholder="Ex: Ganho de peso, Competição..."
                 value={formData.competitivePhase}
                 onChange={handleChange}
-              />
-              <datalist id="phases">
-                <option value="Pré-temporada" />
-                <option value="Competição" />
-                <option value="Transição" />
-                <option value="Férias" />
-                <option value="Ganho de peso" />
-                <option value="Perda de peso" />
-                <option value="Manutenção" />
-              </datalist>
+              >
+                <option value="" disabled>Selecione uma fase</option>
+                <option value="Pré-temporada">Pré-temporada</option>
+                <option value="Competição">Competição</option>
+                <option value="Transição">Transição</option>
+                <option value="Férias">Férias</option>
+                <option value="Ganho de peso">Ganho de peso</option>
+                <option value="Perda de peso">Perda de peso</option>
+                <option value="Manutenção">Manutenção</option>
+              </select>
             </div>
           </div>
 

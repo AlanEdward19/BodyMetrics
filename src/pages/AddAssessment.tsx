@@ -8,10 +8,12 @@ import { Activity, Calendar, Scale, Ruler, Droplets, User2 } from 'lucide-react'
 import './AddAssessment.css';
 
 export default function AddAssessment() {
-  const { addAssessment } = useAssessments();
+  const { addAssessment, updateAssessment, getAssessmentById } = useAssessments();
   const { athletes, getAthleteById } = useAthletes();
   const navigate = useNavigate();
-  const { athleteId } = useParams<{ athleteId: string }>();
+  const { athleteId, assessmentId } = useParams<{ athleteId?: string, assessmentId?: string }>();
+
+  const isEditing = !!assessmentId;
 
   const [selectedAthleteId, setSelectedAthleteId] = useState<string>(athleteId || (athletes[0]?.id || ''));
 
@@ -20,6 +22,51 @@ export default function AddAssessment() {
       setSelectedAthleteId(athleteId);
     }
   }, [athleteId, athletes]);
+
+  useEffect(() => {
+    if (assessmentId) {
+      const existing = getAssessmentById(assessmentId);
+      if (existing) {
+        setSelectedAthleteId(existing.athleteId);
+        setFormData({
+          date: existing.date,
+          weight: existing.weight?.toString() || '',
+          height: existing.height?.toString() || '',
+          sittingHeight: existing.sittingHeight?.toString() || '',
+          bodyWater: existing.bodyWater?.toString() || '',
+          visceralFat: existing.visceralFat?.toString() || '',
+          proteinMass: existing.proteinMass?.toString() || '',
+          muscleMass: existing.muscleMass?.toString() || '',
+          
+          tricepsRight: existing.skinfolds?.tricepsRight?.toString() || '',
+          tricepsLeft: existing.skinfolds?.tricepsLeft?.toString() || '',
+          subscapular: existing.skinfolds?.subscapular?.toString() || '',
+          chestSkinfold: existing.skinfolds?.chest?.toString() || '',
+          midaxillary: existing.skinfolds?.midaxillary?.toString() || '',
+          suprailiac: existing.skinfolds?.suprailiac?.toString() || '',
+          abdominal: existing.skinfolds?.abdominal?.toString() || '',
+          thighRightSkinfold: existing.skinfolds?.thighRight?.toString() || '',
+          thighLeftSkinfold: existing.skinfolds?.thighLeft?.toString() || '',
+          calfRightSkinfold: existing.skinfolds?.calfRight?.toString() || '',
+          calfLeftSkinfold: existing.skinfolds?.calfLeft?.toString() || '',
+
+          shoulder: existing.circumferences?.shoulder?.toString() || '',
+          chest: existing.circumferences?.chest?.toString() || '',
+          armRight: existing.circumferences?.armRight?.toString() || '',
+          armLeft: existing.circumferences?.armLeft?.toString() || '',
+          waist: existing.circumferences?.waist?.toString() || '',
+          hip: existing.circumferences?.hip?.toString() || '',
+          thighMidRight: existing.circumferences?.thighMidRight?.toString() || '',
+          thighMidLeft: existing.circumferences?.thighMidLeft?.toString() || '',
+          calfRight: existing.circumferences?.calfRight?.toString() || '',
+          calfLeft: existing.circumferences?.calfLeft?.toString() || '',
+          wristRight: existing.circumferences?.wristRight?.toString() || '',
+          kneeRight: existing.circumferences?.kneeRight?.toString() || '',
+          ankle: existing.circumferences?.ankle?.toString() || ''
+        });
+      }
+    }
+  }, [assessmentId]);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -62,7 +109,7 @@ export default function AddAssessment() {
 
     const parseNum = (val: string) => parseFloat(val) || 0;
 
-    addAssessment({
+    const dataToSave = {
       athleteId: selectedAthleteId,
       date: formData.date,
       weight: parseNum(formData.weight),
@@ -100,7 +147,13 @@ export default function AddAssessment() {
         kneeRight: parseNum(formData.kneeRight),
         ankle: parseNum(formData.ankle),
       }
-    });
+    };
+
+    if (isEditing && assessmentId) {
+      updateAssessment(assessmentId, dataToSave);
+    } else {
+      addAssessment(dataToSave);
+    }
 
     navigate(`/dashboard`);
   };
@@ -128,8 +181,8 @@ export default function AddAssessment() {
     return (
       <div className="container add-assessment-container">
         <div className="add-assessment-header">
-          <h1>Nova Avaliação Antropométrica</h1>
-          <p>Registre as medidas, dobras e circunferências do atleta.</p>
+          <h1>{isEditing ? 'Editar Avaliação' : 'Nova Avaliação Antropométrica'}</h1>
+          <p>Registre ou atualize as medidas, dobras e circunferências do atleta.</p>
         </div>
         <Card style={{ textAlign: 'center', padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
           <div style={{ backgroundColor: 'var(--color-bg-page)', padding: '1rem', borderRadius: '50%', display: 'inline-flex', marginBottom: '0.5rem' }}>
@@ -150,8 +203,8 @@ export default function AddAssessment() {
   return (
     <div className="container add-assessment-container">
       <div className="add-assessment-header">
-        <h1>Nova Avaliação Antropométrica</h1>
-        <p>Registre as medidas, dobras e circunferências do atleta.</p>
+        <h1>{isEditing ? 'Editar Avaliação' : 'Nova Avaliação Antropométrica'}</h1>
+        <p>Registre ou atualize as medidas, dobras e circunferências do atleta.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="assessment-form-layout">
@@ -172,6 +225,7 @@ export default function AddAssessment() {
                 value={selectedAthleteId} 
                 onChange={(e) => setSelectedAthleteId(e.target.value)}
                 required
+                disabled={isEditing}
               >
                 {athletes.length === 0 && <option value="">Nenhum atleta cadastrado</option>}
                 {athletes.map(a => (
@@ -265,7 +319,7 @@ export default function AddAssessment() {
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary" disabled={athletes.length === 0}>
-            Salvar Avaliação
+            {isEditing ? 'Atualizar Avaliação' : 'Salvar Avaliação'}
           </button>
         </div>
       </form>
