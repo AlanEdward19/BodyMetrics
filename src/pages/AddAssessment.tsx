@@ -51,50 +51,59 @@ export default function AddAssessment() {
   }, [athleteId, athletes]);
 
   useEffect(() => {
-    if (assessmentId && selectedAthleteId) {
-      const athlete = getAthleteById(selectedAthleteId);
-      if (athlete) {
-        // Busca a avaliação no array do atleta (assessmentId aqui é a data no formato ISO)
-        const existingApi = athlete.physicalAssessments.find(pa => pa.assessmentDate === assessmentId);
-        
-        if (existingApi) {
-          const existing = Mapper.mapPhysicalAssessmentToAssessment(existingApi, selectedAthleteId);
-          setFormData({
-            date: existing.date,
-            weight: existing.weight?.toString() || '',
-            height: existing.height?.toString() || '',
-            sittingHeight: existing.sittingHeight?.toString() || '',
-            
-            tricepsRight: existing.skinfolds?.tricepsRight?.toString() || '',
-            tricepsLeft: existing.skinfolds?.tricepsLeft?.toString() || '',
-            subscapular: existing.skinfolds?.subscapular?.toString() || '',
-            chestSkinfold: existing.skinfolds?.chest?.toString() || '',
-            midaxillary: existing.skinfolds?.midaxillary?.toString() || '',
-            suprailiac: existing.skinfolds?.suprailiac?.toString() || '',
-            abdominal: existing.skinfolds?.abdominal?.toString() || '',
-            thighRightSkinfold: existing.skinfolds?.thighRight?.toString() || '',
-            thighLeftSkinfold: existing.skinfolds?.thighLeft?.toString() || '',
-            calfRightSkinfold: existing.skinfolds?.calfRight?.toString() || '',
-            calfLeftSkinfold: existing.skinfolds?.calfLeft?.toString() || '',
+    if (assessmentId && athletes.length > 0) {
+      const dateToFind = assessmentId.startsWith('pa-') ? assessmentId.replace('pa-', '') : assessmentId;
+      
+      let foundAthlete: ApiTypes.AthleteViewModel | undefined;
+      let foundApiAssessment: ApiTypes.PhysicalAssessment | undefined;
 
-            shoulder: existing.circumferences?.shoulder?.toString() || '',
-            chest: existing.circumferences?.chest?.toString() || '',
-            armRight: existing.circumferences?.armRight?.toString() || '',
-            armLeft: existing.circumferences?.armLeft?.toString() || '',
-            waist: existing.circumferences?.waist?.toString() || '',
-            hip: existing.circumferences?.hip?.toString() || '',
-            thighMidRight: existing.circumferences?.thighMidRight?.toString() || '',
-            thighMidLeft: existing.circumferences?.thighMidLeft?.toString() || '',
-            calfRight: existing.circumferences?.calfRight?.toString() || '',
-            calfLeft: existing.circumferences?.calfLeft?.toString() || '',
-            wristRight: existing.circumferences?.wristRight?.toString() || '',
-            kneeRight: existing.circumferences?.kneeRight?.toString() || '',
-            ankle: existing.circumferences?.ankle?.toString() || ''
-          });
+      for (const a of athletes) {
+        const pa = a.physicalAssessments.find(p => p.assessmentDate === dateToFind);
+        if (pa) {
+          foundAthlete = a;
+          foundApiAssessment = pa;
+          break;
         }
       }
+
+      if (foundAthlete && foundApiAssessment) {
+        setSelectedAthleteId(foundAthlete.id);
+        const existing = Mapper.mapPhysicalAssessmentToAssessment(foundApiAssessment, foundAthlete.id);
+        setFormData({
+          date: existing.date,
+          weight: existing.weight?.toString() || '',
+          height: existing.height?.toString() || '',
+          sittingHeight: existing.sittingHeight?.toString() || '',
+          
+          tricepsRight: existing.skinfolds?.tricepsRight?.toString() || '',
+          tricepsLeft: existing.skinfolds?.tricepsLeft?.toString() || '',
+          subscapular: existing.skinfolds?.subscapular?.toString() || '',
+          chestSkinfold: existing.skinfolds?.chest?.toString() || '',
+          midaxillary: existing.skinfolds?.midaxillary?.toString() || '',
+          suprailiac: existing.skinfolds?.suprailiac?.toString() || '',
+          abdominal: existing.skinfolds?.abdominal?.toString() || '',
+          thighRightSkinfold: existing.skinfolds?.thighRight?.toString() || '',
+          thighLeftSkinfold: existing.skinfolds?.thighLeft?.toString() || '',
+          calfRightSkinfold: existing.skinfolds?.calfRight?.toString() || '',
+          calfLeftSkinfold: existing.skinfolds?.calfLeft?.toString() || '',
+
+          shoulder: existing.circumferences?.shoulder?.toString() || '',
+          chest: existing.circumferences?.chest?.toString() || '',
+          armRight: existing.circumferences?.armRight?.toString() || '',
+          armLeft: existing.circumferences?.armLeft?.toString() || '',
+          waist: existing.circumferences?.waist?.toString() || '',
+          hip: existing.circumferences?.hip?.toString() || '',
+          thighMidRight: existing.circumferences?.thighMidRight?.toString() || '',
+          thighMidLeft: existing.circumferences?.thighMidLeft?.toString() || '',
+          calfRight: existing.circumferences?.calfRight?.toString() || '',
+          calfLeft: existing.circumferences?.calfLeft?.toString() || '',
+          wristRight: existing.circumferences?.wristRight?.toString() || '',
+          kneeRight: existing.circumferences?.kneeRight?.toString() || '',
+          ankle: existing.circumferences?.ankle?.toString() || ''
+        });
+      }
     }
-  }, [assessmentId, selectedAthleteId, getAthleteById]);
+  }, [assessmentId, athletes]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -151,21 +160,23 @@ export default function AddAssessment() {
         }
       };
 
+      const dateToFind = isEditing && assessmentId ? (assessmentId.startsWith('pa-') ? assessmentId.replace('pa-', '') : assessmentId) : null;
+
       let updatedAssessments = [...athlete.physicalAssessments];
-      if (isEditing && assessmentId) {
-        // Substitui a existente
+      if (isEditing && dateToFind) {
+        // Substitui a existente (procurando pela data original)
         updatedAssessments = updatedAssessments.map(pa => 
-          pa.assessmentDate === assessmentId ? newAssessment : pa
+          pa.assessmentDate === dateToFind ? newAssessment : pa
         );
       } else {
         // Adiciona nova
         updatedAssessments.push(newAssessment);
       }
 
-      await updateAthlete(athlete.id, {
-        ...athlete,
-        physicalAssessments: updatedAssessments
-      });
+      const updateCommand = Mapper.mapAthleteToUpdateCommand(athlete);
+      updateCommand.physicalAssessments = updatedAssessments;
+
+      await updateAthlete(athlete.id, updateCommand);
 
       navigate(-1);
     } catch (error) {

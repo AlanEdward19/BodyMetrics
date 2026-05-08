@@ -79,6 +79,8 @@ export default function AddAthlete() {
 
     setIsSubmitting(true);
     try {
+      const existingAthlete = isEditing && athleteId ? getAthleteById(athleteId) : null;
+
       const athleteData: ApiTypes.CreateAthleteCommand = {
         fullName: formData.name,
         sportId: formData.sportId,
@@ -88,7 +90,7 @@ export default function AddAthlete() {
         sex: formData.sex,
         ethnicity: formData.ethnicity,
         birthDate: formData.birthDate,
-        physicalAssessments: [], 
+        physicalAssessments: existingAthlete ? existingAthlete.physicalAssessments : [], 
         profilePhoto: profilePhoto,
       };
 

@@ -169,3 +169,18 @@ export const mapPhysicalAssessmentToAssessment = (pa: ApiTypes.PhysicalAssessmen
     }
   };
 };
+export const mapAthleteToUpdateCommand = (athlete: ApiTypes.AthleteViewModel): ApiTypes.UpdateAthleteCommand => {
+  return {
+    id: athlete.id,
+    fullName: athlete.fullName,
+    sportId: athlete.sportId,
+    sector: athlete.sector,
+    phase: athlete.phase,
+    category: athlete.category,
+    sex: athlete.sex,
+    ethnicity: athlete.ethnicity,
+    birthDate: athlete.birthDate,
+    physicalAssessments: athlete.physicalAssessments,
+    profilePhoto: null // Envia null para não alterar a foto se não houver um novo upload
+  };
+};
