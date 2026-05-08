@@ -70,10 +70,11 @@ export default function AthleteDashboard() {
     try {
       const dateToDelete = id.replace('pa-', '');
       const updatedAssessments = athlete.physicalAssessments.filter(pa => pa.assessmentDate !== dateToDelete);
-      await updateAthlete(athlete.id, {
-        ...athlete,
-        physicalAssessments: updatedAssessments
-      });
+      
+      const updateCommand = Mapper.mapAthleteToUpdateCommand(athlete);
+      updateCommand.physicalAssessments = updatedAssessments;
+
+      await updateAthlete(athlete.id, updateCommand);
     } catch (error) {
       alert('Erro ao deletar avaliação.');
     }
@@ -224,7 +225,7 @@ export default function AthleteDashboard() {
     const renderRow = (title: string, data: { d: number, e: number, diff: number }) => {
       const diffSign = data.d > data.e ? '+' : data.d < data.e ? '-' : '';
       return (
-        <div className="metrics-grid" style={{ marginBottom: '1.5rem' }}>
+        <div className="metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
           <MetricCard
             icon={<Ruler size={24} />}
             title={`C/C ${title} D`}
@@ -261,7 +262,7 @@ export default function AthleteDashboard() {
     const r = currentMetrics.relacao;
 
     const renderRow = (titleObj: string, titleOsso: string, media: number, osso: number, relacao: number) => (
-      <div className="metrics-grid" style={{ marginBottom: '1.5rem' }}>
+      <div className="metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
         <MetricCard
           icon={<Ruler size={24} />}
           title={`Média ${titleObj}`}
@@ -515,14 +516,14 @@ export default function AthleteDashboard() {
               {currentMetrics && (
                 <div className="dashboard-content-layout">
                   <div className="dashboard-metrics-column">
-                    <div className="tabs-header" style={{ marginBottom: '1rem', backgroundColor: 'transparent', padding: 0 }}>
+                    <div className="tabs-header">
                       <button className={`tab-btn ${metricsPage === 1 ? 'active' : ''}`} onClick={() => setMetricsPage(1)}>Composição Corporal</button>
                       <button className={`tab-btn ${metricsPage === 2 ? 'active' : ''}`} onClick={() => setMetricsPage(2)}>Índices de Simetria</button>
                       <button className={`tab-btn ${metricsPage === 3 ? 'active' : ''}`} onClick={() => setMetricsPage(3)}>Rel. Cineantropométrica</button>
                     </div>
 
                     {metricsPage === 1 && (
-                      <div className="metrics-grid">
+                      <div className="metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
                         <MetricCard
                           icon={<Scale size={24} />}
                           title="PESO CORPORAL"
