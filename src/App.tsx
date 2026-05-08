@@ -3,26 +3,54 @@ import Navbar from './components/Navbar';
 import AthleteDashboard from './pages/AthleteDashboard';
 import AddAthlete from './pages/AddAthlete';
 import AddAssessment from './pages/AddAssessment';
+import LoginPage from './pages/LoginPage';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import './App.css';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  
+  if (loading) return null; // Ou um spinner/skeleton
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
+function AppContent() {
+  const { user } = useAuth();
+  
+  return (
+    <div className="app-container">
+      {user && <Navbar />}
+      <main className={user ? "main-content" : "auth-content"}>
+        <Routes>
+          <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+          
+          <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><AthleteDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/:athleteId" element={<ProtectedRoute><AthleteDashboard /></ProtectedRoute>} />
+          <Route path="/add" element={<ProtectedRoute><AddAthlete /></ProtectedRoute>} />
+          <Route path="/edit/:athleteId" element={<ProtectedRoute><AddAthlete /></ProtectedRoute>} />
+          <Route path="/add-assessment" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
+          <Route path="/add-assessment/:athleteId" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
+          <Route path="/edit-assessment/:assessmentId" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="app-container">
-        <Navbar />
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<AthleteDashboard />} />
-            <Route path="/dashboard/:athleteId" element={<AthleteDashboard />} />
-            <Route path="/add" element={<AddAthlete />} />
-            <Route path="/edit/:athleteId" element={<AddAthlete />} />
-            <Route path="/add-assessment" element={<AddAssessment />} />
-            <Route path="/add-assessment/:athleteId" element={<AddAssessment />} />
-            <Route path="/edit-assessment/:assessmentId" element={<AddAssessment />} />
-          </Routes>
-        </main>
-      </div>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   );
 }
