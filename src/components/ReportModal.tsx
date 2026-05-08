@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { X, Upload, ChevronLeft, ChevronRight, Trash2, Download } from 'lucide-react';
+import { X, Upload, ChevronLeft, ChevronRight, Trash2, Download, Scale, Ruler, Percent, Activity, Shield, Dumbbell, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import type { Assessment } from '../types/assessment';
 import type { Athlete } from '../types/athlete';
 import './ReportModal.css';
@@ -231,27 +231,33 @@ export function ReportModal({
 
   const renderTableSection = (title: string, items: { label: string, cur?: number, cmp?: number, unit: string }[]) => (
     <div className="report-section">
-      <h3 className="report-section-title">{title}</h3>
-      <table className="report-table">
-        <thead>
-          <tr>
-            <th>Medida</th>
-            <th>Atual ({formatDate(currentEval?.date)})</th>
-            <th>Anterior ({formatDate(compareEval?.date)})</th>
-            <th>Evolução</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item, idx) => (
-            <tr key={idx}>
-              <td>{item.label}</td>
-              <td>{item.cur !== undefined ? `${item.cur.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
-              <td>{item.cmp !== undefined ? `${item.cmp.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
-              <td>{getDiff(item.cur, item.cmp, item.unit)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="report-section-card">
+        <div className="report-section-header">
+          <h3 className="report-section-title">{title}</h3>
+        </div>
+        <div className="report-section-body">
+          <table className="report-table">
+            <thead>
+              <tr>
+                <th>Medida</th>
+                <th>Atual ({formatDate(currentEval?.date)})</th>
+                <th>Anterior ({formatDate(compareEval?.date)})</th>
+                <th>Evolução</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, idx) => (
+                <tr key={idx}>
+                  <td>{item.label}</td>
+                  <td>{item.cur !== undefined ? `${item.cur.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
+                  <td>{item.cmp !== undefined ? `${item.cmp.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
+                  <td>{getDiff(item.cur, item.cmp, item.unit)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 
@@ -503,71 +509,117 @@ export function ReportModal({
               {/* COMPOSIÇÃO CORPORAL (PAG 1) */}
               {isAnySelected('composition') && (
                 <div className="report-section">
-                  <h3 className="report-section-title">Composição Corporal</h3>
-                  {currentMetrics && (
-                    <div className="report-metrics-summary">
-                      {[
-                        { id: 'peso', label: 'Peso Corporal', key: 'peso', unit: 'kg' },
-                        { id: 'altura', label: 'Altura', key: 'altura', unit: 'cm' },
-                        { id: 'percentualGordura', label: '% Gordura', key: 'percentualGordura', unit: '%' },
-                        { id: 'sumDobras', label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm' },
-                        { id: 'gordura', label: 'Massa Gorda', key: 'gordura', unit: 'kg' },
-                        { id: 'mlg', label: 'Massa Livre Gord.', key: 'mlg', unit: 'kg' },
-                        { id: 'ossos', label: 'Massa Óssea', key: 'ossos', unit: 'kg' },
-                        { id: 'massaMuscular', label: 'Massa Muscular', key: 'massaMuscular', unit: 'kg' },
-                      ].filter(m => (selections.composition.items as any)[m.id]).map((m) => {
-                        const curVal = currentMetrics[m.key];
-                        const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
-                        const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
-                        const sign = diff > 0 ? '+' : '';
-                        const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
-                        
-                        return (
-                          <div key={m.key} className="report-metric-box">
-                            <span className="report-metric-label">{m.label}</span>
-                            <span className="report-metric-value">{curVal.toFixed(2).replace('.', ',')} <small>{m.unit}</small></span>
-                            {compareMetrics && (
-                              <span className={`report-metric-trend ${trendClass}`}>
-                                {sign}{diff.toFixed(2).replace('.', ',')} {m.unit}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
+                  <div className="report-section-card">
+                    <div className="report-section-header">
+                      <h3 className="report-section-title">Composição Corporal</h3>
                     </div>
-                  )}
+                    <div className="report-section-body" style={{ padding: '20px' }}>
+                      {currentMetrics && (
+                        <div className="report-metrics-summary">
+                          {[
+                            { id: 'peso', label: 'Peso Corporal', key: 'peso', unit: 'kg', icon: <Scale size={18} /> },
+                            { id: 'altura', label: 'Altura', key: 'altura', unit: 'cm', icon: <Ruler size={18} /> },
+                            { id: 'percentualGordura', label: '% Gordura', key: 'percentualGordura', unit: '%', icon: <Percent size={18} /> },
+                            { id: 'sumDobras', label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm', icon: <Activity size={18} /> },
+                            { id: 'gordura', label: 'Massa Gorda', key: 'gordura', unit: 'kg', icon: <Shield size={18} /> },
+                            { id: 'mlg', label: 'Massa Livre Gord.', key: 'mlg', unit: 'kg', icon: <Dumbbell size={18} /> },
+                            { id: 'ossos', label: 'Massa Óssea', key: 'ossos', unit: 'kg', icon: <Shield size={18} /> },
+                            { id: 'massaMuscular', label: 'Massa Muscular', key: 'massaMuscular', unit: 'kg', icon: <Dumbbell size={18} /> },
+                          ].filter(m => (selections.composition.items as any)[m.id]).map((m) => {
+                            const curVal = currentMetrics[m.key];
+                            const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
+                            const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
+                            const sign = diff > 0 ? '+' : '';
+                            const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
+                            const TrendIcon = diff > 0 ? ArrowUpRight : ArrowDownRight;
+                            
+                            return (
+                              <div key={m.key} className="report-metric-box">
+                                <div className="report-metric-header">
+                                  <div className="report-metric-icon-wrapper">
+                                    {m.icon}
+                                  </div>
+                                  <span className="report-metric-label">{m.label}</span>
+                                </div>
+                                
+                                <div className="report-metric-body">
+                                  <span className="report-metric-value">{curVal.toFixed(2).replace('.', ',')}</span>
+                                  <span className="report-metric-unit">{m.unit}</span>
+                                </div>
+
+                                <div className="report-metric-footer">
+                                  {compareMetrics && diff !== 0 ? (
+                                    <span className={`report-metric-trend ${trendClass}`}>
+                                      <TrendIcon size={12} />
+                                      {sign}{diff.toFixed(2).replace('.', ',')}
+                                    </span>
+                                  ) : <span />}
+                                  <span style={{ fontSize: '6pt', color: '#94a3b8' }}>vs. anterior</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* SIMETRIA (PAG 2) */}
               {isAnySelected('symmetry') && (
                 <div className="report-section">
-                  <h3 className="report-section-title">Índices de Simetria (Medidas Corrigidas)</h3>
-                  <div className="report-cards-grid">
-                    {[
-                      { label: 'Coxa', data: currentMetrics?.simetria?.coxa },
-                      { label: 'Panturrilha', data: currentMetrics?.simetria?.pantu },
-                      { label: 'Braço', data: currentMetrics?.simetria?.braco }
-                    ].filter(item => (selections.symmetry.items as any)[item.label]).map((item, idx) => (
-                      <div key={idx} className="report-card">
-                        <div className="report-card-header">{item.label}</div>
-                        <div className="report-card-body">
-                          <div className="report-card-row">
-                            <span>Lado Direito:</span>
-                            <strong>{item.data?.d.toFixed(2).replace('.', ',')} cm</strong>
+                  <div className="report-section-card">
+                    <div className="report-section-header">
+                      <h3 className="report-section-title">Índices de Simetria (Medidas Corrigidas)</h3>
+                    </div>
+                    <div className="report-section-body" style={{ padding: '20px' }}>
+                      <div className="report-symmetry-container">
+                        {[
+                          { label: 'Coxa', data: currentMetrics?.simetria?.coxa },
+                          { label: 'Panturrilha', data: currentMetrics?.simetria?.pantu },
+                          { label: 'Braço', data: currentMetrics?.simetria?.braco }
+                        ].filter(item => (selections.symmetry.items as any)[item.label]).map((item, idx) => (
+                          <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
+                            <div className="report-metric-box">
+                              <div className="report-metric-header">
+                                <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
+                                <span className="report-metric-label">C/C {item.label} D</span>
+                              </div>
+                              <div className="report-metric-body">
+                                <span className="report-metric-value">{item.data?.d.toFixed(2).replace('.', ',')}</span>
+                                <span className="report-metric-unit">cm</span>
+                              </div>
+                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Direito</span></div>
+                            </div>
+
+                            <div className="report-metric-box">
+                              <div className="report-metric-header">
+                                <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
+                                <span className="report-metric-label">C/C {item.label} E</span>
+                              </div>
+                              <div className="report-metric-body">
+                                <span className="report-metric-value">{item.data?.e.toFixed(2).replace('.', ',')}</span>
+                                <span className="report-metric-unit">cm</span>
+                              </div>
+                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Esquerdo</span></div>
+                            </div>
+
+                            <div className="report-metric-box">
+                              <div className="report-metric-header">
+                                <div className="report-metric-icon-wrapper"><Activity size={14} /></div>
+                                <span className="report-metric-label">Diferença D/E</span>
+                              </div>
+                              <div className="report-metric-body">
+                                <span className="report-metric-value">{item.data?.d > item.data?.e ? '+' : ''}{item.data?.diff.toFixed(2).replace('.', ',')}</span>
+                                <span className="report-metric-unit">cm</span>
+                              </div>
+                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Assimetria</span></div>
+                            </div>
                           </div>
-                          <div className="report-card-row">
-                            <span>Lado Esquerdo:</span>
-                            <strong>{item.data?.e.toFixed(2).replace('.', ',')} cm</strong>
-                          </div>
-                          <div className="report-card-divider"></div>
-                          <div className="report-card-row diff">
-                            <span>Diferença D/E:</span>
-                            <strong>{item.data?.d > item.data?.e ? '+' : ''}{item.data?.diff.toFixed(2).replace('.', ',')} cm</strong>
-                          </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -575,32 +627,57 @@ export function ReportModal({
               {/* RELAÇÕES (PAG 3) */}
               {isAnySelected('relations') && (
                 <div className="report-section">
-                  <h3 className="report-section-title">Relação Cineantropométrica</h3>
-                  <div className="report-cards-grid">
-                    {[
-                      { label: 'Coxa / Fêmur', media: currentMetrics?.relacao?.ccCoxa, osso: currentMetrics?.relacao?.diamJoelho, relacao: currentMetrics?.relacao?.coxa },
-                      { label: 'Panturrilha / Tornozelo', media: currentMetrics?.relacao?.ccPantu, osso: currentMetrics?.relacao?.diamTornozelo, relacao: currentMetrics?.relacao?.pantu },
-                      { label: 'Braço / Úmero', media: currentMetrics?.relacao?.ccBraco, osso: currentMetrics?.relacao?.diamPunho, relacao: currentMetrics?.relacao?.braco }
-                    ].filter(item => (selections.relations.items as any)[item.label]).map((item, idx) => (
-                      <div key={idx} className="report-card">
-                        <div className="report-card-header">{item.label}</div>
-                        <div className="report-card-body">
-                          <div className="report-card-row">
-                            <span>Média Corrigida:</span>
-                            <strong>{item.media?.toFixed(2).replace('.', ',')} cm</strong>
+                  <div className="report-section-card">
+                    <div className="report-section-header">
+                      <h3 className="report-section-title">Relação Cineantropométrica</h3>
+                    </div>
+                    <div className="report-section-body" style={{ padding: '20px' }}>
+                      <div className="report-relations-container">
+                        {[
+                          { label: 'Coxa / Fêmur', titleMedia: 'Coxa', titleOsso: 'Fêmur', media: currentMetrics?.relacao?.ccCoxa, osso: currentMetrics?.relacao?.diamJoelho, relacao: currentMetrics?.relacao?.coxa },
+                          { label: 'Panturrilha / Tornozelo', titleMedia: 'Pantu.', titleOsso: 'Tornozelo', media: currentMetrics?.relacao?.ccPantu, osso: currentMetrics?.relacao?.diamTornozelo, relacao: currentMetrics?.relacao?.pantu },
+                          { label: 'Braço / Úmero', titleMedia: 'Braço', titleOsso: 'Úmero', media: currentMetrics?.relacao?.ccBraco, osso: currentMetrics?.relacao?.diamPunho, relacao: currentMetrics?.relacao?.braco }
+                        ].filter(item => (selections.relations.items as any)[item.label]).map((item, idx) => (
+                          <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
+                            <div className="report-metric-box">
+                              <div className="report-metric-header">
+                                <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
+                                <span className="report-metric-label">Média {item.titleMedia}</span>
+                              </div>
+                              <div className="report-metric-body">
+                                <span className="report-metric-value">{item.media?.toFixed(2).replace('.', ',')}</span>
+                                <span className="report-metric-unit">cm</span>
+                              </div>
+                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Média Corrigida</span></div>
+                            </div>
+
+                            <div className="report-metric-box">
+                              <div className="report-metric-header">
+                                <div className="report-metric-icon-wrapper"><Shield size={14} /></div>
+                                <span className="report-metric-label">Osso {item.titleOsso}</span>
+                              </div>
+                              <div className="report-metric-body">
+                                <span className="report-metric-value">{item.osso > 0 ? item.osso.toFixed(2).replace('.', ',') : '-'}</span>
+                                <span className="report-metric-unit">cm</span>
+                              </div>
+                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Diâmetro Ósseo</span></div>
+                            </div>
+
+                            <div className="report-metric-box">
+                              <div className="report-metric-header">
+                                <div className="report-metric-icon-wrapper"><Activity size={14} /></div>
+                                <span className="report-metric-label">Relação</span>
+                              </div>
+                              <div className="report-metric-body">
+                                <span className="report-metric-value">{item.relacao > 0 ? item.relacao.toFixed(2).replace('.', ',') : '-'}</span>
+                                <span className="report-metric-unit">índice</span>
+                              </div>
+                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Índice Cine.</span></div>
+                            </div>
                           </div>
-                          <div className="report-card-row">
-                            <span>Diâmetro Ósseo:</span>
-                            <strong>{item.osso > 0 ? `${item.osso.toFixed(2).replace('.', ',')} cm` : '-'}</strong>
-                          </div>
-                          <div className="report-card-divider"></div>
-                          <div className="report-card-row relation">
-                            <span>Índice:</span>
-                            <strong>{item.relacao > 0 ? item.relacao.toFixed(2).replace('.', ',') : '-'}</strong>
-                          </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
               )}
