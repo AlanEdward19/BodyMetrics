@@ -1,15 +1,17 @@
-import type { Athlete } from '../types/athlete';
 import { User2 } from 'lucide-react';
 import './AthletePhoto.css';
 
 interface AthletePhotoProps {
-  athlete: Athlete;
+  athlete: any; // Allow flexibility for now
   size?: number;
   className?: string;
 }
 
 export function AthletePhoto({ athlete, size = 140, className = '' }: AthletePhotoProps) {
-  if (!athlete.photoUrl) {
+  const photoUrl = athlete.profilePhoto?.accessUrl || athlete.photoUrl;
+  const name = athlete.fullName || athlete.name;
+
+  if (!photoUrl) {
     return (
       <div 
         className={`athlete-photo-placeholder ${className}`}
@@ -20,17 +22,18 @@ export function AthletePhoto({ athlete, size = 140, className = '' }: AthletePho
     );
   }
 
-  const { cropSettings } = athlete;
+  // Note: cropSettings are local-only features for now if not in API
+  const cropSettings = athlete.cropSettings;
 
   if (!cropSettings) {
     return (
       <div 
         className={`athlete-photo-container-css ${className}`}
-        style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden' }}
+        style={{ width: size, height: size, borderRadius: 'var(--radius-md)', overflow: 'hidden' }}
       >
         <img 
-          src={athlete.photoUrl} 
-          alt={athlete.name} 
+          src={photoUrl} 
+          alt={name} 
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
@@ -53,7 +56,7 @@ export function AthletePhoto({ athlete, size = 140, className = '' }: AthletePho
         height: size,
         overflow: 'hidden',
         position: 'relative',
-        borderRadius: '50%',
+        borderRadius: 'var(--radius-md)',
         backgroundColor: '#f1f5f9'
       }}
     >

@@ -1,8 +1,9 @@
 export enum Phase {
-  PreSeason = 0,
-  InSeason = 1,
-  PostSeason = 2,
-  OffSeason = 3
+  Competitive = 0,
+  PreSeason = 1,
+  WeightLoss = 2,
+  WeightGain = 3,
+  Maintenance = 4
 }
 
 export enum Sex {
@@ -12,12 +13,9 @@ export enum Sex {
 }
 
 export enum Ethnicity {
-  Caucasian = 0,
-  African = 1,
-  Asian = 2,
-  Hispanic = 3,
-  Indigenous = 4,
-  Other = 5
+  Caucasian = 1,
+  African = 2,
+  Asian = 3
 }
 
 export interface CreateSportCommand {
