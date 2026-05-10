@@ -60,7 +60,7 @@ export function SearchableSelect({
       const timer = setTimeout(() => {
         onSearch(searchTerm);
         setLastSearchedTerm(searchTerm);
-      }, 500); // Debounce de 500ms
+      }, 2000); // Debounce de 2 segundos (2000ms)
       return () => clearTimeout(timer);
     }
   }, [searchTerm, filteredOptions.length, onSearch, lastSearchedTerm]);
