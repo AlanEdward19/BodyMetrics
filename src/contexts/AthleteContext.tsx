@@ -76,7 +76,7 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, fetchAthletes, hasFetched]);
 
-  const addAthlete = async (athleteData: CreateAthleteCommand) => {
+  const addAthlete = useCallback(async (athleteData: CreateAthleteCommand) => {
     setLoading(true);
     try {
       const newAthlete = await apiService.createAthlete(athleteData);
@@ -88,9 +88,9 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateAthlete = async (id: string, athleteData: UpdateAthleteCommand) => {
+  const updateAthlete = useCallback(async (id: string, athleteData: UpdateAthleteCommand) => {
     setLoading(true);
     try {
       const updated = await apiService.updateAthlete(id, athleteData);
@@ -101,9 +101,9 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const deleteAthlete = async (id: string) => {
+  const deleteAthlete = useCallback(async (id: string) => {
     setLoading(true);
     try {
       await apiService.deleteAthlete(id);
@@ -114,11 +114,43 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getAthleteById = (id: string) => {
+  const getAthleteById = useCallback((id: string) => {
     return athletes.find(a => a.id === id);
-  };
+  }, [athletes]);
+
+  const searchAthletes = useCallback(async (fullName: string) => {
+    setLoading(true);
+    try {
+      const response = await apiService.listAthletes({ fullName, pageSize: 100 });
+      setAthletes(prev => {
+        const existingIds = new Set(prev.map(a => a.id));
+        const newItems = response.items.filter(a => !existingIds.has(a.id));
+        return [...prev, ...newItems];
+      });
+    } catch (err) {
+      console.error('Erro ao pesquisar atletas:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const importAthletes = useCallback(async (sportName: string, file: File) => {
+    setLoading(true);
+    try {
+      const result = await apiService.importAthletes(sportName, file);
+      await fetchAthletes(1);
+      return result;
+    } catch (err) {
+      console.error('Erro ao importar atletas:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchAthletes]);
+
+  const refreshAthletes = useCallback(() => fetchAthletes(1), [fetchAthletes]);
 
   return (
     <AthleteContext.Provider value={{ 
@@ -129,40 +161,11 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
       updateAthlete, 
       deleteAthlete, 
       getAthleteById,
-      refreshAthletes: () => fetchAthletes(1),
+      refreshAthletes,
       loadMoreAthletes,
       hasMore: page < totalPages,
-      searchAthletes: async (fullName: string) => {
-        setLoading(true);
-        try {
-          const response = await apiService.listAthletes({ fullName, pageSize: 100 });
-          // Mesclar com os existentes, evitando duplicatas por ID
-          setAthletes(prev => {
-            const existingIds = new Set(prev.map(a => a.id));
-            const newItems = response.items.filter(a => !existingIds.has(a.id));
-            return [...prev, ...newItems];
-          });
-        } catch (err) {
-          console.error('Erro ao pesquisar atletas:', err);
-        } finally {
-          setLoading(false);
-        }
-      },
-      importAthletes: async (sportName: string, file: File) => {
-        setLoading(true);
-        try {
-          const result = await apiService.importAthletes(sportName, file);
-          // Recarregar a lista de atletas para garantir que temos os dados atualizados
-          await fetchAthletes(1);
-          
-          return result;
-        } catch (err) {
-          console.error('Erro ao importar atletas:', err);
-          throw err;
-        } finally {
-          setLoading(false);
-        }
-      }
+      searchAthletes,
+      importAthletes
     }}>
       {children}
     </AthleteContext.Provider>

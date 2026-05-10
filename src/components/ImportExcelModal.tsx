@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import { X, Upload, FileSpreadsheet, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { useAthletes } from '../hooks/useAthletes';
 import type { AthleteSpreadsheetImportViewModel } from '../types/api';
@@ -13,7 +14,7 @@ interface ImportExcelModalProps {
 
 export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { importAthletes } = useAthletes();
-  const { sports } = useSports();
+  const { sports, refreshSports } = useSports();
   
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -22,6 +23,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
   const [sportName, setSportName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<AthleteSpreadsheetImportViewModel | null>(null);
+  const [previewData, setPreviewData] = useState<{ headers: string[], rows: any[] } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,6 +35,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
       setIsProcessing(false);
       setSportName('');
       setImportResult(null);
+      setPreviewData(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -44,6 +47,29 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
   const processFile = (file: File) => {
     setSelectedFile(file);
     setError(null);
+    setPreviewData(null);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rows = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', range: 0 });
+        
+        if (rows.length > 0) {
+          const headers = Object.keys(rows[0]);
+          setPreviewData({
+            headers,
+            rows: rows.slice(0, 10)
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao gerar preview:", err);
+      }
+    };
+    reader.readAsBinaryString(file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -86,6 +112,9 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
       const result = await importAthletes(sportName.trim(), selectedFile);
       setImportResult(result);
       setSuccess(true);
+      // Atualiza esportes também, caso um novo tenha sido criado durante a importação
+      refreshSports();
+      
       setTimeout(() => {
         onClose();
         if (onSuccess) onSuccess();
@@ -102,12 +131,13 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
     setSelectedFile(null);
     setError(null);
     setSportName('');
+    setPreviewData(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
     <div className="import-modal-overlay" onClick={onClose}>
-      <div className="import-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className={`import-modal-content ${previewData ? 'modal-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="import-modal-header">
           <h2 className="import-modal-title">
             <FileSpreadsheet className="text-primary" /> 
@@ -210,6 +240,36 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                 <p className="import-dropzone-subtext">ou clique para procurar (.xlsx ou .xls)</p>
               )}
             </div>
+
+            {previewData && !isProcessing && (
+              <div className="import-preview-section" style={{ padding: '0 1.5rem 1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h4 className="import-preview-title">Pré-visualização (10 primeiras linhas)</h4>
+                </div>
+                <div className="import-preview-scroll">
+                  <table className="import-preview-table">
+                    <thead>
+                      <tr>
+                        {previewData.headers.map((h, i) => <th key={i}>{h}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewData.rows.map((row, rIndex) => (
+                        <tr key={rIndex}>
+                          {previewData.headers.map((h, cIndex) => {
+                            let cellData = row[h];
+                            if (cellData instanceof Date) {
+                              cellData = cellData.toLocaleDateString();
+                            }
+                            return <td key={cIndex}>{String(cellData !== undefined && cellData !== null ? cellData : '')}</td>;
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             <div className="import-modal-actions" style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border)', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
               <button 

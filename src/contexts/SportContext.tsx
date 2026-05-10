@@ -69,12 +69,14 @@ export function SportProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, fetchSports, hasFetched]);
 
+  const refreshSports = useCallback(() => fetchSports(1), [fetchSports]);
+
   return (
     <SportContext.Provider value={{ 
       sports, 
       loading, 
       error, 
-      refreshSports: () => fetchSports(1),
+      refreshSports,
       loadMoreSports,
       hasMore: page < totalPages
     }}>
