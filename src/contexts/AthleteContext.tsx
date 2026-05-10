@@ -12,6 +12,7 @@ interface AthleteContextType {
   deleteAthlete: (id: string) => Promise<void>;
   getAthleteById: (id: string) => AthleteViewModel | undefined;
   refreshAthletes: () => Promise<void>;
+  searchAthletes: (fullName: string) => Promise<void>;
 }
 
 const AthleteContext = createContext<AthleteContextType | undefined>(undefined);
@@ -107,7 +108,23 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
       updateAthlete, 
       deleteAthlete, 
       getAthleteById,
-      refreshAthletes: fetchAthletes 
+      refreshAthletes: fetchAthletes,
+      searchAthletes: async (fullName: string) => {
+        setLoading(true);
+        try {
+          const response = await apiService.listAthletes({ fullName, pageSize: 100 });
+          // Mesclar com os existentes, evitando duplicatas por ID
+          setAthletes(prev => {
+            const existingIds = new Set(prev.map(a => a.id));
+            const newItems = response.items.filter(a => !existingIds.has(a.id));
+            return [...prev, ...newItems];
+          });
+        } catch (err) {
+          console.error('Erro ao pesquisar atletas:', err);
+        } finally {
+          setLoading(false);
+        }
+      }
     }}>
       {children}
     </AthleteContext.Provider>

@@ -13,11 +13,20 @@ interface SearchableSelectProps {
   onChange: (id: string) => void;
   placeholder?: string;
   noOptionsMessage?: string;
+  onSearch?: (term: string) => void;
 }
 
-export function SearchableSelect({ options, value, onChange, placeholder = 'Selecionar...', noOptionsMessage = 'Nenhum resultado encontrado' }: SearchableSelectProps) {
+export function SearchableSelect({ 
+  options, 
+  value, 
+  onChange, 
+  placeholder = 'Selecionar...', 
+  noOptionsMessage = 'Nenhum resultado encontrado',
+  onSearch
+}: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [lastSearchedTerm, setLastSearchedTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -41,9 +50,20 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sele
     setIsOpen(!isOpen);
     if (!isOpen) {
       setSearchTerm('');
+      setLastSearchedTerm('');
       setTimeout(() => inputRef.current?.focus(), 10);
     }
   };
+
+  useEffect(() => {
+    if (onSearch && searchTerm.length > 3 && filteredOptions.length <= 1 && searchTerm !== lastSearchedTerm) {
+      const timer = setTimeout(() => {
+        onSearch(searchTerm);
+        setLastSearchedTerm(searchTerm);
+      }, 500); // Debounce de 500ms
+      return () => clearTimeout(timer);
+    }
+  }, [searchTerm, filteredOptions.length, onSearch, lastSearchedTerm]);
 
   const handleSelect = (optionId: string) => {
     onChange(optionId);

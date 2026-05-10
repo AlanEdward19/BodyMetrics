@@ -22,7 +22,7 @@ import './AthleteDashboard.css';
 export default function AthleteDashboard() {
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId?: string }>();
-  const { athletes, getAthleteById, deleteAthlete, updateAthlete, loading: athletesLoading } = useAthletes();
+  const { athletes, getAthleteById, deleteAthlete, updateAthlete, searchAthletes, loading: athletesLoading } = useAthletes();
 
   // Don't auto-select athlete, require explicit selection
   const currentAthleteId = athleteId || null;
@@ -369,6 +369,7 @@ export default function AthleteDashboard() {
               value={currentAthleteId || ''}
               onChange={(id) => navigate(id ? `/dashboard/${id}` : '/dashboard')}
               placeholder="Selecione um Atleta..."
+              onSearch={searchAthletes}
             />
           </div>
 
