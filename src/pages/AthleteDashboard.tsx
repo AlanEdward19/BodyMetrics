@@ -22,7 +22,7 @@ import './AthleteDashboard.css';
 export default function AthleteDashboard() {
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId?: string }>();
-  const { athletes, getAthleteById, deleteAthlete, updateAthlete, searchAthletes, loadMoreAthletes, loading: athletesLoading } = useAthletes();
+  const { athletes, getAthleteById, deleteAthlete, updateAthlete, searchAthletes, loadMoreAthletes, refreshAthletes, loading: athletesLoading } = useAthletes();
 
   // Don't auto-select athlete, require explicit selection
   const currentAthleteId = athleteId || null;
