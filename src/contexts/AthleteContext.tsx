@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import apiService from '../services/api.service';
-import type { AthleteViewModel, CreateAthleteCommand, UpdateAthleteCommand } from '../types/api';
+import type { AthleteViewModel, CreateAthleteCommand, UpdateAthleteCommand, AthleteSpreadsheetImportViewModel } from '../types/api';
 import { useAuth } from './AuthContext';
 
 interface AthleteContextType {
