@@ -13,6 +13,8 @@ interface AthleteContextType {
   getAthleteById: (id: string) => AthleteViewModel | undefined;
   refreshAthletes: () => Promise<void>;
   searchAthletes: (fullName: string) => Promise<void>;
+  loadMoreAthletes: () => Promise<void>;
+  hasMore: boolean;
 }
 
 const AthleteContext = createContext<AthleteContextType | undefined>(undefined);
@@ -23,16 +25,28 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const [hasFetched, setHasFetched] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const fetchingRef = React.useRef(false);
 
-  const fetchAthletes = useCallback(async () => {
+  const fetchAthletes = useCallback(async (pageNum: number = 1) => {
     if (!user || fetchingRef.current) return;
     
     fetchingRef.current = true;
     setLoading(true);
     try {
-      const response = await apiService.listAthletes({ pageSize: 1000 });
-      setAthletes(response.items);
+      const response = await apiService.listAthletes({ page: pageNum, pageSize: 20 });
+      if (pageNum === 1) {
+        setAthletes(response.items);
+      } else {
+        setAthletes(prev => {
+          const existingIds = new Set(prev.map(a => a.id));
+          const newItems = response.items.filter(a => !existingIds.has(a.id));
+          return [...prev, ...newItems];
+        });
+      }
+      setPage(response.page);
+      setTotalPages(response.totalPages);
       setError(null);
       setHasFetched(true);
     } catch (err) {
@@ -43,6 +57,12 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
       fetchingRef.current = false;
     }
   }, [user]);
+
+  const loadMoreAthletes = useCallback(async () => {
+    if (page < totalPages && !loading) {
+      await fetchAthletes(page + 1);
+    }
+  }, [page, totalPages, loading, fetchAthletes]);
 
   useEffect(() => {
     if (user && !hasFetched) {
@@ -108,7 +128,9 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
       updateAthlete, 
       deleteAthlete, 
       getAthleteById,
-      refreshAthletes: fetchAthletes,
+      refreshAthletes: () => fetchAthletes(1),
+      loadMoreAthletes,
+      hasMore: page < totalPages,
       searchAthletes: async (fullName: string) => {
         setLoading(true);
         try {

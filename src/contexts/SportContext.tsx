@@ -8,6 +8,8 @@ interface SportContextType {
   loading: boolean;
   error: string | null;
   refreshSports: () => Promise<void>;
+  loadMoreSports: () => Promise<void>;
+  hasMore: boolean;
 }
 
 const SportContext = createContext<SportContextType | undefined>(undefined);
@@ -18,16 +20,28 @@ export function SportProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const [hasFetched, setHasFetched] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const fetchingRef = React.useRef(false);
 
-  const fetchSports = useCallback(async () => {
+  const fetchSports = useCallback(async (pageNum: number = 1) => {
     if (!user || fetchingRef.current) return;
     
     fetchingRef.current = true;
     setLoading(true);
     try {
-      const response = await apiService.listSports({ pageSize: 100 });
-      setSports(response.items);
+      const response = await apiService.listSports({ page: pageNum, pageSize: 20 });
+      if (pageNum === 1) {
+        setSports(response.items);
+      } else {
+        setSports(prev => {
+          const existingIds = new Set(prev.map(s => s.id));
+          const newItems = response.items.filter(s => !existingIds.has(s.id));
+          return [...prev, ...newItems];
+        });
+      }
+      setPage(response.page);
+      setTotalPages(response.totalPages);
       setError(null);
       setHasFetched(true);
     } catch (err) {
@@ -38,6 +52,12 @@ export function SportProvider({ children }: { children: React.ReactNode }) {
       fetchingRef.current = false;
     }
   }, [user]);
+
+  const loadMoreSports = useCallback(async () => {
+    if (page < totalPages && !loading) {
+      await fetchSports(page + 1);
+    }
+  }, [page, totalPages, loading, fetchSports]);
 
   useEffect(() => {
     if (user && !hasFetched) {
@@ -54,7 +74,9 @@ export function SportProvider({ children }: { children: React.ReactNode }) {
       sports, 
       loading, 
       error, 
-      refreshSports: fetchSports 
+      refreshSports: () => fetchSports(1),
+      loadMoreSports,
+      hasMore: page < totalPages
     }}>
       {children}
     </SportContext.Provider>

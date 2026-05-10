@@ -9,11 +9,13 @@ import { Card } from '../components/Card';
 import { DatePicker } from '../components/DatePicker';
 import { ImageCropperModal } from '../components/ImageCropperModal';
 import { getCroppedImg } from '../utils/imageUtils';
-import { Camera, X } from 'lucide-react';
+import { Camera, X, User2, Search, ChevronDown, Check } from 'lucide-react';
+import { SearchableSelect } from '../components/SearchableSelect';
 import './AddAthlete.css';
 
 export default function AddAthlete() {
   const { addAthlete, updateAthlete, getAthleteById } = useAthletes();
+  const { sports, loadMoreSports } = useSports();
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId: string }>();
   const isEditing = !!athleteId;
@@ -31,7 +33,6 @@ export default function AddAthlete() {
     ethnicity: ApiTypes.Ethnicity.Caucasian,
   });
 
-  const { sports } = useSports();
   const [profilePhoto, setProfilePhoto] = useState<ApiTypes.ProfilePhotoUpload | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
@@ -222,18 +223,22 @@ export default function AddAthlete() {
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="sportId">Esporte</label>
-              <select 
-                id="sportId" 
-                name="sportId" 
-                required 
+              <SearchableSelect 
+                options={sports.map(s => ({ id: s.id, name: s.name }))}
                 value={formData.sportId}
-                onChange={handleChange}
-              >
-                <option value="" disabled>Selecione um esporte</option>
-                {sports.map(sport => (
-                  <option key={sport.id} value={sport.id}>{sport.name}</option>
-                ))}
-              </select>
+                onChange={(id) => {
+                  const selectedSport = sports.find(s => s.id === id);
+                  setFormData(prev => ({
+                    ...prev,
+                    sportId: id,
+                    sportName: selectedSport?.name || '',
+                    sector: '', 
+                    category: selectedSport?.categories[0] || prev.category
+                  }));
+                }}
+                onLoadMore={loadMoreSports}
+                placeholder="Selecione um esporte"
+              />
             </div>
 
             <div className="form-group">

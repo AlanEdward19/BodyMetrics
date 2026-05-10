@@ -14,6 +14,7 @@ interface SearchableSelectProps {
   placeholder?: string;
   noOptionsMessage?: string;
   onSearch?: (term: string) => void;
+  onLoadMore?: () => void;
 }
 
 export function SearchableSelect({ 
@@ -22,13 +23,15 @@ export function SearchableSelect({
   onChange, 
   placeholder = 'Selecionar...', 
   noOptionsMessage = 'Nenhum resultado encontrado',
-  onSearch
+  onSearch,
+  onLoadMore
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [lastSearchedTerm, setLastSearchedTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find(opt => opt.id === value);
 
@@ -65,6 +68,16 @@ export function SearchableSelect({
     }
   }, [searchTerm, filteredOptions.length, onSearch, lastSearchedTerm]);
 
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!onLoadMore) return;
+    
+    const target = e.currentTarget;
+    // Se o usuário scrollou até 80% do conteúdo, carrega mais
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight * 0.8) {
+      onLoadMore();
+    }
+  };
+
   const handleSelect = (optionId: string) => {
     onChange(optionId);
     setIsOpen(false);
@@ -100,7 +113,7 @@ export function SearchableSelect({
               onClick={(e) => e.stopPropagation()}
             />
           </div>
-          <div className="dropdown-options-list">
+          <div className="dropdown-options-list" ref={listRef} onScroll={handleScroll}>
             <div
               className={`dropdown-option ${value === '' ? 'selected' : ''}`}
               onClick={() => handleSelect('')}
