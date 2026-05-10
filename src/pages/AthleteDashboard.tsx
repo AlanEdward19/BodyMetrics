@@ -683,6 +683,7 @@ export default function AthleteDashboard() {
       <ImportExcelModal 
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+        onSuccess={refreshAthletes}
       />
 
       {isDeleteModalOpen && (

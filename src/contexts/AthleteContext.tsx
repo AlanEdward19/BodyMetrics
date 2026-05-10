@@ -140,7 +140,6 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const result = await apiService.importAthletes(sportName, file);
-      await fetchAthletes(1);
       return result;
     } catch (err) {
       console.error('Erro ao importar atletas:', err);
