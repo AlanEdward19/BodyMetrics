@@ -222,11 +222,16 @@ export function ReportModal({
   const currentAge = calculateAge(athlete.birthDate, currentEval?.date);
 
 
+  const formatNumber = (val: any) => {
+    if (val === null || val === undefined || isNaN(val) || typeof val !== 'number') return '-';
+    return val.toFixed(2).replace('.', ',');
+  };
+
   const getDiff = (cur?: number, cmp?: number, unit?: string) => {
-    if (cur === undefined || cmp === undefined) return '-';
+    if (cur === undefined || cur === null || cmp === undefined || cmp === null) return '-';
     const diff = cur - cmp;
     const sign = diff > 0 ? '+' : '';
-    return `${sign}${diff.toFixed(2).replace('.', ',')} ${unit || ''}`.trim();
+    return `${sign}${formatNumber(diff)} ${unit || ''}`.trim();
   };
 
   const renderTableSection = (title: string, items: { label: string, cur?: number, cmp?: number, unit: string }[]) => (
@@ -249,8 +254,8 @@ export function ReportModal({
               {items.map((item, idx) => (
                 <tr key={idx}>
                   <td>{item.label}</td>
-                  <td>{item.cur !== undefined ? `${item.cur.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
-                  <td>{item.cmp !== undefined ? `${item.cmp.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
+                  <td>{formatNumber(item.cur)} {item.cur != null ? item.unit : ''}</td>
+                  <td>{formatNumber(item.cmp)} {item.cmp != null ? item.unit : ''}</td>
                   <td>{getDiff(item.cur, item.cmp, item.unit)}</td>
                 </tr>
               ))}
@@ -529,7 +534,6 @@ export function ReportModal({
                             const curVal = currentMetrics[m.key];
                             const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
                             const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
-                            const sign = diff > 0 ? '+' : '';
                             const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
                             const TrendIcon = diff > 0 ? ArrowUpRight : ArrowDownRight;
                             
@@ -543,15 +547,15 @@ export function ReportModal({
                                 </div>
                                 
                                 <div className="report-metric-body">
-                                  <span className="report-metric-value">{curVal.toFixed(2).replace('.', ',')}</span>
+                                  <span className="report-metric-value">{formatNumber(curVal)}</span>
                                   <span className="report-metric-unit">{m.unit}</span>
                                 </div>
 
                                 <div className="report-metric-footer">
-                                  {compareMetrics && diff !== 0 ? (
+                                  {compareMetrics && curVal != null && cmpVal != null && diff !== 0 ? (
                                     <span className={`report-metric-trend ${trendClass}`}>
                                       <TrendIcon size={12} />
-                                      {sign}{diff.toFixed(2).replace('.', ',')}
+                                      {formatNumber(diff)}
                                     </span>
                                   ) : <span />}
                                   <span style={{ fontSize: '6pt', color: '#94a3b8' }}>vs. anterior</span>
@@ -587,31 +591,31 @@ export function ReportModal({
                                 <span className="report-metric-label">C/C {item.label} D</span>
                               </div>
                               <div className="report-metric-body">
-                                <span className="report-metric-value">{item.data?.d.toFixed(2).replace('.', ',')}</span>
+                                <span className="report-metric-value">{formatNumber(item.data?.d)}</span>
                                 <span className="report-metric-unit">cm</span>
                               </div>
                               <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Direito</span></div>
                             </div>
-
+                            
                             <div className="report-metric-box">
                               <div className="report-metric-header">
                                 <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
                                 <span className="report-metric-label">C/C {item.label} E</span>
                               </div>
                               <div className="report-metric-body">
-                                <span className="report-metric-value">{item.data?.e.toFixed(2).replace('.', ',')}</span>
+                                <span className="report-metric-value">{formatNumber(item.data?.e)}</span>
                                 <span className="report-metric-unit">cm</span>
                               </div>
                               <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Esquerdo</span></div>
                             </div>
-
+                            
                             <div className="report-metric-box">
                               <div className="report-metric-header">
                                 <div className="report-metric-icon-wrapper"><Activity size={14} /></div>
                                 <span className="report-metric-label">Diferença D/E</span>
                               </div>
                               <div className="report-metric-body">
-                                <span className="report-metric-value">{item.data?.d > item.data?.e ? '+' : ''}{item.data?.diff.toFixed(2).replace('.', ',')}</span>
+                                <span className="report-metric-value">{(item.data?.d ?? 0) > (item.data?.e ?? 0) ? '+' : ''}{formatNumber(item.data?.diff)}</span>
                                 <span className="report-metric-unit">cm</span>
                               </div>
                               <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Assimetria</span></div>
@@ -645,31 +649,31 @@ export function ReportModal({
                                 <span className="report-metric-label">Média {item.titleMedia}</span>
                               </div>
                               <div className="report-metric-body">
-                                <span className="report-metric-value">{item.media?.toFixed(2).replace('.', ',')}</span>
+                                <span className="report-metric-value">{formatNumber(item.media)}</span>
                                 <span className="report-metric-unit">cm</span>
                               </div>
                               <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Média Corrigida</span></div>
                             </div>
-
+                            
                             <div className="report-metric-box">
                               <div className="report-metric-header">
                                 <div className="report-metric-icon-wrapper"><Shield size={14} /></div>
                                 <span className="report-metric-label">Osso {item.titleOsso}</span>
                               </div>
                               <div className="report-metric-body">
-                                <span className="report-metric-value">{item.osso > 0 ? item.osso.toFixed(2).replace('.', ',') : '-'}</span>
+                                <span className="report-metric-value">{formatNumber(item.osso)}</span>
                                 <span className="report-metric-unit">cm</span>
                               </div>
                               <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Diâmetro Ósseo</span></div>
                             </div>
-
+                            
                             <div className="report-metric-box">
                               <div className="report-metric-header">
                                 <div className="report-metric-icon-wrapper"><Activity size={14} /></div>
                                 <span className="report-metric-label">Relação</span>
                               </div>
                               <div className="report-metric-body">
-                                <span className="report-metric-value">{item.relacao > 0 ? item.relacao.toFixed(2).replace('.', ',') : '-'}</span>
+                                <span className="report-metric-value">{formatNumber(item.relacao)}</span>
                                 <span className="report-metric-unit">índice</span>
                               </div>
                               <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Índice Cine.</span></div>

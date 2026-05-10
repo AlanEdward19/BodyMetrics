@@ -199,8 +199,13 @@ export default function AthleteDashboard() {
   const currentMetrics = calculateMetrics(currentEval);
   const compareMetrics = calculateMetrics(compareEval);
 
-  const getTrendUi = (currentVal: number, compareVal: number | undefined, inverseGood = false) => {
-    if (compareVal === undefined || compareVal === null) return <span className="trend-neutral">-</span>;
+  const formatNumber = (val: any) => {
+    if (val === null || val === undefined || isNaN(val) || typeof val !== 'number') return '-';
+    return val.toFixed(2).replace('.', ',');
+  };
+
+  const getTrendUi = (currentVal: number | null | undefined, compareVal: number | null | undefined, inverseGood = false) => {
+    if (compareVal === undefined || compareVal === null || currentVal === undefined || currentVal === null) return <span className="trend-neutral">-</span>;
     const diff = currentVal - compareVal;
     if (diff === 0) return <span className="trend-neutral"><Minus size={16} /> 0</span>;
 
@@ -213,7 +218,7 @@ export default function AthleteDashboard() {
     return (
       <span className={className}>
         <Icon size={16} />
-        {sign}{diff.toFixed(2).replace('.', ',')}
+        {sign}{formatNumber(diff)}
       </span>
     );
   };
@@ -229,19 +234,19 @@ export default function AthleteDashboard() {
           <MetricCard
             icon={<Ruler size={24} />}
             title={`C/C ${title} D`}
-            value={data.d.toFixed(2).replace('.', ',')}
+            value={formatNumber(data.d)}
             unit="cm"
           />
           <MetricCard
             icon={<Ruler size={24} />}
             title={`C/C ${title} E`}
-            value={data.e.toFixed(2).replace('.', ',')}
+            value={formatNumber(data.e)}
             unit="cm"
           />
           <MetricCard
             icon={<Activity size={24} />}
             title="DIF D/E"
-            value={`${diffSign}${data.diff.toFixed(2).replace('.', ',')}`}
+            value={`${diffSign}${formatNumber(data.diff)}`}
             unit="cm"
           />
         </div>
@@ -266,19 +271,19 @@ export default function AthleteDashboard() {
         <MetricCard
           icon={<Ruler size={24} />}
           title={`Média ${titleObj}`}
-          value={media.toFixed(2).replace('.', ',')}
+          value={formatNumber(media)}
           unit="cm"
         />
         <MetricCard
           icon={<Shield size={24} />}
           title={`Osso ${titleOsso}`}
-          value={osso > 0 ? osso.toFixed(2).replace('.', ',') : '-'}
+          value={formatNumber(osso)}
           unit="cm"
         />
         <MetricCard
           icon={<Activity size={24} />}
           title="Relação"
-          value={relacao > 0 ? relacao.toFixed(2).replace('.', ',') : '-'}
+          value={formatNumber(relacao)}
           unit="índice"
         />
       </div>
@@ -308,10 +313,10 @@ export default function AthleteDashboard() {
           {items.map((item, idx) => (
             <tr key={idx}>
               <td>{item.label}</td>
-              <td>{item.cur !== undefined ? `${item.cur.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>
-              {compareEval && <td>{item.cmp !== undefined ? `${item.cmp.toFixed(2).replace('.', ',')} ${item.unit}` : '-'}</td>}
+              <td>{formatNumber(item.cur)} {item.cur != null ? item.unit : ''}</td>
+              {compareEval && <td>{formatNumber(item.cmp)} {item.cmp != null ? item.unit : ''}</td>}
               {compareEval && (
-                <td>{getTrendUi(item.cur || 0, item.cmp, item.inverseGood)}</td>
+                <td>{getTrendUi(item.cur, item.cmp, item.inverseGood)}</td>
               )}
             </tr>
           ))}
@@ -527,11 +532,11 @@ export default function AthleteDashboard() {
                         <MetricCard
                           icon={<Scale size={24} />}
                           title="PESO CORPORAL"
-                          value={currentMetrics.peso.toFixed(2).replace('.', ',')}
+                          value={formatNumber(currentMetrics.peso)}
                           unit="kg"
                           trend={compareEval ? {
                             direction: currentMetrics.peso > (compareMetrics || currentMetrics).peso ? 'up' : currentMetrics.peso < (compareMetrics || currentMetrics).peso ? 'down' : 'neutral',
-                            value: `${Math.abs(currentMetrics.peso - (compareMetrics || currentMetrics).peso).toFixed(2).replace('.', ',')} kg`,
+                            value: `${formatNumber(Math.abs(currentMetrics.peso - (compareMetrics || currentMetrics).peso))} kg`,
                             text: 'vs. comparação',
                             isGood: currentMetrics.peso < (compareMetrics || currentMetrics).peso
                           } : undefined}
@@ -539,17 +544,17 @@ export default function AthleteDashboard() {
                         <MetricCard
                           icon={<Ruler size={24} />}
                           title="ALTURA"
-                          value={currentMetrics.altura.toFixed(2).replace('.', ',')}
+                          value={formatNumber(currentMetrics.altura)}
                           unit="cm"
                         />
                         <MetricCard
                           icon={<Percent size={24} />}
                           title="% GORDURA"
-                          value={currentMetrics.percentualGordura.toFixed(2).replace('.', ',')}
+                          value={formatNumber(currentMetrics.percentualGordura)}
                           unit="%"
                           trend={compareEval ? {
                             direction: currentMetrics.percentualGordura > (compareMetrics || currentMetrics).percentualGordura ? 'up' : currentMetrics.percentualGordura < (compareMetrics || currentMetrics).percentualGordura ? 'down' : 'neutral',
-                            value: `${Math.abs(currentMetrics.percentualGordura - (compareMetrics || currentMetrics).percentualGordura).toFixed(2).replace('.', ',')} %`,
+                            value: `${formatNumber(Math.abs(currentMetrics.percentualGordura - (compareMetrics || currentMetrics).percentualGordura))} %`,
                             text: 'vs. comparação',
                             isGood: currentMetrics.percentualGordura < (compareMetrics || currentMetrics).percentualGordura
                           } : undefined}
@@ -557,11 +562,11 @@ export default function AthleteDashboard() {
                         <MetricCard
                           icon={<Activity size={24} />}
                           title="SOMA DAS DOBRAS"
-                          value={currentMetrics.sumDobras.toFixed(2).replace('.', ',')}
+                          value={formatNumber(currentMetrics.sumDobras)}
                           unit="mm"
                           trend={compareEval ? {
                             direction: currentMetrics.sumDobras > (compareMetrics || currentMetrics).sumDobras ? 'up' : currentMetrics.sumDobras < (compareMetrics || currentMetrics).sumDobras ? 'down' : 'neutral',
-                            value: `${Math.abs(currentMetrics.sumDobras - (compareMetrics || currentMetrics).sumDobras).toFixed(2).replace('.', ',')} mm`,
+                            value: `${formatNumber(Math.abs(currentMetrics.sumDobras - (compareMetrics || currentMetrics).sumDobras))} mm`,
                             text: 'vs. comparação',
                             isGood: currentMetrics.sumDobras < (compareMetrics || currentMetrics).sumDobras
                           } : undefined}
@@ -569,11 +574,11 @@ export default function AthleteDashboard() {
                         <MetricCard
                           icon={<Shield size={24} />}
                           title="MASSA GORDA"
-                          value={currentMetrics.gordura.toFixed(2).replace('.', ',')}
+                          value={formatNumber(currentMetrics.gordura)}
                           unit="kg"
                           trend={compareEval ? {
                             direction: currentMetrics.gordura > (compareMetrics || currentMetrics).gordura ? 'up' : currentMetrics.gordura < (compareMetrics || currentMetrics).gordura ? 'down' : 'neutral',
-                            value: `${Math.abs(currentMetrics.gordura - (compareMetrics || currentMetrics).gordura).toFixed(2).replace('.', ',')} kg`,
+                            value: `${formatNumber(Math.abs(currentMetrics.gordura - (compareMetrics || currentMetrics).gordura))} kg`,
                             text: 'vs. comparação',
                             isGood: currentMetrics.gordura < (compareMetrics || currentMetrics).gordura
                           } : undefined}
@@ -581,11 +586,11 @@ export default function AthleteDashboard() {
                         <MetricCard
                           icon={<Dumbbell size={24} />}
                           title="MASSA LIVRE DE GORDURA"
-                          value={currentMetrics.mlg.toFixed(2).replace('.', ',')}
+                          value={formatNumber(currentMetrics.mlg)}
                           unit="kg"
                           trend={compareEval ? {
                             direction: currentMetrics.mlg > (compareMetrics || currentMetrics).mlg ? 'up' : currentMetrics.mlg < (compareMetrics || currentMetrics).mlg ? 'down' : 'neutral',
-                            value: `${Math.abs(currentMetrics.mlg - (compareMetrics || currentMetrics).mlg).toFixed(2).replace('.', ',')} kg`,
+                            value: `${formatNumber(Math.abs(currentMetrics.mlg - (compareMetrics || currentMetrics).mlg))} kg`,
                             text: 'vs. comparação',
                             isGood: currentMetrics.mlg > (compareMetrics || currentMetrics).mlg
                           } : undefined}
@@ -593,17 +598,17 @@ export default function AthleteDashboard() {
                         <MetricCard
                           icon={<Shield size={24} />}
                           title="MASSA ÓSSEA"
-                          value={currentMetrics.ossos.toFixed(2).replace('.', ',')}
+                          value={formatNumber(currentMetrics.ossos)}
                           unit="kg"
                         />
                         <MetricCard
                           icon={<Dumbbell size={24} />}
                           title="MASSA MUSCULAR"
-                          value={currentMetrics.massaMuscular.toFixed(2).replace('.', ',')}
+                          value={formatNumber(currentMetrics.massaMuscular)}
                           unit="kg"
                           trend={compareEval ? {
                             direction: currentMetrics.massaMuscular > (compareMetrics || currentMetrics).massaMuscular ? 'up' : currentMetrics.massaMuscular < (compareMetrics || currentMetrics).massaMuscular ? 'down' : 'neutral',
-                            value: `${Math.abs(currentMetrics.massaMuscular - (compareMetrics || currentMetrics).massaMuscular).toFixed(2).replace('.', ',')} kg`,
+                            value: `${formatNumber(Math.abs(currentMetrics.massaMuscular - (compareMetrics || currentMetrics).massaMuscular))} kg`,
                             text: 'vs. comparação',
                             isGood: currentMetrics.massaMuscular > (compareMetrics || currentMetrics).massaMuscular
                           } : undefined}
