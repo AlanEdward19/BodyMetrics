@@ -91,6 +91,19 @@ class ApiService {
   async deleteAthlete(id: string): Promise<void> {
     await this.api.delete(`/api/athletes/${id}`);
   }
+
+  async importAthletes(sportName: string, file: File): Promise<Types.AthleteSpreadsheetImportViewModel> {
+    const formData = new FormData();
+    formData.append('SportName', sportName);
+    formData.append('File', file);
+
+    const response = await this.api.post<Types.AthleteSpreadsheetImportViewModel>('/api/athletes/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

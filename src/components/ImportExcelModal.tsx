@@ -1,11 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
-import { X, Upload, FileSpreadsheet, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Upload, FileSpreadsheet, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { useAthletes } from '../hooks/useAthletes';
-import { useAssessments } from '../hooks/useAssessments';
-import type { Athlete } from '../types/athlete';
-import type { Assessment } from '../types/assessment';
-import * as ApiTypes from '../types/api';
+import type { AthleteSpreadsheetImportViewModel } from '../types/api';
 import { useSports } from '../contexts/SportContext';
 import './ImportExcelModal.css';
 
@@ -16,30 +12,27 @@ interface ImportExcelModalProps {
 }
 
 export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { athletes, addAthlete } = useAthletes();
+  const { importAthletes } = useAthletes();
   const { sports } = useSports();
-  const { assessments: existingAssessments, addAssessment, updateAssessment } = useAssessments();
   
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
-  
-  const [parsedData, setParsedData] = useState<{
-    athletes: Map<string, Omit<Athlete, 'id'>>;
-    assessments: { athleteName: string, data: Omit<Assessment, 'id' | 'athleteId'> }[];
-    rawRows: any[];
-    headers: string[];
-  } | null>(null);
+  const [sportName, setSportName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [importResult, setImportResult] = useState<AthleteSpreadsheetImportViewModel | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isOpen) {
-      setParsedData(null);
+      setSelectedFile(null);
       setError(null);
       setSuccess(false);
       setIsProcessing(false);
+      setSportName('');
+      setImportResult(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -48,205 +41,9 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
 
   if (!isOpen) return null;
 
-  const num = (val: any) => {
-    if (typeof val === 'number') return val;
-    if (typeof val === 'string') {
-      const parsed = parseFloat(val.replace(',', '.'));
-      return isNaN(parsed) ? 0 : parsed;
-    }
-    return 0;
-  };
-
-  const excelDateToJSDate = (serial: any) => {
-    if (!serial) return '';
-    if (serial instanceof Date) {
-      if (isNaN(serial.getTime())) return '';
-      return serial.toISOString().split('T')[0];
-    }
-    if (typeof serial === 'number') {
-      // Excel serial date (days since 1899-12-30)
-      const utc_days = Math.floor(serial - 25569);
-      const utc_value = utc_days * 86400;
-      const date_info = new Date(utc_value * 1000);
-      if (isNaN(date_info.getTime())) return '';
-      return date_info.toISOString().split('T')[0];
-    }
-    if (typeof serial === 'string') {
-      if (serial.includes('/')) {
-        const parts = serial.split('/');
-        if (parts.length === 3) {
-          // Assumes DD/MM/YYYY or similar based on parsing possibilities, try DD/MM/YYYY
-          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-        }
-      }
-      const d = new Date(serial);
-      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
-    }
-    return '';
-  };
-
   const processFile = (file: File) => {
-    setIsProcessing(true);
+    setSelectedFile(file);
     setError(null);
-    setSuccess(false);
-
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      try {
-        const data = e.target?.result;
-        const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
-        
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        // Defval: '' para preencher colunas vazias, facilitando leitura e nao omitindo chaves
-        const rows = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '' });
-
-        if (rows.length === 0) {
-          throw new Error("O arquivo parece estar vazio.");
-        }
-
-        const normalizeStr = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\s.]+/g, "");
-        
-        const getRowVal = (row: any, ...possibleKeys: string[]) => {
-          // 1. Tentar match exato primeiro (evita falsos positivos onde Pantu D e Pantu. D convergem pra pantud no fuzzy)
-          for (const targetKey of possibleKeys) {
-            if (targetKey in row) {
-              return row[targetKey];
-            }
-          }
-          
-          // 2. Fallback de Fuzzy Match apenas se a coluna exata nao existir
-          const rowKeys = Object.keys(row);
-          for (const targetKey of possibleKeys) {
-            const normTarget = normalizeStr(targetKey);
-            const foundKey = rowKeys.find(rk => normalizeStr(rk) === normTarget);
-            if (foundKey !== undefined) return row[foundKey];
-          }
-          return ''; 
-        };
-
-        const normalizeGender = (val: string): string => {
-          const v = val.trim().toLowerCase();
-          if (v === 'h' || v === 'm') return 'Masculino';
-          if (v === 'f') return 'Feminino';
-          if (v === 'masculino') return 'Masculino';
-          if (v === 'feminino') return 'Feminino';
-          return val.trim();
-        };
-
-        const normalizeRace = (val: string): string => {
-          const v = val.trim().toLowerCase();
-          if (v === 'b') return 'Branco';
-          if (v === 'n') return 'Negro';
-          if (v === 'a') return 'Asiático';
-          return val.trim();
-        };
-
-        const athletesMap = new Map<string, Omit<Athlete, 'id'>>();
-        const assessmentsList: { athleteName: string, data: Omit<Assessment, 'id' | 'athleteId'> }[] = [];
-
-        rows.forEach((row) => {
-          const name = String(row['Nome'] || '').trim();
-          if (!name) return; // Ignora linhas sem nome
-
-          if (!athletesMap.has(name)) {
-            let obs = '';
-            const setor = String(row['Setor'] || '').trim();
-            const pos = String(row['Posição'] || '').trim();
-            if (setor && pos) obs = `${setor} - ${pos}`;
-            else if (setor) obs = setor;
-            else if (pos) obs = pos;
-
-            let phase = String(row['Fase'] || '').trim();
-            const phaseLower = phase.toLowerCase();
-            if (phaseLower === 'competitiva') {
-              phase = 'Competição';
-            } else if (phaseLower === 'pré-competitiva' || phaseLower === 'pre-competitiva') {
-              phase = 'Pré-temporada';
-            }
-
-            athletesMap.set(name, {
-              name: name,
-              gender: normalizeGender(String(row['Sexo'] || '')),
-              race: normalizeRace(String(row['Raça'] || '')),
-              category: String(row['Categoria'] || ''),
-              birthDate: excelDateToJSDate(row['Nascimento']),
-              competitivePhase: phase,
-              sport: 'Futebol',
-              sportObservation: obs,
-            });
-          }
-
-          // Monta assessment
-          const evaluationDate = excelDateToJSDate(row['Data avaliação']);
-          // Pula se por acaso nao tiver data (embora pudesse criar sem, melhor requerer data mínima, ou deixar hj)
-          
-          assessmentsList.push({
-            athleteName: name,
-            data: {
-              date: evaluationDate || new Date().toISOString().split('T')[0],
-              weight: num(row['Peso']),
-              height: num(row['Altura']),
-              sittingHeight: num(row['Altura sentado']),
-              skinfolds: {
-                tricepsRight: num(getRowVal(row, 'Tricep D.', 'Triceps D', 'Tríceps Dir')),
-                tricepsLeft: num(getRowVal(row, 'Tricep E.', 'Triceps E', 'Tríceps Esq')),
-                subscapular: num(getRowVal(row, 'Sub esc', 'Subescapular')),
-                chest: num(getRowVal(row, 'Torax', 'Tórax')),
-                midaxillary: num(getRowVal(row, 'Sub. Axi', 'Sub. Axilar', 'Subaxilar')),
-                suprailiac: num(getRowVal(row, 'Supra. lli', 'Supra. ili', 'Supra-ilíaca', 'Supra iliaca')),
-                abdominal: num(getRowVal(row, 'abd', 'Abdominal')),
-                thighRight: num(getRowVal(row, 'Coxa D', 'D. Coxa D', 'Coxa Dir', 'Dobra Coxa Direita')),
-                thighLeft: num(getRowVal(row, 'Coxa E', 'D. Coxa E', 'Coxa Esq', 'Dobra Coxa Esquerda')),
-                calfRight: num(getRowVal(row, 'Pantu D', 'D. Pantu D', 'Dobra Panturrilha Dir')),
-                calfLeft: num(getRowVal(row, 'Pantu E', 'D. Pantu E', 'Dobra Panturrilha Esq'))
-              },
-              circumferences: {
-                shoulder: num(getRowVal(row, 'C. ombro', 'Ombro', 'C. Ombro')),
-                chest: num(getRowVal(row, 'C.Peitoral', 'Peitoral', 'C. Peitoral')),
-                armRight: num(getRowVal(row, 'C.Braço D.', 'C. Braço Dir')),
-                armLeft: num(getRowVal(row, 'C.Braço E.', 'C. Braço Esq')),
-                waist: num(getRowVal(row, 'C.Cintura', 'Cintura', 'C. Cintura')),
-                hip: num(getRowVal(row, 'C.Quadril', 'Quadril', 'C. Quadril')),
-                thighMidRight: num(getRowVal(row, 'C. Medial D', 'C. Coxa Dir')),
-                thighMidLeft: num(getRowVal(row, 'C.Medial E', 'C. Coxa Esq')),
-                calfRight: num(getRowVal(row, 'Pantu. D.', 'C. Pantu D', 'C. Panturrilha Dir')),
-                calfLeft: num(getRowVal(row, 'Pantu. E.', 'C. Pantu E', 'C. Panturrilha Esq')),
-                wristRight: num(getRowVal(row, 'D.Punho', 'D. Punho', 'Punho')),
-                kneeRight: num(getRowVal(row, 'D.Joelho', 'D. Joelho', 'Joelho')),
-                ankle: num(getRowVal(row, 'D.Tornozelo', 'D. Tornozelo', 'Tornozelo'))
-              }
-            }
-          });
-        });
-
-        if (assessmentsList.length === 0) {
-          throw new Error("Não foi possível encontrar dados válidos (A coluna 'Nome' é obrigatória).");
-        }
-
-        setParsedData({
-          athletes: athletesMap,
-          assessments: assessmentsList,
-          rawRows: rows,
-          headers: Object.keys(rows[0] || {})
-        });
-
-      } catch (err: any) {
-        setError(err.message || "Erro ao processar arquivo. Verifique se o template está correto.");
-        setParsedData(null);
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-
-    reader.onerror = () => {
-      setError("Erro ao ler o arquivo.");
-      setIsProcessing(false);
-    };
-
-    reader.readAsBinaryString(file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -278,95 +75,39 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
   };
 
   const handleImport = async () => {
-    if (!parsedData) return;
+    if (!selectedFile || !sportName.trim()) {
+      setError("Por favor, selecione um esporte e um arquivo.");
+      return;
+    }
     setIsProcessing(true);
     setError(null);
 
     try {
-      // 1. Resolve Atletas
-      const nameToIdMap = new Map<string, string>();
-      let firstAthleteId: string | undefined;
-
-      // Pegamos o primeiro esporte como fallback ou um que contenha "Futebol"
-      const defaultSport = sports.find(s => s.name.toLowerCase().includes('futebol')) || sports[0];
-
-      if (!defaultSport) {
-        throw new Error("Nenhum esporte cadastrado no sistema. Cadastre um esporte antes de importar.");
-      }
-
-      for (const [name, athleteData] of parsedData.athletes.entries()) {
-        const existingAthlete = athletes.find(a => a.fullName.toLowerCase() === name.toLowerCase());
-        
-        let athleteId = '';
-        if (existingAthlete) {
-          athleteId = existingAthlete.id;
-        } else {
-          // Mapear Omit<Athlete, 'id'> para CreateAthleteCommand
-          const command: ApiTypes.CreateAthleteCommand = {
-            fullName: athleteData.name,
-            sportId: defaultSport.id,
-            sector: athleteData.sportObservation || '',
-            category: athleteData.category || 'Profissional',
-            birthDate: athleteData.birthDate || new Date().toISOString().split('T')[0],
-            phase: athleteData.competitivePhase.toLowerCase().includes('competi') ? ApiTypes.Phase.Competitive : ApiTypes.Phase.PreSeason,
-            sex: athleteData.gender?.toLowerCase().startsWith('f') ? ApiTypes.Sex.Female : ApiTypes.Sex.Male,
-            ethnicity: athleteData.race?.toLowerCase().startsWith('n') ? ApiTypes.Ethnicity.African : ApiTypes.Ethnicity.Caucasian,
-            physicalAssessments: [],
-            profilePhoto: null
-          };
-          athleteId = await addAthlete(command);
-        }
-
-        if (!firstAthleteId) firstAthleteId = athleteId;
-        nameToIdMap.set(name, athleteId);
-      }
-
-      // 2. Resolve Avaliações
-      parsedData.assessments.forEach(assessmentItem => {
-        const athleteId = nameToIdMap.get(assessmentItem.athleteName);
-        if (athleteId) {
-          const assessmentDate = assessmentItem.data.date;
-          
-          // Busca avaliação existente para o mesmo atleta na mesma data
-          const existingEval = existingAssessments.find(
-            ea => ea.athleteId === athleteId && ea.date === assessmentDate
-          );
-
-          if (existingEval) {
-            // Se já existe, atualiza
-            updateAssessment(existingEval.id, assessmentItem.data);
-          } else {
-            // Se não existe, cria nova
-            addAssessment({
-              ...assessmentItem.data,
-              athleteId
-            });
-          }
-        }
-      });
-
+      const result = await importAthletes(sportName.trim(), selectedFile);
+      setImportResult(result);
       setSuccess(true);
       setTimeout(() => {
         onClose();
-        if (onSuccess) onSuccess(firstAthleteId);
-      }, 1500);
+        if (onSuccess) onSuccess();
+      }, 3000);
 
-    } catch (err) {
-      setError("Ocorreu um erro ao salvar os dados.");
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.response?.data?.title || "Ocorreu um erro ao salvar os dados.");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const cancelAndReset = () => {
-    setParsedData(null);
+    setSelectedFile(null);
     setError(null);
+    setSportName('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
     <div className="import-modal-overlay" onClick={onClose}>
-      <div className={`import-modal-content ${parsedData ? 'modal-expanded' : ''}`} onClick={(e) => e.stopPropagation()}>
+      <div className="import-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="import-modal-header">
           <h2 className="import-modal-title">
             <FileSpreadsheet className="text-primary" /> 
@@ -378,26 +119,72 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
         </div>
 
         {error && (
-          <div className="import-error-banner">
+          <div className="import-error-banner" style={{ margin: '0 1.5rem 1rem' }}>
             <AlertCircle size={20} />
             {error}
           </div>
         )}
 
         {success ? (
-          <div className="import-summary" style={{ textAlign: 'center', padding: '3rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-            <Loader2 size={40} className="import-spinner" style={{ color: 'var(--color-primary)', animation: 'spin 1s linear infinite' }} />
-            <h3 style={{ color: 'var(--color-text-main)', margin: 0, fontSize: '1.25rem' }}>Importação Concluída!</h3>
-            <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>Carregando dashboard do atleta...</p>
+          <div className="import-summary" style={{ textAlign: 'center', padding: '3rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="success-icon-container" style={{ backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '50%', color: '#15803d' }}>
+              <CheckCircle2 size={48} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <h3 style={{ color: 'var(--color-text-main)', margin: 0, fontSize: '1.5rem' }}>Importação Finalizada!</h3>
+              <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>A planilha foi processada com sucesso.</p>
+            </div>
+            
+            {importResult && (
+              <div className="import-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', width: '100%', maxWidth: '400px' }}>
+                <div className="stat-item" style={{ backgroundColor: 'var(--color-bg-page)', padding: '1rem', borderRadius: '0.75rem', textAlign: 'center' }}>
+                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>{importResult.createdAthletes}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Atletas Criados</span>
+                </div>
+                <div className="stat-item" style={{ backgroundColor: 'var(--color-bg-page)', padding: '1rem', borderRadius: '0.75rem', textAlign: 'center' }}>
+                  <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>{importResult.importedAssessments}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Avaliações</span>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+              <Loader2 size={16} className="spinner" />
+              <span>Redirecionando para o dashboard...</span>
+            </div>
           </div>
         ) : (
-          !parsedData ? (
+          <div className="import-flow-container">
+            <div className="import-form-section" style={{ padding: '0 1.5rem 1.5rem' }}>
+              <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
+                Esporte
+              </label>
+              <div className="sport-input-group" style={{ position: 'relative' }}>
+                <input 
+                  type="text"
+                  list="sports-list"
+                  className="form-input"
+                  placeholder="Selecione ou digite o nome do esporte..."
+                  value={sportName}
+                  onChange={(e) => setSportName(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-page)' }}
+                />
+                <datalist id="sports-list">
+                  {sports.map(s => <option key={s.id} value={s.name} />)}
+                </datalist>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.4rem' }}>
+                  Você pode escolher um esporte existente ou cadastrar um novo apenas digitando o nome.
+                </p>
+              </div>
+            </div>
+
             <div 
-              className={`import-dropzone ${isDragging ? 'drag-active' : ''}`}
+              className={`import-dropzone ${isDragging ? 'drag-active' : ''} ${selectedFile ? 'file-selected' : ''}`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => !isProcessing && fileInputRef.current?.click()}
+              style={{ margin: '0 1.5rem 1.5rem', cursor: isProcessing ? 'not-allowed' : 'pointer' }}
             >
               <input 
                 type="file" 
@@ -405,93 +192,45 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                 onChange={handleFileChange} 
                 accept=".xlsx, .xls" 
                 style={{ display: 'none' }} 
+                disabled={isProcessing}
               />
               <div className="import-dropzone-icon">
-                {isProcessing ? <Loader2 size={32} className="spinner" /> : <Upload size={32} />}
+                {isProcessing ? (
+                  <Loader2 size={32} className="spinner" />
+                ) : selectedFile ? (
+                  <CheckCircle2 size={32} style={{ color: 'var(--color-primary)' }} />
+                ) : (
+                  <Upload size={32} />
+                )}
               </div>
               <p className="import-dropzone-text">
-                {isProcessing ? 'Processando arquivo...' : 'Arraste e solte o arquivo Excel aqui'}
+                {isProcessing ? 'Enviando para o servidor...' : selectedFile ? selectedFile.name : 'Arraste e solte o arquivo Excel aqui'}
               </p>
-              {!isProcessing && (
-                <p className="import-dropzone-subtext">ou clique para procurar no seu computador (.xlsx ou .xls)</p>
+              {!isProcessing && !selectedFile && (
+                <p className="import-dropzone-subtext">ou clique para procurar (.xlsx ou .xls)</p>
               )}
             </div>
-          ) : (
-            <>
-              <div className="import-success-layout">
-                {/* Lado Esquerdo - Resumo */}
-                <div className="import-summary-side">
-                  <div className="import-summary">
-                    <h3 className="import-summary-title">Resumo dos Dados Encontrados</h3>
-                    <div className="import-summary-grid">
-                      <div className="import-summary-item" style={{ padding: '1rem' }}>
-                        <span className="import-summary-value">{parsedData.athletes.size}</span>
-                        <span className="import-summary-label">Atleta(s)</span>
-                      </div>
-                      <div className="import-summary-item" style={{ padding: '1rem' }}>
-                        <span className="import-summary-value">{parsedData.assessments.length}</span>
-                        <span className="import-summary-label">Avaliação(ões)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Lado Direito - Tabela */}
-                <div className="import-preview-side">
-                  <div className="import-preview-table-container">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <h4 className="import-preview-title">Pré-visualização</h4>
-                      <span className="import-preview-badge">{parsedData.rawRows.length} linhas lidas</span>
-                    </div>
-                    <div className="import-preview-scroll">
-                      <table className="import-preview-table">
-                        <thead>
-                          <tr>
-                            {parsedData.headers.map((h, i) => <th key={i}>{h}</th>)}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {parsedData.rawRows.slice(0, 10).map((row, rIndex) => (
-                            <tr key={rIndex}>
-                              {parsedData.headers.map((h, cIndex) => {
-                                let cellData = row[h];
-                                if (cellData instanceof Date) {
-                                  cellData = cellData.toLocaleDateString();
-                                }
-                                return <td key={cIndex}>{String(cellData !== undefined && cellData !== null ? cellData : '')}</td>;
-                              })}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    {parsedData.rawRows.length > 10 && (
-                      <p className="import-preview-more">Exibindo as primeiras 10 linhas...</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="import-modal-actions">
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={cancelAndReset}
-                  disabled={isProcessing}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  className="btn btn-primary" 
-                  onClick={handleImport}
-                  disabled={isProcessing}
-                  style={{ minWidth: '200px' }}
-                >
-                  {isProcessing ? <Loader2 size={20} className="spinner" /> : <FileSpreadsheet size={20} />}
-                  Confirmar Importação
-                </button>
-              </div>
-            </>
-          )
+            <div className="import-modal-actions" style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border)', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={selectedFile ? cancelAndReset : onClose}
+                disabled={isProcessing}
+                style={{ padding: '0.75rem 1.5rem' }}
+              >
+                {selectedFile ? 'Trocar Arquivo' : 'Cancelar'}
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleImport}
+                disabled={isProcessing || !selectedFile || !sportName.trim()}
+                style={{ minWidth: '180px', padding: '0.75rem 1.5rem' }}
+              >
+                {isProcessing ? <Loader2 size={20} className="spinner" /> : <FileSpreadsheet size={20} />}
+                {isProcessing ? 'Processando...' : 'Iniciar Importação'}
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

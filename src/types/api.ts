@@ -137,3 +137,15 @@ export interface AthleteViewModel {
   profilePhoto: ProfilePhoto | null;
   physicalAssessments: PhysicalAssessment[];
 }
+export interface AthleteSpreadsheetImportViewModel {
+  sportId: string;
+  sportName: string;
+  processedRows: number;
+  createdAthletes: number;
+  updatedAthletes: number;
+  importedAssessments: number;
+  replacedAssessments: number;
+  addedSportSectors: number;
+  addedSportCategories: number;
+  sportCreated: boolean;
+}

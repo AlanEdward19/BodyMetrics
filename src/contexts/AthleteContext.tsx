@@ -14,6 +14,7 @@ interface AthleteContextType {
   refreshAthletes: () => Promise<void>;
   searchAthletes: (fullName: string) => Promise<void>;
   loadMoreAthletes: () => Promise<void>;
+  importAthletes: (sportName: string, file: File) => Promise<AthleteSpreadsheetImportViewModel>;
   hasMore: boolean;
 }
 
@@ -143,6 +144,21 @@ export function AthleteProvider({ children }: { children: React.ReactNode }) {
           });
         } catch (err) {
           console.error('Erro ao pesquisar atletas:', err);
+        } finally {
+          setLoading(false);
+        }
+      },
+      importAthletes: async (sportName: string, file: File) => {
+        setLoading(true);
+        try {
+          const result = await apiService.importAthletes(sportName, file);
+          // Recarregar a lista de atletas para garantir que temos os dados atualizados
+          await fetchAthletes(1);
+          
+          return result;
+        } catch (err) {
+          console.error('Erro ao importar atletas:', err);
+          throw err;
         } finally {
           setLoading(false);
         }
