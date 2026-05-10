@@ -335,7 +335,7 @@ export default function AthleteDashboard() {
     athletes.map(a => ({ id: a.id, name: a.fullName })), 
   [athletes]);
 
-  if (athletesLoading && athletes.length === 0) {
+  if (athletesLoading && athletes.length === 0 && !isImportModalOpen) {
     return <div className="container" style={{ padding: '2rem' }}>Carregando atletas...</div>;
   }
 
