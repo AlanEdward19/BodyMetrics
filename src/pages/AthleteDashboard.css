@@ -295,7 +295,7 @@
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .athlete-eval-summary {
     flex-direction: row;
     justify-content: space-between;
@@ -305,7 +305,7 @@
     padding-top: 2rem;
     flex-wrap: wrap;
   }
-  
+
   .eval-divider {
     display: none;
   }
@@ -322,11 +322,11 @@
     left: 50%;
     transform: translateX(-50%);
   }
-  
+
   .athlete-badges {
     justify-content: center;
   }
-  
+
   .badge-divider {
     display: none;
   }
@@ -452,7 +452,7 @@
 .tab-btn.active {
   background-color: var(--color-bg-card);
   color: var(--color-primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .tab-content {
@@ -460,8 +460,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Delete Confirmation Modal */
@@ -493,8 +500,15 @@
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .delete-modal-icon {

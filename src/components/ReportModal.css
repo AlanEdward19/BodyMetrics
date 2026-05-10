@@ -636,3 +636,17 @@
   font-size: 0.875rem;
   line-height: 1.5;
 }
+
+/* NA States */
+.report-metric-box.is-na .report-metric-value {
+  color: #94a3b8 !important;
+}
+
+.report-metric-box.is-na .report-metric-icon-wrapper {
+  background-color: #f1f5f9 !important;
+  color: #94a3b8 !important;
+}
+
+.report-table td.is-na {
+  color: #94a3b8 !important;
+}

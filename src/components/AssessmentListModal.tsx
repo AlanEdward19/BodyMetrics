@@ -4,20 +4,24 @@ import { X, Pencil, Trash2, ChevronDown, ChevronUp, Plus, ClipboardList } from '
 import type { Assessment } from '../types/assessment';
 import './AssessmentListModal.css';
 
+import type { Athlete } from '../types/athlete';
+
 interface AssessmentListModalProps {
   isOpen: boolean;
   onClose: () => void;
   assessments: Assessment[];
-  athleteId: string;
-  onDelete: (id: string) => void;
+  athlete: Athlete;
+  onDeleteAssessment: (id: string) => void;
+  onEditAssessment: (id: string) => void;
 }
 
 export function AssessmentListModal({
   isOpen,
   onClose,
   assessments,
-  athleteId,
-  onDelete,
+  athlete,
+  onDeleteAssessment,
+  onEditAssessment,
 }: AssessmentListModalProps) {
   const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -37,7 +41,7 @@ export function AssessmentListModal({
 
   const handleConfirmDelete = () => {
     if (confirmDeleteId) {
-      onDelete(confirmDeleteId);
+      onDeleteAssessment(confirmDeleteId);
       setConfirmDeleteId(null);
       if (expandedId === confirmDeleteId) setExpandedId(null);
     }
@@ -103,7 +107,7 @@ export function AssessmentListModal({
           <div className="al-header-actions">
             <button
               className="btn btn-primary al-new-btn"
-              onClick={() => { onClose(); navigate(`/add-assessment/${athleteId}`); }}
+              onClick={() => { onClose(); navigate(`/add-assessment/${athlete.id}`); }}
             >
               <Plus size={16} /> Nova Avaliação
             </button>
@@ -139,7 +143,7 @@ export function AssessmentListModal({
                       <button
                         className="al-action-btn al-edit"
                         title="Editar"
-                        onClick={() => { onClose(); navigate(`/edit-assessment/${a.id}`); }}
+                        onClick={() => { onClose(); onEditAssessment(a.id); }}
                       >
                         <Pencil size={15} />
                       </button>

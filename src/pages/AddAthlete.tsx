@@ -1,110 +1,173 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
+import { useSports } from '../contexts/SportContext';
+import apiService from '../services/api.service';
+import * as ApiTypes from '../types/api';
+import * as Mapper from '../utils/mapper';
 import { Card } from '../components/Card';
 import { DatePicker } from '../components/DatePicker';
 import { ImageCropperModal } from '../components/ImageCropperModal';
-import { AthletePhoto } from '../components/AthletePhoto';
-import { Scissors, Link as LinkIcon } from 'lucide-react';
+import { getCroppedImg } from '../utils/imageUtils';
+import { Camera, X, User2, Search, ChevronDown, Check } from 'lucide-react';
+import { SearchableSelect } from '../components/SearchableSelect';
 import './AddAthlete.css';
-import type { Athlete } from '../types/athlete';
 
 export default function AddAthlete() {
   const { addAthlete, updateAthlete, getAthleteById } = useAthletes();
+  const { sports, loadMoreSports } = useSports();
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId: string }>();
   const isEditing = !!athleteId;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
-    photoUrl: '',
-    sport: '',
-    sportObservation: '',
+    sportId: '',
+    sportName: '',
+    sector: '',
     category: 'Profissional',
-    competitivePhase: '',
+    phase: '' as ApiTypes.Phase | '',
     birthDate: '',
-    gender: 'Masculino',
-    race: 'Branco',
-    cropSettings: undefined as Athlete['cropSettings'],
+    sex: ApiTypes.Sex.Male,
+    ethnicity: ApiTypes.Ethnicity.Caucasian,
   });
 
+  const [profilePhoto, setProfilePhoto] = useState<ApiTypes.ProfilePhotoUpload | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>('');
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState('');
-  const [urlInput, setUrlInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentFileName, setCurrentFileName] = useState('profile.jpg');
+  const [currentContentType, setCurrentContentType] = useState('image/jpeg');
+
 
   useEffect(() => {
     if (isEditing && athleteId) {
       const athlete = getAthleteById(athleteId);
       if (athlete) {
-        let phase = athlete.competitivePhase || '';
-        const phaseLower = phase.toLowerCase();
-        if (phaseLower === 'competitiva') {
-          phase = 'Competição';
-        } else if (phaseLower === 'pre-competitiva' || phaseLower === 'pré-competitiva') {
-          phase = 'Pré-temporada';
-        }
-
         setFormData({
-          name: athlete.name,
-          photoUrl: athlete.photoUrl || '',
-          cropSettings: athlete.cropSettings,
-          sport: (athlete as any).sport || '',
-          sportObservation: (athlete as any).sportObservation || (athlete as any).position || (athlete as any).sector || '',
+          name: athlete.fullName,
+          sportId: athlete.sportId,
+          sportName: athlete.sportName,
+          sector: athlete.sector,
           category: athlete.category,
-          competitivePhase: phase,
-          birthDate: athlete.birthDate,
-          gender: athlete.gender || 'Masculino',
-          race: athlete.race || 'Branco',
+          phase: athlete.phase,
+          birthDate: athlete.birthDate.split('T')[0],
+          sex: athlete.sex,
+          ethnicity: athlete.ethnicity,
         });
-        setUrlInput(athlete.photoUrl || '');
+        if (athlete.profilePhoto?.accessUrl) {
+          setPhotoPreview(athlete.profilePhoto.accessUrl);
+        }
       }
     }
-  }, [isEditing, athleteId]);
+  }, [isEditing, athleteId, getAthleteById]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const athleteData: Omit<Athlete, 'id'> = {
-      name: formData.name,
-      photoUrl: urlInput || formData.photoUrl || '',
-      cropSettings: formData.cropSettings,
-      sport: formData.sport,
-      sportObservation: formData.sportObservation,
-      category: formData.category,
-      competitivePhase: formData.competitivePhase,
-      birthDate: formData.birthDate,
-      gender: formData.gender,
-      race: formData.race,
-    };
+    if (isSubmitting) return;
 
-    if (isEditing && athleteId) {
-      updateAthlete(athleteId, athleteData);
-    } else {
-      addAthlete(athleteData);
+    setIsSubmitting(true);
+    try {
+      const existingAthlete = isEditing && athleteId ? getAthleteById(athleteId) : null;
+
+      const athleteData: ApiTypes.CreateAthleteCommand = {
+        fullName: formData.name,
+        sportId: formData.sportId,
+        sector: formData.sector,
+        phase: formData.phase === '' ? ApiTypes.Phase.Competitive : formData.phase,
+        category: formData.category,
+        sex: formData.sex,
+        ethnicity: formData.ethnicity,
+        birthDate: formData.birthDate,
+        physicalAssessments: existingAthlete ? existingAthlete.physicalAssessments : [], 
+        profilePhoto: profilePhoto,
+      };
+
+      if (isEditing && athleteId) {
+        await updateAthlete(athleteId, { ...athleteData, id: athleteId });
+      } else {
+        await addAthlete(athleteData);
+      }
+      navigate(-1);
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      alert('Erro ao salvar os dados do atleta.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Navigate back
-    navigate(-1);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleUrlBlur = () => {
-    if (urlInput && urlInput.startsWith('http')) {
-      setImageToCrop(urlInput);
-      setIsCropModalOpen(true);
+    const { name, value } = e.target;
+    
+    if (name === 'sportId') {
+      const selectedSport = sports.find(s => s.id === value);
+      setFormData(prev => ({
+        ...prev,
+        sportId: value,
+        sportName: selectedSport?.name || '',
+        sector: '', 
+        category: selectedSport?.categories[0] || prev.category
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: name === 'phase' || name === 'sex' || name === 'ethnicity' ? Number(value) : value
+      }));
     }
   };
 
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUrlInput(e.target.value);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione apenas arquivos de imagem.');
+        return;
+      }
+
+      setCurrentFileName(file.name);
+      setCurrentContentType(file.type);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageToCrop(reader.result as string);
+        setIsCropModalOpen(true);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
+  const handleCropComplete = async (cropSettings: any) => {
+    try {
+      const croppedBase64 = await getCroppedImg(
+        imageToCrop,
+        cropSettings,
+        cropSettings.rotation
+      );
+
+      setPhotoPreview(croppedBase64);
+      setProfilePhoto({
+        fileName: currentFileName,
+        contentType: currentContentType,
+        base64Content: croppedBase64.split(',')[1]
+      });
+      setIsCropModalOpen(false);
+    } catch (e) {
+      console.error('Erro ao recortar imagem:', e);
+    }
+  };
+
+  const removePhoto = () => {
+    setPhotoPreview('');
+    setProfilePhoto(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const selectedSport = sports.find(s => s.id === formData.sportId);
 
   return (
     <div className="container add-athlete-container">
@@ -115,6 +178,35 @@ export default function AddAthlete() {
 
       <Card className="add-athlete-card">
         <form onSubmit={handleSubmit} className="add-athlete-form">
+          <div className="photo-upload-section">
+            <div className="photo-upload-container">
+              <div className="photo-preview-large">
+                {photoPreview ? (
+                  <div className="preview-image-wrapper">
+                    <img src={photoPreview} alt="Preview" className="preview-image" />
+                  </div>
+                ) : (
+                  <div className="photo-placeholder" onClick={() => fileInputRef.current?.click()}>
+                    <Camera size={40} />
+                    <span>Carregar Foto</span>
+                  </div>
+                )}
+              </div>
+              {photoPreview && (
+                <button type="button" className="remove-photo-btn" onClick={removePhoto} title="Remover foto">
+                  <X size={16} />
+                </button>
+              )}
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                style={{ display: 'none' }} 
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+          </div>
+
           <div className="form-group">
             <label htmlFor="name">Nome Completo</label>
             <input 
@@ -130,89 +222,96 @@ export default function AddAthlete() {
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="sport">Esporte</label>
-              <input 
-                list="sports"
-                id="sport" 
-                name="sport" 
-                required 
-                placeholder="Ex: Futebol, Basquete..."
-                value={formData.sport}
-                onChange={handleChange}
+              <label htmlFor="sportId">Esporte</label>
+              <SearchableSelect 
+                options={sports.map(s => ({ id: s.id, name: s.name }))}
+                value={formData.sportId}
+                onChange={(id) => {
+                  const selectedSport = sports.find(s => s.id === id);
+                  setFormData(prev => ({
+                    ...prev,
+                    sportId: id,
+                    sportName: selectedSport?.name || '',
+                    sector: '', 
+                    category: selectedSport?.categories[0] || prev.category
+                  }));
+                }}
+                onLoadMore={loadMoreSports}
+                placeholder="Selecione um esporte"
               />
-              <datalist id="sports">
-                <option value="Futebol" />
-                <option value="Basquete" />
-                <option value="Vôlei" />
-                <option value="Natação" />
-                <option value="Atletismo" />
-                <option value="Ciclismo" />
-                <option value="Lutas / Artes Marciais" />
-                <option value="Crossfit" />
-                <option value="Musculação" />
-              </datalist>
             </div>
 
             <div className="form-group">
-              <label htmlFor="sportObservation">Observação do Esporte</label>
-              <input 
-                type="text" 
-                id="sportObservation" 
-                name="sportObservation" 
-                placeholder="Ex: Posição, Setor..."
-                value={formData.sportObservation}
+              <label htmlFor="sector">Setor / Posição</label>
+              <select 
+                id="sector" 
+                name="sector" 
+                required 
+                disabled={!selectedSport}
+                value={formData.sector}
                 onChange={handleChange}
-              />
+              >
+                <option value="" disabled>Selecione o setor</option>
+                {selectedSport?.sectors.map(sector => (
+                  <option key={sector} value={sector}>{sector}</option>
+                ))}
+              </select>
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="category">Categoria</label>
-              <select id="category" name="category" value={formData.category} onChange={handleChange}>
-                <option value="Profissional">Profissional</option>
-                <option value="Sub-20">Sub-20</option>
-                <option value="Sub-17">Sub-17</option>
-                <option value="Sub-15">Sub-15</option>
+              <select 
+                id="category" 
+                name="category" 
+                required 
+                disabled={!selectedSport}
+                value={formData.category} 
+                onChange={handleChange}
+              >
+                <option value="" disabled>Selecione a categoria</option>
+                {selectedSport?.categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
 
             <div className="form-group">
-              <label htmlFor="competitivePhase">Fase / Objetivo</label>
+              <label htmlFor="phase">Fase / Objetivo</label>
               <select 
-                id="competitivePhase" 
-                name="competitivePhase" 
+                id="phase" 
+                name="phase" 
                 required 
-                value={formData.competitivePhase}
+                value={formData.phase}
                 onChange={handleChange}
               >
                 <option value="" disabled>Selecione uma fase</option>
-                <option value="Pré-temporada">Pré-temporada</option>
-                <option value="Competição">Competição</option>
-                <option value="Transição">Transição</option>
-                <option value="Férias">Férias</option>
-                <option value="Ganho de peso">Ganho de peso</option>
-                <option value="Perda de peso">Perda de peso</option>
-                <option value="Manutenção">Manutenção</option>
+                <option value={ApiTypes.Phase.Competitive}>{Mapper.mapPhaseToLabel(ApiTypes.Phase.Competitive)}</option>
+                <option value={ApiTypes.Phase.PreSeason}>{Mapper.mapPhaseToLabel(ApiTypes.Phase.PreSeason)}</option>
+                <option value={ApiTypes.Phase.WeightLoss}>{Mapper.mapPhaseToLabel(ApiTypes.Phase.WeightLoss)}</option>
+                <option value={ApiTypes.Phase.WeightGain}>{Mapper.mapPhaseToLabel(ApiTypes.Phase.WeightGain)}</option>
+                <option value={ApiTypes.Phase.Maintenance}>{Mapper.mapPhaseToLabel(ApiTypes.Phase.Maintenance)}</option>
               </select>
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="gender">Sexo</label>
-              <select id="gender" name="gender" value={formData.gender} onChange={handleChange}>
-                <option value="Masculino">Masculino</option>
-                <option value="Feminino">Feminino</option>
+              <label htmlFor="sex">Sexo</label>
+              <select id="sex" name="sex" value={formData.sex} onChange={handleChange}>
+                <option value={ApiTypes.Sex.Male}>{Mapper.mapSexToLabel(ApiTypes.Sex.Male)}</option>
+                <option value={ApiTypes.Sex.Female}>{Mapper.mapSexToLabel(ApiTypes.Sex.Female)}</option>
+                <option value={ApiTypes.Sex.Other}>{Mapper.mapSexToLabel(ApiTypes.Sex.Other)}</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label htmlFor="race">Raça / Etnia</label>
-              <select id="race" name="race" value={formData.race} onChange={handleChange}>
-                <option value="Branco">Branco</option>
-                <option value="Negro">Negro</option>
-                <option value="Asiático">Asiático</option>
+              <label htmlFor="ethnicity">Raça / Etnia</label>
+              <select id="ethnicity" name="ethnicity" value={formData.ethnicity} onChange={handleChange}>
+                <option value={ApiTypes.Ethnicity.Caucasian}>{Mapper.mapEthnicityToLabel(ApiTypes.Ethnicity.Caucasian)}</option>
+                <option value={ApiTypes.Ethnicity.African}>{Mapper.mapEthnicityToLabel(ApiTypes.Ethnicity.African)}</option>
+                <option value={ApiTypes.Ethnicity.Asian}>{Mapper.mapEthnicityToLabel(ApiTypes.Ethnicity.Asian)}</option>
               </select>
             </div>
           </div>
@@ -228,74 +327,26 @@ export default function AddAthlete() {
                 required 
               />
             </div>
-
-            <div className="form-group">
-              <label htmlFor="photoUrl">URL da Foto do Atleta</label>
-              <div className="url-input-container">
-                <div className="input-with-icon">
-                  <LinkIcon size={18} className="input-icon" />
-                  <input 
-                    type="url" 
-                    id="photoUrl" 
-                    placeholder="Cole o link da imagem aqui (ex: https://...)"
-                    value={urlInput}
-                    onChange={handleUrlChange}
-                    onBlur={handleUrlBlur}
-                  />
-                </div>
-                
-                {formData.photoUrl && (
-                  <div className="photo-preview-box">
-                    <div className="photo-preview-avatar">
-                      <AthletePhoto 
-                        athlete={{ ...formData, id: 'temp' } as Athlete} 
-                        size={72} 
-                      />
-                    </div>
-                    <div className="photo-preview-info">
-                      <span>Imagem Ajustada</span>
-                      <button 
-                        type="button" 
-                        className="btn-link"
-                        onClick={() => {
-                          setImageToCrop(urlInput || formData.photoUrl);
-                          setIsCropModalOpen(true);
-                        }}
-                      >
-                        <Scissors size={14} /> Reajustar Recorte
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
-          {isCropModalOpen && (
-            <ImageCropperModal
-              image={imageToCrop}
-              initialSettings={formData.cropSettings}
-              onClose={() => setIsCropModalOpen(false)}
-              onCropComplete={(settings) => {
-                setFormData(prev => ({ 
-                  ...prev, 
-                  photoUrl: imageToCrop,
-                  cropSettings: settings 
-                }));
-              }}
-            />
-          )}
-
           <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button type="submit" className="btn btn-primary">
-              {isEditing ? 'Salvar Alterações' : 'Salvar Atleta'}
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Salvar Atleta')}
             </button>
           </div>
         </form>
       </Card>
+
+      {isCropModalOpen && (
+        <ImageCropperModal
+          image={imageToCrop}
+          onClose={() => setIsCropModalOpen(false)}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </div>
   );
 }

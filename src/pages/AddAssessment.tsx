@@ -1,33 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAssessments } from '../hooks/useAssessments';
 import { useAthletes } from '../hooks/useAthletes';
+import * as ApiTypes from '../types/api';
+import * as Mapper from '../utils/mapper';
 import { Card } from '../components/Card';
 import { DatePicker } from '../components/DatePicker';
 import { Activity, Scale, Ruler, Droplets, User2 } from 'lucide-react';
 import './AddAssessment.css';
 
 export default function AddAssessment() {
-  const { addAssessment, updateAssessment, getAssessmentById } = useAssessments();
-  const { athletes, getAthleteById } = useAthletes();
+  const { athletes, getAthleteById, updateAthlete, loading: athletesLoading } = useAthletes();
   const navigate = useNavigate();
   const { athleteId, assessmentId } = useParams<{ athleteId?: string, assessmentId?: string }>();
 
   const isEditing = !!assessmentId;
 
-  const [selectedAthleteId, setSelectedAthleteId] = useState<string>(athleteId || (athletes[0]?.id || ''));
+  const [selectedAthleteId, setSelectedAthleteId] = useState<string>(athleteId || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    weight: '',
+    height: '',
+    sittingHeight: '',
+    
+    // Dobras
+    tricepsRight: '', tricepsLeft: '',
+    subscapular: '', chestSkinfold: '',
+    midaxillary: '', suprailiac: '',
+    abdominal: '', thighRightSkinfold: '',
+    thighLeftSkinfold: '', calfRightSkinfold: '',
+    calfLeftSkinfold: '',
+
+    // Circunferencias
+    shoulder: '', chest: '',
+    armRight: '', armLeft: '',
+    waist: '', hip: '',
+    thighMidRight: '', thighMidLeft: '',
+    calfRight: '', calfLeft: '',
+    wristRight: '', kneeRight: '',
+    ankle: ''
+  });
 
   useEffect(() => {
-    if (athleteId && getAthleteById(athleteId)) {
+    if (athleteId) {
       setSelectedAthleteId(athleteId);
+    } else if (athletes.length > 0 && !selectedAthleteId) {
+      setSelectedAthleteId(athletes[0].id);
     }
   }, [athleteId, athletes]);
 
   useEffect(() => {
-    if (assessmentId) {
-      const existing = getAssessmentById(assessmentId);
-      if (existing) {
-        setSelectedAthleteId(existing.athleteId);
+    if (assessmentId && athletes.length > 0) {
+      const dateToFind = assessmentId.startsWith('pa-') ? assessmentId.replace('pa-', '') : assessmentId;
+      
+      let foundAthlete: ApiTypes.AthleteViewModel | undefined;
+      let foundApiAssessment: ApiTypes.PhysicalAssessment | undefined;
+
+      for (const a of athletes) {
+        const pa = a.physicalAssessments.find(p => p.assessmentDate === dateToFind);
+        if (pa) {
+          foundAthlete = a;
+          foundApiAssessment = pa;
+          break;
+        }
+      }
+
+      if (foundAthlete && foundApiAssessment) {
+        setSelectedAthleteId(foundAthlete.id);
+        const existing = Mapper.mapPhysicalAssessmentToAssessment(foundApiAssessment, foundAthlete.id);
         setFormData({
           date: existing.date,
           weight: existing.weight?.toString() || '',
@@ -62,31 +103,7 @@ export default function AddAssessment() {
         });
       }
     }
-  }, [assessmentId]);
-
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    weight: '',
-    height: '',
-    sittingHeight: '',
-    
-    // Dobras
-    tricepsRight: '', tricepsLeft: '',
-    subscapular: '', chestSkinfold: '',
-    midaxillary: '', suprailiac: '',
-    abdominal: '', thighRightSkinfold: '',
-    thighLeftSkinfold: '', calfRightSkinfold: '',
-    calfLeftSkinfold: '',
-
-    // Circunferencias
-    shoulder: '', chest: '',
-    armRight: '', armLeft: '',
-    waist: '', hip: '',
-    thighMidRight: '', thighMidLeft: '',
-    calfRight: '', calfLeft: '',
-    wristRight: '', kneeRight: '',
-    ankle: ''
-  });
+  }, [assessmentId, athletes]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -95,55 +112,79 @@ export default function AddAssessment() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAthleteId) return;
+    setIsSubmitting(true);
 
-    const parseNum = (val: string) => parseFloat(val) || 0;
+    try {
+      const athlete = getAthleteById(selectedAthleteId);
+      if (!athlete) throw new Error('Atleta não encontrado');
 
-    const dataToSave = {
-      athleteId: selectedAthleteId,
-      date: formData.date,
-      weight: parseNum(formData.weight),
-      height: parseNum(formData.height),
-      sittingHeight: parseNum(formData.sittingHeight) || undefined,
-      skinfolds: {
-        tricepsRight: parseNum(formData.tricepsRight),
-        tricepsLeft: parseNum(formData.tricepsLeft),
-        subscapular: parseNum(formData.subscapular),
-        chest: parseNum(formData.chestSkinfold),
-        midaxillary: parseNum(formData.midaxillary),
-        suprailiac: parseNum(formData.suprailiac),
-        abdominal: parseNum(formData.abdominal),
-        thighRight: parseNum(formData.thighRightSkinfold),
-        thighLeft: parseNum(formData.thighLeftSkinfold),
-        calfRight: parseNum(formData.calfRightSkinfold),
-        calfLeft: parseNum(formData.calfLeftSkinfold),
-      },
-      circumferences: {
-        shoulder: parseNum(formData.shoulder),
-        chest: parseNum(formData.chest),
-        armRight: parseNum(formData.armRight),
-        armLeft: parseNum(formData.armLeft),
-        waist: parseNum(formData.waist),
-        hip: parseNum(formData.hip),
-        thighMidRight: parseNum(formData.thighMidRight),
-        thighMidLeft: parseNum(formData.thighMidLeft),
-        calfRight: parseNum(formData.calfRight),
-        calfLeft: parseNum(formData.calfLeft),
-        wristRight: parseNum(formData.wristRight),
-        kneeRight: parseNum(formData.kneeRight),
-        ankle: parseNum(formData.ankle),
+      const parseNum = (val: string) => parseFloat(val) || 0;
+
+      const newAssessment: ApiTypes.PhysicalAssessment = {
+        assessmentDate: formData.date,
+        generalMeasurements: {
+          weightKg: parseNum(formData.weight),
+          heightCm: parseNum(formData.height),
+          sittingHeightCm: parseNum(formData.sittingHeight)
+        },
+        skinfolds: {
+          rightTricepsMm: parseNum(formData.tricepsRight),
+          leftTricepsMm: parseNum(formData.tricepsLeft),
+          subscapularMm: parseNum(formData.subscapular),
+          thoraxMm: parseNum(formData.chestSkinfold),
+          subaxillaryMm: parseNum(formData.midaxillary),
+          suprailiacMm: parseNum(formData.suprailiac),
+          abdominalMm: parseNum(formData.abdominal),
+          rightThighMm: parseNum(formData.thighRightSkinfold),
+          leftThighMm: parseNum(formData.thighLeftSkinfold),
+          rightCalfMm: parseNum(formData.calfRightSkinfold),
+          leftCalfMm: parseNum(formData.calfLeftSkinfold)
+        },
+        circumferences: {
+          shoulderCm: parseNum(formData.shoulder),
+          chestCm: parseNum(formData.chest),
+          rightArmCm: parseNum(formData.armRight),
+          leftArmCm: parseNum(formData.armLeft),
+          waistCm: parseNum(formData.waist),
+          hipCm: parseNum(formData.hip),
+          rightMidThighCm: parseNum(formData.thighMidRight),
+          leftMidThighCm: parseNum(formData.thighMidLeft),
+          rightCalfCm: parseNum(formData.calfRight),
+          leftCalfCm: parseNum(formData.calfLeft),
+          rightWristCm: parseNum(formData.wristRight),
+          rightKneeCm: parseNum(formData.kneeRight),
+          rightAnkleCm: parseNum(formData.ankle)
+        }
+      };
+
+      const dateToFind = isEditing && assessmentId ? (assessmentId.startsWith('pa-') ? assessmentId.replace('pa-', '') : assessmentId) : null;
+
+      let updatedAssessments = [...athlete.physicalAssessments];
+      if (isEditing && dateToFind) {
+        // Substitui a existente (procurando pela data original)
+        updatedAssessments = updatedAssessments.map(pa => 
+          pa.assessmentDate === dateToFind ? newAssessment : pa
+        );
+      } else {
+        // Adiciona nova
+        updatedAssessments.push(newAssessment);
       }
-    };
 
-    if (isEditing && assessmentId) {
-      updateAssessment(assessmentId, dataToSave);
-    } else {
-      addAssessment(dataToSave);
+      const updateCommand = Mapper.mapAthleteToUpdateCommand(athlete);
+      updateCommand.physicalAssessments = updatedAssessments;
+
+      await updateAthlete(athlete.id, updateCommand);
+
+      navigate(-1);
+    } catch (error) {
+      console.error('Erro ao salvar avaliação:', error);
+      alert('Não foi possível salvar a avaliação.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    navigate(-1);
   };
 
   const renderInput = (name: string, label: string, unit: string = '') => (
@@ -164,6 +205,10 @@ export default function AddAssessment() {
       </div>
     </div>
   );
+
+  if (athletesLoading && athletes.length === 0) {
+    return <div className="container" style={{ padding: '2rem' }}>Carregando atletas...</div>;
+  }
 
   if (athletes.length === 0) {
     return (
@@ -215,9 +260,8 @@ export default function AddAssessment() {
                 required
                 disabled={isEditing}
               >
-                {athletes.length === 0 && <option value="">Nenhum atleta cadastrado</option>}
                 {athletes.map(a => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
+                  <option key={a.id} value={a.id}>{a.fullName}</option>
                 ))}
               </select>
             </div>
@@ -299,11 +343,11 @@ export default function AddAssessment() {
         </div>
 
         <div className="sticky-form-actions">
-          <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)} disabled={isSubmitting}>
             Cancelar
           </button>
-          <button type="submit" className="btn btn-primary" disabled={athletes.length === 0}>
-            {isEditing ? 'Atualizar Avaliação' : 'Salvar Avaliação'}
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting || athletes.length === 0}>
+            {isSubmitting ? 'Salvando...' : (isEditing ? 'Atualizar Avaliação' : 'Salvar Avaliação')}
           </button>
         </div>
       </form>

@@ -23,7 +23,7 @@ export function ImageCropperModal({ image, onClose, onCropComplete, initialSetti
   const [crop, setCrop] = useState({ x: initialSettings?.x || 0, y: initialSettings?.y || 0 });
   const [zoom, setZoom] = useState(initialSettings?.zoom || 1);
   const [rotation, setRotation] = useState(initialSettings?.rotation || 0);
-  const [croppedArea, setCroppedArea] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
   const onCropChange = (crop: any) => {
     setCrop(crop);
@@ -37,17 +37,14 @@ export function ImageCropperModal({ image, onClose, onCropComplete, initialSetti
     setRotation(rotation);
   };
 
-  const onCropCompleteCallback = useCallback((croppedArea: any, _croppedAreaPixels: any) => {
-    setCroppedArea(croppedArea);
+  const onCropCompleteCallback = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
   const handleSave = () => {
-    if (croppedArea) {
+    if (croppedAreaPixels) {
       onCropComplete({
-        x: croppedArea.x,
-        y: croppedArea.y,
-        width: croppedArea.width,
-        height: croppedArea.height,
+        ...croppedAreaPixels,
         zoom,
         rotation
       });

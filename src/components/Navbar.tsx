@@ -1,8 +1,17 @@
-import { NavLink, Link } from 'react-router-dom';
-import { Activity, LayoutDashboard, UserPlus } from 'lucide-react';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { Activity, LayoutDashboard, UserPlus, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import './Navbar.css';
 
 export default function Navbar() {
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
   return (
     <nav className="navbar">
       <div className="container navbar-container">
@@ -25,6 +34,23 @@ export default function Navbar() {
               <span>Novo Atleta</span>
             </NavLink>
           </li>
+          {user && (
+            <li className="navbar-user-section">
+              <div className="user-profile">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.displayName || 'User'} className="user-avatar" />
+                ) : (
+                  <div className="user-avatar-placeholder">
+                    {user.displayName?.charAt(0) || user.email?.charAt(0)}
+                  </div>
+                )}
+                <span className="user-name">{user.displayName || user.email?.split('@')[0]}</span>
+              </div>
+              <button onClick={handleLogout} className="nav-link btn-logout-nav" title="Sair">
+                <LogOut size={18} />
+              </button>
+            </li>
+          )}
         </ul>
       </div>
     </nav>
