@@ -200,7 +200,7 @@ export default function AthleteDashboard() {
   const compareMetrics = calculateMetrics(compareEval);
 
   const formatNumber = (val: any) => {
-    if (val === null || val === undefined || isNaN(val) || typeof val !== 'number') return '-';
+    if (val === null || val === undefined || isNaN(val) || typeof val !== 'number' || val <= 0) return '-';
     return val.toFixed(2).replace('.', ',');
   };
 
@@ -313,8 +313,14 @@ export default function AthleteDashboard() {
           {items.map((item, idx) => (
             <tr key={idx}>
               <td>{item.label}</td>
-              <td>{formatNumber(item.cur)} {item.cur != null ? item.unit : ''}</td>
-              {compareEval && <td>{formatNumber(item.cmp)} {item.cmp != null ? item.unit : ''}</td>}
+              <td style={{ color: item.cur && item.cur > 0 ? 'inherit' : 'var(--color-text-muted)' }}>
+                {formatNumber(item.cur)} {item.cur != null && item.cur > 0 ? item.unit : ''}
+              </td>
+              {compareEval && (
+                <td style={{ color: item.cmp && item.cmp > 0 ? 'inherit' : 'var(--color-text-muted)' }}>
+                  {formatNumber(item.cmp)} {item.cmp != null && item.cmp > 0 ? item.unit : ''}
+                </td>
+              )}
               {compareEval && (
                 <td>{getTrendUi(item.cur, item.cmp, item.inverseGood)}</td>
               )}

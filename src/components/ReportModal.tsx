@@ -223,7 +223,7 @@ export function ReportModal({
 
 
   const formatNumber = (val: any) => {
-    if (val === null || val === undefined || isNaN(val) || typeof val !== 'number') return '-';
+    if (val === null || val === undefined || isNaN(val) || typeof val !== 'number' || val <= 0) return '-';
     return val.toFixed(2).replace('.', ',');
   };
 
@@ -254,8 +254,8 @@ export function ReportModal({
               {items.map((item, idx) => (
                 <tr key={idx}>
                   <td>{item.label}</td>
-                  <td>{formatNumber(item.cur)} {item.cur != null ? item.unit : ''}</td>
-                  <td>{formatNumber(item.cmp)} {item.cmp != null ? item.unit : ''}</td>
+                  <td className={!item.cur || item.cur <= 0 ? 'is-na' : ''}>{formatNumber(item.cur)} {item.cur != null && item.cur > 0 ? item.unit : ''}</td>
+                  <td className={!item.cmp || item.cmp <= 0 ? 'is-na' : ''}>{formatNumber(item.cmp)} {item.cmp != null && item.cmp > 0 ? item.unit : ''}</td>
                   <td>{getDiff(item.cur, item.cmp, item.unit)}</td>
                 </tr>
               ))}
@@ -536,9 +536,10 @@ export function ReportModal({
                             const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
                             const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
                             const TrendIcon = diff > 0 ? ArrowUpRight : ArrowDownRight;
+                            const isNA = !curVal || curVal <= 0;
                             
                             return (
-                              <div key={m.key} className="report-metric-box">
+                              <div key={m.key} className={`report-metric-box ${isNA ? 'is-na' : ''}`}>
                                 <div className="report-metric-header">
                                   <div className="report-metric-icon-wrapper">
                                     {m.icon}
@@ -583,45 +584,51 @@ export function ReportModal({
                           { label: 'Coxa', data: currentMetrics?.simetria?.coxa },
                           { label: 'Panturrilha', data: currentMetrics?.simetria?.pantu },
                           { label: 'Braço', data: currentMetrics?.simetria?.braco }
-                        ].filter(item => (selections.symmetry.items as any)[item.label]).map((item, idx) => (
-                          <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
-                            <div className="report-metric-box">
-                              <div className="report-metric-header">
-                                <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
-                                <span className="report-metric-label">C/C {item.label} D</span>
+                        ].filter(item => (selections.symmetry.items as any)[item.label]).map((item, idx) => {
+                          const isD_NA = !item.data?.d || item.data?.d <= 0;
+                          const isE_NA = !item.data?.e || item.data?.e <= 0;
+                          const isDiff_NA = isD_NA || isE_NA;
+                          
+                          return (
+                            <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
+                              <div className={`report-metric-box ${isD_NA ? 'is-na' : ''}`}>
+                                <div className="report-metric-header">
+                                  <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
+                                  <span className="report-metric-label">C/C {item.label} D</span>
+                                </div>
+                                <div className="report-metric-body">
+                                  <span className="report-metric-value">{formatNumber(item.data?.d)}</span>
+                                  <span className="report-metric-unit">cm</span>
+                                </div>
+                                <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Direito</span></div>
                               </div>
-                              <div className="report-metric-body">
-                                <span className="report-metric-value">{formatNumber(item.data?.d)}</span>
-                                <span className="report-metric-unit">cm</span>
+                              
+                              <div className={`report-metric-box ${isE_NA ? 'is-na' : ''}`}>
+                                <div className="report-metric-header">
+                                  <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
+                                  <span className="report-metric-label">C/C {item.label} E</span>
+                                </div>
+                                <div className="report-metric-body">
+                                  <span className="report-metric-value">{formatNumber(item.data?.e)}</span>
+                                  <span className="report-metric-unit">cm</span>
+                                </div>
+                                <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Esquerdo</span></div>
                               </div>
-                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Direito</span></div>
+                              
+                              <div className={`report-metric-box ${isDiff_NA ? 'is-na' : ''}`}>
+                                <div className="report-metric-header">
+                                  <div className="report-metric-icon-wrapper"><Activity size={14} /></div>
+                                  <span className="report-metric-label">Diferença D/E</span>
+                                </div>
+                                <div className="report-metric-body">
+                                  <span className="report-metric-value">{(item.data?.d ?? 0) > (item.data?.e ?? 0) ? '+' : ''}{formatNumber(item.data?.diff)}</span>
+                                  <span className="report-metric-unit">cm</span>
+                                </div>
+                                <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Assimetria</span></div>
+                              </div>
                             </div>
-                            
-                            <div className="report-metric-box">
-                              <div className="report-metric-header">
-                                <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
-                                <span className="report-metric-label">C/C {item.label} E</span>
-                              </div>
-                              <div className="report-metric-body">
-                                <span className="report-metric-value">{formatNumber(item.data?.e)}</span>
-                                <span className="report-metric-unit">cm</span>
-                              </div>
-                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Esquerdo</span></div>
-                            </div>
-                            
-                            <div className="report-metric-box">
-                              <div className="report-metric-header">
-                                <div className="report-metric-icon-wrapper"><Activity size={14} /></div>
-                                <span className="report-metric-label">Diferença D/E</span>
-                              </div>
-                              <div className="report-metric-body">
-                                <span className="report-metric-value">{(item.data?.d ?? 0) > (item.data?.e ?? 0) ? '+' : ''}{formatNumber(item.data?.diff)}</span>
-                                <span className="report-metric-unit">cm</span>
-                              </div>
-                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Assimetria</span></div>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -641,45 +648,51 @@ export function ReportModal({
                           { label: 'Coxa / Fêmur', titleMedia: 'Coxa', titleOsso: 'Fêmur', media: currentMetrics?.relacao?.ccCoxa, osso: currentMetrics?.relacao?.diamJoelho, relacao: currentMetrics?.relacao?.coxa },
                           { label: 'Panturrilha / Tornozelo', titleMedia: 'Pantu.', titleOsso: 'Tornozelo', media: currentMetrics?.relacao?.ccPantu, osso: currentMetrics?.relacao?.diamTornozelo, relacao: currentMetrics?.relacao?.pantu },
                           { label: 'Braço / Úmero', titleMedia: 'Braço', titleOsso: 'Úmero', media: currentMetrics?.relacao?.ccBraco, osso: currentMetrics?.relacao?.diamPunho, relacao: currentMetrics?.relacao?.braco }
-                        ].filter(item => (selections.relations.items as any)[item.label]).map((item, idx) => (
-                          <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
-                            <div className="report-metric-box">
-                              <div className="report-metric-header">
-                                <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
-                                <span className="report-metric-label">Média {item.titleMedia}</span>
+                        ].filter(item => (selections.relations.items as any)[item.label]).map((item, idx) => {
+                          const isMedia_NA = !item.media || item.media <= 0;
+                          const isOsso_NA = !item.osso || item.osso <= 0;
+                          const isRel_NA = isMedia_NA || isOsso_NA;
+                          
+                          return (
+                            <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
+                              <div className={`report-metric-box ${isMedia_NA ? 'is-na' : ''}`}>
+                                <div className="report-metric-header">
+                                  <div className="report-metric-icon-wrapper"><Ruler size={14} /></div>
+                                  <span className="report-metric-label">Média {item.titleMedia}</span>
+                                </div>
+                                <div className="report-metric-body">
+                                  <span className="report-metric-value">{formatNumber(item.media)}</span>
+                                  <span className="report-metric-unit">cm</span>
+                                </div>
+                                <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Média Corrigida</span></div>
                               </div>
-                              <div className="report-metric-body">
-                                <span className="report-metric-value">{formatNumber(item.media)}</span>
-                                <span className="report-metric-unit">cm</span>
+                              
+                              <div className={`report-metric-box ${isOsso_NA ? 'is-na' : ''}`}>
+                                <div className="report-metric-header">
+                                  <div className="report-metric-icon-wrapper"><Shield size={14} /></div>
+                                  <span className="report-metric-label">Osso {item.titleOsso}</span>
+                                </div>
+                                <div className="report-metric-body">
+                                  <span className="report-metric-value">{formatNumber(item.osso)}</span>
+                                  <span className="report-metric-unit">cm</span>
+                                </div>
+                                <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Diâmetro Ósseo</span></div>
                               </div>
-                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Média Corrigida</span></div>
+                              
+                              <div className={`report-metric-box ${isRel_NA ? 'is-na' : ''}`}>
+                                <div className="report-metric-header">
+                                  <div className="report-metric-icon-wrapper"><Activity size={14} /></div>
+                                  <span className="report-metric-label">Relação</span>
+                                </div>
+                                <div className="report-metric-body">
+                                  <span className="report-metric-value">{formatNumber(item.relacao)}</span>
+                                  <span className="report-metric-unit">índice</span>
+                                </div>
+                                <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Índice Cine.</span></div>
+                              </div>
                             </div>
-                            
-                            <div className="report-metric-box">
-                              <div className="report-metric-header">
-                                <div className="report-metric-icon-wrapper"><Shield size={14} /></div>
-                                <span className="report-metric-label">Osso {item.titleOsso}</span>
-                              </div>
-                              <div className="report-metric-body">
-                                <span className="report-metric-value">{formatNumber(item.osso)}</span>
-                                <span className="report-metric-unit">cm</span>
-                              </div>
-                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Diâmetro Ósseo</span></div>
-                            </div>
-                            
-                            <div className="report-metric-box">
-                              <div className="report-metric-header">
-                                <div className="report-metric-icon-wrapper"><Activity size={14} /></div>
-                                <span className="report-metric-label">Relação</span>
-                              </div>
-                              <div className="report-metric-body">
-                                <span className="report-metric-value">{formatNumber(item.relacao)}</span>
-                                <span className="report-metric-unit">índice</span>
-                              </div>
-                              <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Índice Cine.</span></div>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
