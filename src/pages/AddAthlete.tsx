@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
 import { useSports } from '../contexts/SportContext';
-import { useSports } from '../contexts/SportContext';
 import * as ApiTypes from '../types/api';
 import * as Mapper from '../utils/mapper';
 import { Card } from '../components/Card';
@@ -29,8 +28,8 @@ export default function AddAthlete() {
     category: 'Profissional',
     phase: '' as ApiTypes.Phase | '',
     birthDate: '',
-    sex: ApiTypes.Sex.Male,
-    ethnicity: ApiTypes.Ethnicity.Caucasian,
+    sex: ApiTypes.Sex.Male as ApiTypes.Sex,
+    ethnicity: ApiTypes.Ethnicity.Caucasian as ApiTypes.Ethnicity,
   });
 
   const [profilePhoto, setProfilePhoto] = useState<ApiTypes.ProfilePhotoUpload | null>(null);

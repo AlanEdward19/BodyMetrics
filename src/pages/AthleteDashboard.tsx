@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
 import { AthletePhoto } from '../components/AthletePhoto';
 import { Card } from '../components/Card';
