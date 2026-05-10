@@ -6,6 +6,7 @@ import AddAssessment from './pages/AddAssessment';
 import LoginPage from './pages/LoginPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AthleteProvider } from './contexts/AthleteContext';
+import { SportProvider } from './contexts/SportContext';
 import './App.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -50,9 +51,11 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AthleteProvider>
-          <AppContent />
-        </AthleteProvider>
+        <SportProvider>
+          <AthleteProvider>
+            <AppContent />
+          </AthleteProvider>
+        </SportProvider>
       </AuthProvider>
     </BrowserRouter>
   );

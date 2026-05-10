@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
+import { useSports } from '../contexts/SportContext';
 import apiService from '../services/api.service';
 import * as ApiTypes from '../types/api';
 import * as Mapper from '../utils/mapper';
@@ -30,7 +31,7 @@ export default function AddAthlete() {
     ethnicity: ApiTypes.Ethnicity.Caucasian,
   });
 
-  const [sports, setSports] = useState<ApiTypes.SportResponse[]>([]);
+  const { sports } = useSports();
   const [profilePhoto, setProfilePhoto] = useState<ApiTypes.ProfilePhotoUpload | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
@@ -39,17 +40,6 @@ export default function AddAthlete() {
   const [currentFileName, setCurrentFileName] = useState('profile.jpg');
   const [currentContentType, setCurrentContentType] = useState('image/jpeg');
 
-  useEffect(() => {
-    const fetchSports = async () => {
-      try {
-        const response = await apiService.listSports({ pageSize: 100 });
-        setSports(response.items);
-      } catch (error) {
-        console.error('Erro ao buscar esportes:', error);
-      }
-    };
-    fetchSports();
-  }, []);
 
   useEffect(() => {
     if (isEditing && athleteId) {
