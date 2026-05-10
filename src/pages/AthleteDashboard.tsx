@@ -13,7 +13,7 @@ import {
   User2, Calendar, Target, Shield, Scale, Percent, 
   Dumbbell, Activity, Plus, Ruler, ArrowUpRight, 
   ArrowDownRight, Minus, Pencil, Trash2, Download, 
-  FileSpreadsheet, ClipboardList, Droplets
+  FileSpreadsheet, ClipboardList
 } from 'lucide-react';
 import * as Mapper from '../utils/mapper';
 import type { Assessment } from '../types/assessment';
