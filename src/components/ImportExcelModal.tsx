@@ -5,6 +5,8 @@ import { useAthletes } from '../hooks/useAthletes';
 import { useAssessments } from '../hooks/useAssessments';
 import type { Athlete } from '../types/athlete';
 import type { Assessment } from '../types/assessment';
+import * as ApiTypes from '../types/api';
+import { useSports } from '../contexts/SportContext';
 import './ImportExcelModal.css';
 
 interface ImportExcelModalProps {
@@ -15,6 +17,7 @@ interface ImportExcelModalProps {
 
 export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { athletes, addAthlete } = useAthletes();
+  const { sports } = useSports();
   const { assessments: existingAssessments, addAssessment, updateAssessment } = useAssessments();
   
   const [isDragging, setIsDragging] = useState(false);
@@ -274,28 +277,49 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
     }
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!parsedData) return;
     setIsProcessing(true);
+    setError(null);
 
     try {
       // 1. Resolve Atletas
       const nameToIdMap = new Map<string, string>();
       let firstAthleteId: string | undefined;
 
-      parsedData.athletes.forEach((athleteData, name) => {
-        const existingAthlete = athletes.find(a => a.name.toLowerCase() === name.toLowerCase());
+      // Pegamos o primeiro esporte como fallback ou um que contenha "Futebol"
+      const defaultSport = sports.find(s => s.name.toLowerCase().includes('futebol')) || sports[0];
+
+      if (!defaultSport) {
+        throw new Error("Nenhum esporte cadastrado no sistema. Cadastre um esporte antes de importar.");
+      }
+
+      for (const [name, athleteData] of parsedData.athletes.entries()) {
+        const existingAthlete = athletes.find(a => a.fullName.toLowerCase() === name.toLowerCase());
         
         let athleteId = '';
         if (existingAthlete) {
           athleteId = existingAthlete.id;
         } else {
-          athleteId = addAthlete(athleteData);
+          // Mapear Omit<Athlete, 'id'> para CreateAthleteCommand
+          const command: ApiTypes.CreateAthleteCommand = {
+            fullName: athleteData.name,
+            sportId: defaultSport.id,
+            sector: athleteData.sportObservation || '',
+            category: athleteData.category || 'Profissional',
+            birthDate: athleteData.birthDate || new Date().toISOString().split('T')[0],
+            phase: athleteData.competitivePhase.toLowerCase().includes('competi') ? ApiTypes.Phase.Competitive : ApiTypes.Phase.PreSeason,
+            sex: athleteData.gender?.toLowerCase().startsWith('f') ? ApiTypes.Sex.Female : ApiTypes.Sex.Male,
+            ethnicity: athleteData.race?.toLowerCase().startsWith('n') ? ApiTypes.Ethnicity.African : ApiTypes.Ethnicity.Caucasian,
+            physicalAssessments: [],
+            profilePhoto: null
+          };
+          athleteId = await addAthlete(command);
         }
 
         if (!firstAthleteId) firstAthleteId = athleteId;
         nameToIdMap.set(name, athleteId);
-      });
+      }
 
       // 2. Resolve Avaliações
       parsedData.assessments.forEach(assessmentItem => {

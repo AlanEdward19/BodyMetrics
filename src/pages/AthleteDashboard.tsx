@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
 import { AthletePhoto } from '../components/AthletePhoto';
 import { Card } from '../components/Card';
@@ -13,7 +13,7 @@ import {
   User2, Calendar, Target, Shield, Scale, Percent, 
   Dumbbell, Activity, Plus, Ruler, ArrowUpRight, 
   ArrowDownRight, Minus, Pencil, Trash2, Download, 
-  FileSpreadsheet, ClipboardList, Droplets
+  FileSpreadsheet, ClipboardList
 } from 'lucide-react';
 import * as Mapper from '../utils/mapper';
 import type { Assessment } from '../types/assessment';

@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
 import { useSports } from '../contexts/SportContext';
-import apiService from '../services/api.service';
+import { useSports } from '../contexts/SportContext';
 import * as ApiTypes from '../types/api';
 import * as Mapper from '../utils/mapper';
 import { Card } from '../components/Card';
 import { DatePicker } from '../components/DatePicker';
 import { ImageCropperModal } from '../components/ImageCropperModal';
 import { getCroppedImg } from '../utils/imageUtils';
-import { Camera, X, User2, Search, ChevronDown, Check } from 'lucide-react';
+import { Camera, X } from 'lucide-react';
 import { SearchableSelect } from '../components/SearchableSelect';
 import './AddAthlete.css';
 

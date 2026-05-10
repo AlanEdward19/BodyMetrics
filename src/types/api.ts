@@ -1,22 +1,25 @@
-export enum Phase {
-  Competitive = 0,
-  PreSeason = 1,
-  WeightLoss = 2,
-  WeightGain = 3,
-  Maintenance = 4
-}
+export const Phase = {
+  Competitive: 0,
+  PreSeason: 1,
+  WeightLoss: 2,
+  WeightGain: 3,
+  Maintenance: 4
+} as const;
+export type Phase = (typeof Phase)[keyof typeof Phase];
 
-export enum Sex {
-  Male = 0,
-  Female = 1,
-  Other = 2
-}
+export const Sex = {
+  Male: 0,
+  Female: 1,
+  Other: 2
+} as const;
+export type Sex = (typeof Sex)[keyof typeof Sex];
 
-export enum Ethnicity {
-  Caucasian = 1,
-  African = 2,
-  Asian = 3
-}
+export const Ethnicity = {
+  Caucasian: 1,
+  African: 2,
+  Asian: 3
+} as const;
+export type Ethnicity = (typeof Ethnicity)[keyof typeof Ethnicity];
 
 export interface CreateSportCommand {
   name: string;
