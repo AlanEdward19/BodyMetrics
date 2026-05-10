@@ -8,16 +8,16 @@ export const Phase = {
 export type Phase = (typeof Phase)[keyof typeof Phase];
 
 export const Sex = {
-  Male: 0,
-  Female: 1,
-  Other: 2
+  Male: 'Male',
+  Female: 'Female',
+  Other: 'Other'
 } as const;
 export type Sex = (typeof Sex)[keyof typeof Sex];
 
 export const Ethnicity = {
-  Caucasian: 1,
-  African: 2,
-  Asian: 3
+  Caucasian: 'White',
+  African: 'Black',
+  Asian: 'Asian'
 } as const;
 export type Ethnicity = (typeof Ethnicity)[keyof typeof Ethnicity];
 

@@ -113,7 +113,7 @@ export default function AddAthlete() {
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: name === 'phase' || name === 'sex' || name === 'ethnicity' ? Number(value) : value
+        [name]: name === 'phase' ? Number(value) : value
       }));
     }
   };

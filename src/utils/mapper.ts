@@ -27,18 +27,34 @@ export const mapPhase = (phase?: string): ApiTypes.Phase => {
   }
 };
 
-export const mapSex = (sex?: string): ApiTypes.Sex => {
+export const mapSex = (sex?: string | number): ApiTypes.Sex => {
+  if (typeof sex === 'number') {
+    if (sex === 0) return ApiTypes.Sex.Male;
+    if (sex === 1) return ApiTypes.Sex.Female;
+    return ApiTypes.Sex.Other;
+  }
   switch (sex?.toLowerCase()) {
+    case 'male':
     case 'masculino': return ApiTypes.Sex.Male;
+    case 'female':
     case 'feminino': return ApiTypes.Sex.Female;
     default: return ApiTypes.Sex.Other;
   }
 };
 
-export const mapEthnicity = (ethnicity?: string): ApiTypes.Ethnicity => {
+export const mapEthnicity = (ethnicity?: string | number): ApiTypes.Ethnicity => {
+  if (typeof ethnicity === 'number') {
+    if (ethnicity === 1) return ApiTypes.Ethnicity.Caucasian;
+    if (ethnicity === 2) return ApiTypes.Ethnicity.African;
+    if (ethnicity === 3) return ApiTypes.Ethnicity.Asian;
+    return ApiTypes.Ethnicity.Caucasian;
+  }
   switch (ethnicity?.toLowerCase()) {
+    case 'white':
     case 'branco': return ApiTypes.Ethnicity.Caucasian;
+    case 'black':
     case 'negro': return ApiTypes.Ethnicity.African;
+    case 'asian':
     case 'asiático': return ApiTypes.Ethnicity.Asian;
     default: return ApiTypes.Ethnicity.Caucasian;
   }
@@ -71,21 +87,19 @@ export const mapPhaseToLabel = (phase: ApiTypes.Phase): string => {
   }
 };
 
-export const mapSexToLabel = (sex: ApiTypes.Sex): string => {
-  switch (sex) {
-    case ApiTypes.Sex.Male: return 'Masculino';
-    case ApiTypes.Sex.Female: return 'Feminino';
-    default: return 'Outro';
-  }
+export const mapSexToLabel = (sex: ApiTypes.Sex | number | string): string => {
+  const s = String(sex).toLowerCase();
+  if (s === '0' || s === 'male' || s === 'masculino') return 'Masculino';
+  if (s === '1' || s === 'female' || s === 'feminino') return 'Feminino';
+  return 'Outro';
 };
 
-export const mapEthnicityToLabel = (ethnicity: ApiTypes.Ethnicity): string => {
-  switch (ethnicity) {
-    case ApiTypes.Ethnicity.Caucasian: return 'Branco';
-    case ApiTypes.Ethnicity.African: return 'Negro';
-    case ApiTypes.Ethnicity.Asian: return 'Asiático';
-    default: return 'Branco';
-  }
+export const mapEthnicityToLabel = (ethnicity: ApiTypes.Ethnicity | number | string): string => {
+  const e = String(ethnicity).toLowerCase();
+  if (e === '1' || e === 'white' || e === 'branco' || e === 'caucasian') return 'Branco';
+  if (e === '2' || e === 'black' || e === 'negro' || e === 'african') return 'Negro';
+  if (e === '3' || e === 'asian' || e === 'asiático') return 'Asiático';
+  return 'Branco';
 };
 
 export const mapAssessmentToPhysicalAssessment = (assessment: Assessment): ApiTypes.PhysicalAssessment => {
