@@ -6,6 +6,7 @@ import * as Mapper from '../utils/mapper';
 import { Card } from '../components/Card';
 import { DatePicker } from '../components/DatePicker';
 import { Activity, Scale, Ruler, Droplets, User2 } from 'lucide-react';
+import { Loading } from '../components/Loading';
 import './AddAssessment.css';
 
 export default function AddAssessment() {
@@ -207,7 +208,7 @@ export default function AddAssessment() {
   );
 
   if (athletesLoading && athletes.length === 0) {
-    return <div className="container" style={{ padding: '2rem' }}>Carregando atletas...</div>;
+    return <Loading fullScreen message="Carregando atletas..." />;
   }
 
   if (athletes.length === 0) {
@@ -235,6 +236,7 @@ export default function AddAssessment() {
 
   return (
     <div className="container add-assessment-container">
+      {isSubmitting && <Loading fullScreen message="Salvando avaliação..." />}
       <div className="add-assessment-header">
         <h1>{isEditing ? 'Editar Avaliação' : 'Nova Avaliação Antropométrica'}</h1>
         <p>Registre ou atualize as medidas, dobras e circunferências do atleta.</p>
@@ -347,7 +349,7 @@ export default function AddAssessment() {
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary" disabled={isSubmitting || athletes.length === 0}>
-            {isSubmitting ? 'Salvando...' : (isEditing ? 'Atualizar Avaliação' : 'Salvar Avaliação')}
+            {isSubmitting ? <Loading size="sm" variant="white" message="" /> : (isEditing ? 'Atualizar Avaliação' : 'Salvar Avaliação')}
           </button>
         </div>
       </form>

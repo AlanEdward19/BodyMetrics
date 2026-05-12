@@ -10,11 +10,12 @@ import { ImageCropperModal } from '../components/ImageCropperModal';
 import { getCroppedImg } from '../utils/imageUtils';
 import { Camera, X } from 'lucide-react';
 import { SearchableSelect } from '../components/SearchableSelect';
+import { Loading } from '../components/Loading';
 import './AddAthlete.css';
 
 export default function AddAthlete() {
-  const { addAthlete, updateAthlete, getAthleteById } = useAthletes();
-  const { sports, loadMoreSports } = useSports();
+  const { addAthlete, updateAthlete, getAthleteById, loading: athletesLoading } = useAthletes();
+  const { sports, loadMoreSports, loading: sportsLoading } = useSports();
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId: string }>();
   const isEditing = !!athleteId;
@@ -168,8 +169,13 @@ export default function AddAthlete() {
 
   const selectedSport = sports.find(s => s.id === formData.sportId);
 
+  if ((athletesLoading && isEditing) || (sportsLoading && sports.length === 0)) {
+    return <Loading fullScreen message="Carregando dados..." />;
+  }
+
   return (
     <div className="container add-athlete-container">
+      {isSubmitting && <Loading fullScreen message="Salvando atleta..." />}
       <div className="add-athlete-header">
         <h1>{isEditing ? 'Editar Atleta' : 'Adicionar Novo Atleta'}</h1>
         <p>{isEditing ? 'Atualize os dados do atleta no sistema.' : 'Preencha os dados básicos para cadastrar um novo atleta no sistema.'}</p>
@@ -333,7 +339,7 @@ export default function AddAthlete() {
               Cancelar
             </button>
             <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Salvar Atleta')}
+              {isSubmitting ? <Loading size="sm" variant="white" message="" /> : (isEditing ? 'Salvar Alterações' : 'Salvar Atleta')}
             </button>
           </div>
         </form>

@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 import { Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
+import { Loading } from '../components/Loading';
 import './LoginPage.css';
 
 export default function LoginPage() {
@@ -69,6 +70,7 @@ export default function LoginPage() {
 
   return (
     <div className="login-container">
+      {isLoading && <Loading fullScreen message="Autenticando..." />}
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo">
@@ -128,8 +130,8 @@ export default function LoginPage() {
             </div>
           )}
 
-          <button className="btn btn-primary btn-login" disabled={isLoading}>
-            {isLoading ? 'Aguarde...' : (isLogin ? 'Entrar' : 'Cadastrar')}
+          <button type="submit" className="login-button" disabled={isLoading}>
+            {isLoading ? <Loading size="sm" variant="white" message="" /> : 'Entrar'}
           </button>
         </form>
 

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { X, Upload, ChevronLeft, ChevronRight, Trash2, Download, Scale, Ruler, Percent, Activity, Shield, Dumbbell, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Loading } from './Loading';
 import type { Assessment } from '../types/assessment';
 import type { Athlete } from '../types/athlete';
 import './ReportModal.css';
@@ -278,11 +279,9 @@ export function ReportModal({
         <div className="report-modal-content">
           {isGenerating && (
             <div className="report-loading-overlay">
-              <div className="report-loader-container">
-                <div className="report-spinner"></div>
-                <h3>Gerando Relatório PDF</h3>
-                <p>Processando imagens e tabelas... Isso pode levar alguns segundos.</p>
-              </div>
+              <Loading 
+                message="Gerando Relatório PDF. Processando imagens e tabelas... Isso pode levar alguns segundos." 
+              />
             </div>
           )}
 
