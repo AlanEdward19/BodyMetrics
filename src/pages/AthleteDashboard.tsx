@@ -8,6 +8,7 @@ import { MetricCard } from '../components/MetricCard';
 import { SearchableSelect } from '../components/SearchableSelect';
 import { ReportModal } from '../components/ReportModal';
 import { ImportExcelModal } from '../components/ImportExcelModal';
+import { Loading } from '../components/Loading';
 import { AssessmentListModal } from '../components/AssessmentListModal';
 import { 
   User2, Calendar, Target, Shield, Scale, Percent, 
@@ -336,7 +337,7 @@ export default function AthleteDashboard() {
   [athletes]);
 
   if (athletesLoading && athletes.length === 0 && !isImportModalOpen) {
-    return <div className="container" style={{ padding: '2rem' }}>Carregando atletas...</div>;
+    return <Loading fullScreen message="Carregando atletas..." />;
   }
 
   return (
