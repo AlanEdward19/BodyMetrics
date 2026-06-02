@@ -39,6 +39,7 @@ function AppContent() {
           <Route path="/add-assessment" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
           <Route path="/add-assessment/:athleteId" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
           <Route path="/edit-assessment/:assessmentId" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
+          <Route path="/edit-assessment/:athleteId/:assessmentId" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
           
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

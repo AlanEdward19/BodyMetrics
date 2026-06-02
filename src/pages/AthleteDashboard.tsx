@@ -724,7 +724,7 @@ export default function AthleteDashboard() {
           athlete={Mapper.mapNewToOldAthlete(athlete)}
           assessments={assessments}
           onDeleteAssessment={handleDeleteAssessment}
-          onEditAssessment={(id) => navigate(`/edit-assessment/${id}`)}
+          onEditAssessment={(id) => navigate(`/edit-assessment/${athlete.id}/${id}`)}
         />
       )}
     </div>

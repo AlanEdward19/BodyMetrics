@@ -57,12 +57,20 @@ export default function AddAssessment() {
       let foundAthlete: ApiTypes.AthleteViewModel | undefined;
       let foundApiAssessment: ApiTypes.PhysicalAssessment | undefined;
 
-      for (const a of athletes) {
-        const pa = a.physicalAssessments.find(p => p.assessmentDate === dateToFind);
-        if (pa) {
-          foundAthlete = a;
-          foundApiAssessment = pa;
-          break;
+      if (athleteId) {
+        foundAthlete = athletes.find(a => a.id === athleteId);
+        if (foundAthlete) {
+          foundApiAssessment = foundAthlete.physicalAssessments.find(p => p.assessmentDate === dateToFind);
+        }
+      } else {
+        // Fallback for backward compatibility
+        for (const a of athletes) {
+          const pa = a.physicalAssessments.find(p => p.assessmentDate === dateToFind);
+          if (pa) {
+            foundAthlete = a;
+            foundApiAssessment = pa;
+            break;
+          }
         }
       }
 
@@ -103,7 +111,7 @@ export default function AddAssessment() {
         });
       }
     }
-  }, [assessmentId, athletes]);
+  }, [assessmentId, athleteId, athletes]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
