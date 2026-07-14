@@ -9,13 +9,14 @@ import { DatePicker } from '../components/DatePicker';
 import { ImageCropperModal } from '../components/ImageCropperModal';
 import { getCroppedImg } from '../utils/imageUtils';
 import { Camera, X } from 'lucide-react';
-import { SearchableSelect } from '../components/SearchableSelect';
+import { SearchableSelect, NEW_OPTION_PREFIX } from '../components/SearchableSelect';
 import { Loading } from '../components/Loading';
+import apiService from '../services/api.service';
 import './AddAthlete.css';
 
 export default function AddAthlete() {
   const { addAthlete, updateAthlete, getAthleteById, loading: athletesLoading } = useAthletes();
-  const { sports, loadMoreSports, loading: sportsLoading } = useSports();
+  const { sports, loadMoreSports, addSport, updateSportInCache, loading: sportsLoading } = useSports();
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId: string }>();
   const isEditing = !!athleteId;
@@ -68,16 +69,56 @@ export default function AddAthlete() {
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!formData.sportId) {
+      alert('Selecione ou crie um esporte.');
+      return;
+    }
+    if (!formData.sector) {
+      alert('Selecione ou crie um setor.');
+      return;
+    }
+    if (!formData.category) {
+      alert('Selecione ou crie uma categoria.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const existingAthlete = isEditing && athleteId ? getAthleteById(athleteId) : null;
+      const stripPrefix = (v: string) => v.startsWith(NEW_OPTION_PREFIX) ? v.slice(NEW_OPTION_PREFIX.length) : v;
+
+      let sportId = formData.sportId;
+      const sector = stripPrefix(formData.sector);
+      const category = stripPrefix(formData.category);
+
+      if (isNewSport) {
+        const createdSport = await apiService.createSport({
+          name: formData.sportName,
+          sectors: [sector],
+          categories: [category],
+        });
+        sportId = createdSport.id;
+        addSport(createdSport);
+      } else if (selectedSport) {
+        const isNewSector = formData.sector.startsWith(NEW_OPTION_PREFIX);
+        const isNewCategory = formData.category.startsWith(NEW_OPTION_PREFIX);
+        if (isNewSector || isNewCategory) {
+          const updatedSport = await apiService.updateSport(selectedSport.id, {
+            id: selectedSport.id,
+            name: selectedSport.name,
+            sectors: isNewSector ? [...selectedSport.sectors, sector] : selectedSport.sectors,
+            categories: isNewCategory ? [...selectedSport.categories, category] : selectedSport.categories,
+          });
+          updateSportInCache(updatedSport);
+        }
+      }
 
       const athleteData: ApiTypes.CreateAthleteCommand = {
         fullName: formData.name,
-        sportId: formData.sportId,
-        sector: formData.sector,
+        sportId,
+        sector,
         phase: formData.phase === '' ? ApiTypes.Phase.Competitive : formData.phase,
-        category: formData.category,
+        category,
         sex: formData.sex,
         ethnicity: formData.ethnicity,
         birthDate: formData.birthDate,
@@ -168,6 +209,7 @@ export default function AddAthlete() {
   };
 
   const selectedSport = sports.find(s => s.id === formData.sportId);
+  const isNewSport = formData.sportId.startsWith(NEW_OPTION_PREFIX);
 
   if ((athletesLoading && isEditing) || (sportsLoading && sports.length === 0)) {
     return <Loading fullScreen message="Carregando dados..." />;
@@ -228,58 +270,86 @@ export default function AddAthlete() {
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="sportId">Esporte</label>
-              <SearchableSelect 
+              <SearchableSelect
                 options={sports.map(s => ({ id: s.id, name: s.name }))}
                 value={formData.sportId}
                 onChange={(id) => {
+                  if (id.startsWith(NEW_OPTION_PREFIX)) {
+                    setFormData(prev => ({
+                      ...prev,
+                      sportId: id,
+                      sportName: id.slice(NEW_OPTION_PREFIX.length),
+                      sector: '',
+                      category: ''
+                    }));
+                    return;
+                  }
                   const selectedSport = sports.find(s => s.id === id);
                   setFormData(prev => ({
                     ...prev,
                     sportId: id,
                     sportName: selectedSport?.name || '',
-                    sector: '', 
+                    sector: '',
                     category: selectedSport?.categories[0] || prev.category
                   }));
                 }}
                 onLoadMore={loadMoreSports}
                 placeholder="Selecione um esporte"
+                creatable
+                createLabel={(term) => `Criar esporte "${term}"`}
               />
             </div>
 
             <div className="form-group">
               <label htmlFor="sector">Setor / Posição</label>
-              <select 
-                id="sector" 
-                name="sector" 
-                required 
-                disabled={!selectedSport}
-                value={formData.sector}
-                onChange={handleChange}
-              >
-                <option value="" disabled>Selecione o setor</option>
-                {selectedSport?.sectors.map(sector => (
-                  <option key={sector} value={sector}>{sector}</option>
-                ))}
-              </select>
+              {isNewSport ? (
+                <input
+                  type="text"
+                  id="sector"
+                  name="sector"
+                  required
+                  placeholder="Ex: Ataque"
+                  value={formData.sector}
+                  onChange={handleChange}
+                />
+              ) : (
+                <SearchableSelect
+                  options={(selectedSport?.sectors ?? []).map(sector => ({ id: sector, name: sector }))}
+                  value={formData.sector}
+                  onChange={(value) => setFormData(prev => ({ ...prev, sector: value }))}
+                  placeholder="Selecione o setor"
+                  disabled={!selectedSport}
+                  creatable
+                  createLabel={(term) => `Criar setor "${term}"`}
+                />
+              )}
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="category">Categoria</label>
-              <select 
-                id="category" 
-                name="category" 
-                required 
-                disabled={!selectedSport}
-                value={formData.category} 
-                onChange={handleChange}
-              >
-                <option value="" disabled>Selecione a categoria</option>
-                {selectedSport?.categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+              {isNewSport ? (
+                <input
+                  type="text"
+                  id="category"
+                  name="category"
+                  required
+                  placeholder="Ex: Profissional"
+                  value={formData.category}
+                  onChange={handleChange}
+                />
+              ) : (
+                <SearchableSelect
+                  options={(selectedSport?.categories ?? []).map(cat => ({ id: cat, name: cat }))}
+                  value={formData.category}
+                  onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                  placeholder="Selecione a categoria"
+                  disabled={!selectedSport}
+                  creatable
+                  createLabel={(term) => `Criar categoria "${term}"`}
+                />
+              )}
             </div>
 
             <div className="form-group">

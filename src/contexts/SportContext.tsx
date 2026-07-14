@@ -9,6 +9,8 @@ interface SportContextType {
   error: string | null;
   refreshSports: () => Promise<void>;
   loadMoreSports: () => Promise<void>;
+  addSport: (sport: SportResponse) => void;
+  updateSportInCache: (sport: SportResponse) => void;
   hasMore: boolean;
 }
 
@@ -71,13 +73,23 @@ export function SportProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSports = useCallback(() => fetchSports(1), [fetchSports]);
 
+  const addSport = useCallback((sport: SportResponse) => {
+    setSports(prev => [sport, ...prev.filter(s => s.id !== sport.id)]);
+  }, []);
+
+  const updateSportInCache = useCallback((sport: SportResponse) => {
+    setSports(prev => prev.map(s => s.id === sport.id ? sport : s));
+  }, []);
+
   return (
-    <SportContext.Provider value={{ 
-      sports, 
-      loading, 
-      error, 
+    <SportContext.Provider value={{
+      sports,
+      loading,
+      error,
       refreshSports,
       loadMoreSports,
+      addSport,
+      updateSportInCache,
       hasMore: page < totalPages
     }}>
       {children}
