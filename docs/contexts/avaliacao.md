@@ -21,3 +21,6 @@ Ao comparar avaliações ou visualizar os dados atuais, as seguintes fórmulas s
 - **Relação Massa Muscular-Ossos**: `MLG / Ossos` (índice adimensional).
 - **Relação Massa Muscular-Gordura**: `MLG / Gordura` (índice adimensional).
 - **PVC (Pico de Velocidade de Crescimento)**: `-9.236 + (0.0002708 * Altura * AlturaSentado) - (0.001663 * Idade * Altura) + (0.007216 * Idade * AlturaSentado) + (0.02292 * Peso / Altura)` — requer campo `sittingHeight` preenchido na avaliação.
+
+## Comportamento no Preenchimento de Nova Avaliação
+- **Comparação em Tempo Real**: Durante o input dos campos no formulário de Nova Avaliação ou Edição, o sistema exibe abaixo de cada campo o valor registrado na avaliação anterior imediatamente anterior.

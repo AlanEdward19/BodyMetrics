@@ -299,3 +299,15 @@
     grid-template-columns: 1fr;
   }
 }
+
+.prev-val-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.4rem;
+  font-weight: 500;
+}
+
+
