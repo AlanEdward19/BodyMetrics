@@ -16,6 +16,7 @@ Ao comparar avaliações ou visualizar os dados atuais, as seguintes fórmulas s
 - **Ossos (kg)**: `3.02 * (400 * (Circuferencia D. Punho / 100 ) * (Circuferencia D. Joelho / 100 ) * ((Altura / 100)^2))^0.712`
 - **Gordura (kg)**: `(Peso * Percentual de Gordura) / 100`
 - **Massa Livre de Gordura (MLG em kg)**: `Peso - Gordura - Ossos`
+- **Massa Muscular (kg)**: `(Altura / 100) * ((0.00744 * (Relação M/O Braço^2)) + (0.00088 * (Circunferência Braço Corrigida^2)) + (0.00441 * (Tornozelo^2))) + (2.4 * Sexo) - (0.048 * Idade) + Raça + 7.8` onde Relação M/O Braço é `Circunferência Braço Corrigida / Diâmetro Punho`, Sexo é 1 para masculino e 0 para feminino, Raça é 0 para branco, 1.1 para negro e -2 para asiático, e Tornozelo é o valor registrado de circunferência/diâmetro do tornozelo.
 - **Somatório de Dobras**: Soma de todas as dobras registradas na avaliação.
 - **Percentual de Gordura (%)**: O usuário deve poder escolher entre as fórmulas de Pollock ou Faulkner.
 - **Relação Massa Muscular-Ossos**: `MLG / Ossos` (índice adimensional).
