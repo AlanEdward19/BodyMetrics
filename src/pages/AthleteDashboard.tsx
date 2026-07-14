@@ -8,6 +8,7 @@ import { MetricCard } from '../components/MetricCard';
 import { SearchableSelect } from '../components/SearchableSelect';
 import { ReportModal } from '../components/ReportModal';
 import { ImportExcelModal } from '../components/ImportExcelModal';
+import { Loading } from '../components/Loading';
 import { AssessmentListModal } from '../components/AssessmentListModal';
 import { 
   User2, Calendar, Target, Shield, Scale, Percent, 
@@ -170,6 +171,23 @@ export default function AthleteDashboard() {
       massaMuscular = (alturaM * 100 / 100) * (mmBraco + mmCoxa + mmPantu) + (2.4 * fatorSexo) - (0.048 * idade) + fatorRaca + 7.8;
     }
 
+    // Relação Massa Muscular-Ossos (MLG / Ossos)
+    const relacaoMusculoOsso = (mlg > 0 && ossos > 0) ? mlg / ossos : 0;
+
+    // Relação Massa Muscular-Gordura (MLG / Gordura)
+    const relacaoMusculoGordura = (mlg > 0 && gordura > 0) ? mlg / gordura : 0;
+
+    // PVC (Pico de Velocidade de Crescimento)
+    const altSentado = evalData.sittingHeight || 0;
+    let pvc = 0;
+    if (altSentado > 0 && altura > 0 && idade > 0 && peso > 0) {
+      pvc = -9.236
+        + (0.0002708 * (altura * altSentado))
+        - (0.001663 * (idade * altura))
+        + (0.007216 * (idade * altSentado))
+        + (0.02292 * (peso / altura));
+    }
+
     return {
       peso,
       altura,
@@ -179,6 +197,9 @@ export default function AthleteDashboard() {
       mlg,
       percentualGordura,
       massaMuscular,
+      relacaoMusculoOsso,
+      relacaoMusculoGordura,
+      pvc,
       simetria: {
         coxa: { d: coxaD_C, e: coxaE_C, diff: Math.abs(coxaD_C - coxaE_C) },
         pantu: { d: pantuD_C, e: pantuE_C, diff: Math.abs(pantuD_C - pantuE_C) },
@@ -336,7 +357,7 @@ export default function AthleteDashboard() {
   [athletes]);
 
   if (athletesLoading && athletes.length === 0 && !isImportModalOpen) {
-    return <div className="container" style={{ padding: '2rem' }}>Carregando atletas...</div>;
+    return <Loading fullScreen message="Carregando atletas..." />;
   }
 
   return (
@@ -619,6 +640,42 @@ export default function AthleteDashboard() {
                             value: `${formatNumber(Math.abs(currentMetrics.massaMuscular - (compareMetrics || currentMetrics).massaMuscular))} kg`,
                             text: 'vs. comparação',
                             isGood: currentMetrics.massaMuscular > (compareMetrics || currentMetrics).massaMuscular
+                          } : undefined}
+                        />
+                        <MetricCard
+                          icon={<Activity size={24} />}
+                          title="REL. MÚSCULO/OSSO"
+                          value={formatNumber(currentMetrics.relacaoMusculoOsso)}
+                          unit="índice"
+                          trend={compareEval ? {
+                            direction: currentMetrics.relacaoMusculoOsso > (compareMetrics || currentMetrics).relacaoMusculoOsso ? 'up' : currentMetrics.relacaoMusculoOsso < (compareMetrics || currentMetrics).relacaoMusculoOsso ? 'down' : 'neutral',
+                            value: formatNumber(Math.abs(currentMetrics.relacaoMusculoOsso - (compareMetrics || currentMetrics).relacaoMusculoOsso)),
+                            text: 'vs. comparação',
+                            isGood: currentMetrics.relacaoMusculoOsso > (compareMetrics || currentMetrics).relacaoMusculoOsso
+                          } : undefined}
+                        />
+                        <MetricCard
+                          icon={<Activity size={24} />}
+                          title="REL. MÚSCULO/GORDURA"
+                          value={formatNumber(currentMetrics.relacaoMusculoGordura)}
+                          unit="índice"
+                          trend={compareEval ? {
+                            direction: currentMetrics.relacaoMusculoGordura > (compareMetrics || currentMetrics).relacaoMusculoGordura ? 'up' : currentMetrics.relacaoMusculoGordura < (compareMetrics || currentMetrics).relacaoMusculoGordura ? 'down' : 'neutral',
+                            value: formatNumber(Math.abs(currentMetrics.relacaoMusculoGordura - (compareMetrics || currentMetrics).relacaoMusculoGordura)),
+                            text: 'vs. comparação',
+                            isGood: currentMetrics.relacaoMusculoGordura > (compareMetrics || currentMetrics).relacaoMusculoGordura
+                          } : undefined}
+                        />
+                        <MetricCard
+                          icon={<Ruler size={24} />}
+                          title="PVC"
+                          value={formatNumber(currentMetrics.pvc)}
+                          unit="anos"
+                          trend={compareEval ? {
+                            direction: currentMetrics.pvc > (compareMetrics || currentMetrics).pvc ? 'up' : currentMetrics.pvc < (compareMetrics || currentMetrics).pvc ? 'down' : 'neutral',
+                            value: `${formatNumber(Math.abs(currentMetrics.pvc - (compareMetrics || currentMetrics).pvc))} anos`,
+                            text: 'vs. comparação',
+                            isGood: currentMetrics.pvc > (compareMetrics || currentMetrics).pvc
                           } : undefined}
                         />
                       </div>

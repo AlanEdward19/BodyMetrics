@@ -5,7 +5,8 @@ import * as ApiTypes from '../types/api';
 import * as Mapper from '../utils/mapper';
 import { Card } from '../components/Card';
 import { DatePicker } from '../components/DatePicker';
-import { Activity, Scale, Ruler, Droplets, User2 } from 'lucide-react';
+import { Activity, Scale, Ruler, Droplets, User2, Calculator } from 'lucide-react';
+import { Loading } from '../components/Loading';
 import './AddAssessment.css';
 
 export default function AddAssessment() {
@@ -17,6 +18,9 @@ export default function AddAssessment() {
 
   const [selectedAthleteId, setSelectedAthleteId] = useState<string>(athleteId || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [useHeightCalc, setUseHeightCalc] = useState(false);
+  const [benchHeight, setBenchHeight] = useState('');
+  const [heightFlash, setHeightFlash] = useState(false);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -112,6 +116,21 @@ export default function AddAssessment() {
       }
     }
   }, [assessmentId, athleteId, athletes]);
+
+  useEffect(() => {
+    if (!useHeightCalc) return;
+    const sitting = parseFloat(formData.sittingHeight);
+    const bench = parseFloat(benchHeight);
+    const computed = (!isNaN(sitting) && !isNaN(bench)) ? (sitting + bench).toFixed(2) : '';
+    setFormData(prev => prev.height === computed ? prev : { ...prev, height: computed });
+  }, [useHeightCalc, formData.sittingHeight, benchHeight]);
+
+  useEffect(() => {
+    if (!useHeightCalc || !formData.height) return;
+    setHeightFlash(true);
+    const timer = setTimeout(() => setHeightFlash(false), 600);
+    return () => clearTimeout(timer);
+  }, [formData.height, useHeightCalc]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -215,7 +234,7 @@ export default function AddAssessment() {
   );
 
   if (athletesLoading && athletes.length === 0) {
-    return <div className="container" style={{ padding: '2rem' }}>Carregando atletas...</div>;
+    return <Loading fullScreen message="Carregando atletas..." />;
   }
 
   if (athletes.length === 0) {
@@ -243,6 +262,7 @@ export default function AddAssessment() {
 
   return (
     <div className="container add-assessment-container">
+      {isSubmitting && <Loading fullScreen message="Salvando avaliação..." />}
       <div className="add-assessment-header">
         <h1>{isEditing ? 'Editar Avaliação' : 'Nova Avaliação Antropométrica'}</h1>
         <p>Registre ou atualize as medidas, dobras e circunferências do atleta.</p>
@@ -297,7 +317,56 @@ export default function AddAssessment() {
           </div>
           <div className="grid-3-cols">
             {renderInput('weight', 'Peso', 'kg')}
-            {renderInput('height', 'Altura', 'cm')}
+
+            <div className="form-group">
+              <div className="height-field-label">
+                <label htmlFor="height">Altura</label>
+                <button
+                  type="button"
+                  className={`calc-toggle ${useHeightCalc ? 'active' : ''}`}
+                  onClick={() => setUseHeightCalc(v => !v)}
+                >
+                  <Calculator size={13} />
+                  {useHeightCalc ? 'Usar manual' : 'Calcular via banco'}
+                </button>
+              </div>
+              <div className="input-with-unit">
+                <input
+                  type="number"
+                  step="0.01"
+                  id="height"
+                  name="height"
+                  value={formData.height}
+                  onChange={handleChange}
+                  placeholder="0.00"
+                  required
+                  readOnly={useHeightCalc}
+                  className={useHeightCalc ? `computed-input ${heightFlash ? 'flash' : ''}` : ''}
+                />
+                <span className="unit">cm</span>
+              </div>
+              <div className={`bench-height-reveal ${useHeightCalc ? 'open' : ''}`}>
+                <div className="bench-height-inner">
+                  <div className="bench-height-inner-content">
+                    <label htmlFor="benchHeight" className="bench-label">Altura do Banco</label>
+                    <div className="input-with-unit">
+                      <input
+                        type="number"
+                        step="0.01"
+                        id="benchHeight"
+                        name="benchHeight"
+                        value={benchHeight}
+                        onChange={(e) => setBenchHeight(e.target.value)}
+                        placeholder="0.00"
+                      />
+                      <span className="unit">cm</span>
+                    </div>
+                    <span className="field-hint">Alt. Sentado + Banco = Altura</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {renderInput('sittingHeight', 'Alt. Sentado', 'cm')}
           </div>
         </Card>
@@ -355,7 +424,7 @@ export default function AddAssessment() {
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary" disabled={isSubmitting || athletes.length === 0}>
-            {isSubmitting ? 'Salvando...' : (isEditing ? 'Atualizar Avaliação' : 'Salvar Avaliação')}
+            {isSubmitting ? <Loading size="sm" variant="white" message="" /> : (isEditing ? 'Atualizar Avaliação' : 'Salvar Avaliação')}
           </button>
         </div>
       </form>

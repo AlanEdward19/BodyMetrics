@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import { Loading } from './components/Loading';
 import AthleteDashboard from './pages/AthleteDashboard';
 import AddAthlete from './pages/AddAthlete';
 import AddAssessment from './pages/AddAssessment';
@@ -12,7 +13,7 @@ import './App.css';
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   
-  if (loading) return null; // Ou um spinner/skeleton
+  if (loading) return <Loading fullScreen />;
   
   if (!user) {
     return <Navigate to="/login" replace />;

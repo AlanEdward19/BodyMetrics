@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { X, Upload, FileSpreadsheet, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loading } from './Loading';
 import { useAthletes } from '../hooks/useAthletes';
 import type { AthleteSpreadsheetImportViewModel } from '../types/api';
 import { useSports } from '../contexts/SportContext';
+import { SearchableSelect, NEW_OPTION_PREFIX } from './SearchableSelect';
 import './ImportExcelModal.css';
 
 interface ImportExcelModalProps {
@@ -20,20 +22,24 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
-  const [sportName, setSportName] = useState('');
+  const [sportValue, setSportValue] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<AthleteSpreadsheetImportViewModel | null>(null);
   const [previewData, setPreviewData] = useState<{ headers: string[], rows: any[] } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const sportName = sportValue.startsWith(NEW_OPTION_PREFIX) ? sportValue.slice(NEW_OPTION_PREFIX.length) : sportValue;
+
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      refreshSports();
+    } else {
       setSelectedFile(null);
       setError(null);
       setSuccess(false);
       setIsProcessing(false);
-      setSportName('');
+      setSportValue('');
       setImportResult(null);
       setPreviewData(null);
       if (fileInputRef.current) {
@@ -121,7 +127,17 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
       }, 3000);
 
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.response?.data?.title || "Ocorreu um erro ao salvar os dados.");
+      const data = err.response?.data;
+      let msg = "Ocorreu um erro ao salvar os dados.";
+      
+      if (data?.errors) {
+        // Extrai todas as mensagens de erro do objeto 'errors' da API
+        msg = Object.values(data.errors).flat().join(". ");
+      } else {
+        msg = data?.detail || data?.title || msg;
+      }
+      
+      setError(msg);
     } finally {
       setIsProcessing(false);
     }
@@ -130,7 +146,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
   const cancelAndReset = () => {
     setSelectedFile(null);
     setError(null);
-    setSportName('');
+    setSportValue('');
     setPreviewData(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -149,9 +165,12 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
         </div>
 
         {error && (
-          <div className="import-error-banner" style={{ margin: '0 1.5rem 1rem' }}>
-            <AlertCircle size={20} />
-            {error}
+          <div className="import-error-banner" style={{ margin: '0 1.5rem 1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <AlertCircle size={20} style={{ marginTop: '0.1rem', flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+              <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Erro ao importar o arquivo, tente novamente.</span>
+              <span style={{ fontSize: '0.75rem', opacity: 0.85, lineHeight: '1.2' }}>{error}</span>
+            </div>
           </div>
         )}
 
@@ -179,7 +198,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
             )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-              <Loader2 size={16} className="spinner" />
+              <Loading size="sm" message="" />
               <span>Redirecionando para o dashboard...</span>
             </div>
           </div>
@@ -187,25 +206,20 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
           <div className="import-flow-container">
             <div className="import-form-section" style={{ padding: '0 1.5rem 1.5rem' }}>
               <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
-                Esporte
+                Esporte <span style={{ color: '#dc2626' }}>*</span>
               </label>
-              <div className="sport-input-group" style={{ position: 'relative' }}>
-                <input 
-                  type="text"
-                  list="sports-list"
-                  className="form-input"
-                  placeholder="Selecione ou digite o nome do esporte..."
-                  value={sportName}
-                  onChange={(e) => setSportName(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-page)' }}
-                />
-                <datalist id="sports-list">
-                  {sports.map(s => <option key={s.id} value={s.name} />)}
-                </datalist>
-                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.4rem' }}>
-                  Você pode escolher um esporte existente ou cadastrar um novo apenas digitando o nome.
-                </p>
-              </div>
+              <SearchableSelect
+                options={sports.map(s => ({ id: s.name, name: s.name }))}
+                value={sportValue}
+                onChange={setSportValue}
+                placeholder="Selecione ou digite o esporte..."
+                creatable
+                createLabel={(term) => `Criar esporte "${term}"`}
+              />
+              <p className={`sport-field-hint ${sportName ? '' : 'sport-field-hint-required'}`}>
+                {!sportName && <AlertCircle size={14} />}
+                {sportName ? 'Você pode escolher um esporte existente ou cadastrar um novo apenas digitando o nome.' : 'O campo Esporte é obrigatório para iniciar a importação.'}
+              </p>
             </div>
 
             <div 
@@ -226,7 +240,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
               />
               <div className="import-dropzone-icon">
                 {isProcessing ? (
-                  <Loader2 size={32} className="spinner" />
+                  <Loading size="sm" message="" />
                 ) : selectedFile ? (
                   <CheckCircle2 size={32} style={{ color: 'var(--color-primary)' }} />
                 ) : (
@@ -286,7 +300,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                 disabled={isProcessing || !selectedFile || !sportName.trim()}
                 style={{ minWidth: '180px', padding: '0.75rem 1.5rem' }}
               >
-                {isProcessing ? <Loader2 size={20} className="spinner" /> : <FileSpreadsheet size={20} />}
+                {isProcessing ? <Loading size="sm" variant="white" message="" /> : <FileSpreadsheet size={20} />}
                 {isProcessing ? 'Processando...' : 'Iniciar Importação'}
               </button>
             </div>

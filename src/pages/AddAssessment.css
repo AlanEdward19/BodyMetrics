@@ -143,6 +143,111 @@
   pointer-events: none;
 }
 
+.height-field-label {
+  position: relative;
+}
+
+.height-field-label label {
+  margin-bottom: 0.5rem;
+}
+
+.calc-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.calc-toggle:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.calc-toggle:active {
+  transform: scale(0.94);
+}
+
+.calc-toggle.active {
+  background-color: rgba(34, 197, 94, 0.12);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.computed-input {
+  background-color: rgba(34, 197, 94, 0.06) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  font-weight: 600;
+  cursor: default;
+}
+
+@keyframes heightComputedFlash {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.35); }
+  100% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+}
+
+.computed-input.flash {
+  animation: heightComputedFlash 0.6s ease-out;
+}
+
+.bench-height-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bench-height-reveal.open {
+  grid-template-rows: 1fr;
+}
+
+.bench-height-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.bench-height-inner-content {
+  padding-top: 0.85rem;
+}
+
+.bench-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.field-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.4rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bench-height-reveal,
+  .calc-toggle,
+  .computed-input {
+    transition: none;
+  }
+  .computed-input.flash {
+    animation: none;
+  }
+}
+
 .sticky-form-actions {
   position: fixed;
   bottom: 0;
