@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, ChevronDown, Check, User2 } from 'lucide-react';
+import { Search, ChevronDown, Check, User2, Plus } from 'lucide-react';
 import './SearchableSelect.css';
 
 interface Option {
   id: string;
   name: string;
 }
+
+export const NEW_OPTION_PREFIX = '__new__:';
 
 interface SearchableSelectProps {
   options: Option[];
@@ -15,16 +17,22 @@ interface SearchableSelectProps {
   noOptionsMessage?: string;
   onSearch?: (term: string) => void;
   onLoadMore?: () => void;
+  creatable?: boolean;
+  createLabel?: (term: string) => string;
+  disabled?: boolean;
 }
 
-export function SearchableSelect({ 
-  options, 
-  value, 
-  onChange, 
-  placeholder = 'Selecionar...', 
+export function SearchableSelect({
+  options,
+  value,
+  onChange,
+  placeholder = 'Selecionar...',
   noOptionsMessage = 'Nenhum resultado encontrado',
   onSearch,
-  onLoadMore
+  onLoadMore,
+  creatable = false,
+  createLabel = (term) => `Criar "${term}"`,
+  disabled = false
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,10 +42,16 @@ export function SearchableSelect({
   const listRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find(opt => opt.id === value);
+  const isNewValue = !selectedOption && value.startsWith(NEW_OPTION_PREFIX);
+  const newValueName = isNewValue ? value.slice(NEW_OPTION_PREFIX.length) : '';
 
   const filteredOptions = options.filter(opt =>
     opt.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const trimmedSearch = searchTerm.trim();
+  const hasExactMatch = options.some(opt => opt.name.toLowerCase() === trimmedSearch.toLowerCase());
+  const showCreateOption = creatable && trimmedSearch !== '' && !hasExactMatch;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -50,6 +64,7 @@ export function SearchableSelect({
   }, []);
 
   const handleToggle = () => {
+    if (disabled) return;
     setIsOpen(!isOpen);
     if (!isOpen) {
       setSearchTerm('');
@@ -84,16 +99,23 @@ export function SearchableSelect({
     setSearchTerm('');
   };
 
+  const handleCreate = () => {
+    if (!trimmedSearch) return;
+    onChange(`${NEW_OPTION_PREFIX}${trimmedSearch}`);
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+
   return (
     <div className="searchable-select-container" ref={containerRef}>
-      <div 
-        className={`searchable-select-trigger ${isOpen ? 'active' : ''}`} 
+      <div
+        className={`searchable-select-trigger ${isOpen ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
         onClick={handleToggle}
       >
         <div className="trigger-content">
           <User2 size={18} className="trigger-icon" />
-          <span className={`trigger-text ${!selectedOption ? 'placeholder' : ''}`}>
-            {selectedOption ? selectedOption.name : placeholder}
+          <span className={`trigger-text ${!selectedOption && !isNewValue ? 'placeholder' : ''}`}>
+            {selectedOption ? selectedOption.name : isNewValue ? newValueName : placeholder}
           </span>
         </div>
         <ChevronDown size={20} className={`chevron-icon ${isOpen ? 'rotate' : ''}`} />
@@ -122,6 +144,14 @@ export function SearchableSelect({
               <span className="option-name">-- Limpar seleção --</span>
               {value === '' && <Check size={16} className="check-icon" />}
             </div>
+            {showCreateOption && (
+              <div className="dropdown-option" onClick={handleCreate}>
+                <span className="option-name" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Plus size={16} />
+                  {createLabel(trimmedSearch)}
+                </span>
+              </div>
+            )}
             {filteredOptions.length > 0 ? (
               filteredOptions.map(option => (
                 <div
@@ -134,7 +164,7 @@ export function SearchableSelect({
                 </div>
               ))
             ) : (
-              <div className="dropdown-no-results">{noOptionsMessage}</div>
+              !showCreateOption && <div className="dropdown-no-results">{noOptionsMessage}</div>
             )}
           </div>
         </div>
