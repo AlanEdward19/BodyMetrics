@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { X, Upload, ChevronLeft, ChevronRight, Trash2, Download, Scale, Ruler, Percent, Activity, Shield, Dumbbell, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { X, Upload, ChevronLeft, ChevronRight, Trash2, Download, Scale, Ruler, Percent, Activity, Shield, Dumbbell, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { Loading } from './Loading';
 import type { Assessment } from '../types/assessment';
 import type { Athlete } from '../types/athlete';
@@ -38,7 +38,8 @@ export function ReportModal({
     composition: { 
       items: { 
         peso: true, altura: true, percentualGordura: true, sumDobras: true, 
-        gordura: true, mlg: true, ossos: true, massaMuscular: true 
+        gordura: true, mlg: true, ossos: true, massaMuscular: true,
+        relacaoMusculoOsso: true, relacaoMusculoGordura: true, pvc: true
       } 
     },
     symmetry: { 
@@ -229,6 +230,35 @@ export function ReportModal({
     return val.toFixed(2).replace('.', ',');
   };
 
+  const formatDeltaNumber = (val: number) => {
+    if (val === null || val === undefined || Number.isNaN(val)) return '-';
+    return Math.abs(val).toFixed(2).replace('.', ',');
+  };
+
+  const getTrendState = (currentVal?: number, compareVal?: number, inverseGood = false) => {
+    if (currentVal === undefined || currentVal === null || compareVal === undefined || compareVal === null) {
+      return null;
+    }
+
+    const diff = currentVal - compareVal;
+    if (diff === 0) {
+      return {
+        direction: 'neutral' as const,
+        className: 'trend-neutral',
+        value: '0,00',
+      };
+    }
+
+    const isUp = diff > 0;
+    const isGood = inverseGood ? !isUp : isUp;
+
+    return {
+      direction: isUp ? 'up' as const : 'down' as const,
+      className: isGood ? 'trend-good' : 'trend-bad',
+      value: formatDeltaNumber(diff),
+    };
+  };
+
   const getDiff = (cur?: number, cmp?: number, unit?: string) => {
     if (cur === undefined || cur === null || cmp === undefined || cmp === null) return '-';
     const diff = cur - cmp;
@@ -340,7 +370,10 @@ export function ReportModal({
                       { id: 'peso', label: 'Peso' }, { id: 'altura', label: 'Altura' },
                       { id: 'percentualGordura', label: '% Gordura' }, { id: 'sumDobras', label: 'Soma Dobras' },
                       { id: 'gordura', label: 'Massa Gorda' }, { id: 'mlg', label: 'MLG' },
-                      { id: 'ossos', label: 'Massa Óssea' }, { id: 'massaMuscular', label: 'Massa Muscular' }
+                      { id: 'ossos', label: 'Massa Óssea' }, { id: 'massaMuscular', label: 'Massa Muscular' },
+                      { id: 'relacaoMusculoOsso', label: 'Rel. Músculo/Osso' },
+                      { id: 'relacaoMusculoGordura', label: 'Rel. Músculo/Gordura' },
+                      { id: 'pvc', label: 'PVC' }
                     ].map(item => (
                       <label key={item.id} className="item-checkbox">
                         <input type="checkbox" checked={(selections.composition.items as any)[item.id]} onChange={() => toggleItem('composition', item.id)} />
@@ -522,21 +555,22 @@ export function ReportModal({
                       {currentMetrics && (
                         <div className="report-metrics-summary">
                           {[
-                            { id: 'peso', label: 'Peso Corporal', key: 'peso', unit: 'kg', icon: <Scale size={18} /> },
-                            { id: 'altura', label: 'Altura', key: 'altura', unit: 'cm', icon: <Ruler size={18} /> },
-                            { id: 'percentualGordura', label: '% Gordura', key: 'percentualGordura', unit: '%', icon: <Percent size={18} /> },
-                            { id: 'sumDobras', label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm', icon: <Activity size={18} /> },
-                            { id: 'gordura', label: 'Massa Gorda', key: 'gordura', unit: 'kg', icon: <Shield size={18} /> },
-                            { id: 'mlg', label: 'Massa Livre Gord.', key: 'mlg', unit: 'kg', icon: <Dumbbell size={18} /> },
-                            { id: 'ossos', label: 'Massa Óssea', key: 'ossos', unit: 'kg', icon: <Shield size={18} /> },
-                            { id: 'massaMuscular', label: 'Massa Muscular', key: 'massaMuscular', unit: 'kg', icon: <Dumbbell size={18} /> },
+                            { id: 'peso', label: 'Peso Corporal', key: 'peso', unit: 'kg', icon: <Scale size={18} />, inverseGood: true, showTrend: true },
+                            { id: 'altura', label: 'Altura', key: 'altura', unit: 'cm', icon: <Ruler size={18} />, inverseGood: false, showTrend: false },
+                            { id: 'percentualGordura', label: '% Gordura', key: 'percentualGordura', unit: '%', icon: <Percent size={18} />, inverseGood: true, showTrend: true },
+                            { id: 'sumDobras', label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm', icon: <Activity size={18} />, inverseGood: true, showTrend: true },
+                            { id: 'gordura', label: 'Massa Gorda', key: 'gordura', unit: 'kg', icon: <Shield size={18} />, inverseGood: true, showTrend: true },
+                            { id: 'mlg', label: 'Massa Livre Gord.', key: 'mlg', unit: 'kg', icon: <Dumbbell size={18} />, inverseGood: false, showTrend: true },
+                            { id: 'ossos', label: 'Massa Óssea', key: 'ossos', unit: 'kg', icon: <Shield size={18} />, inverseGood: false, showTrend: false },
+                            { id: 'massaMuscular', label: 'Massa Muscular', key: 'massaMuscular', unit: 'kg', icon: <Dumbbell size={18} />, inverseGood: false, showTrend: true },
+                            { id: 'relacaoMusculoOsso', label: 'Rel. Músculo/Osso', key: 'relacaoMusculoOsso', unit: 'índice', icon: <Activity size={18} />, inverseGood: false, showTrend: true },
+                            { id: 'relacaoMusculoGordura', label: 'Rel. Músculo/Gordura', key: 'relacaoMusculoGordura', unit: 'índice', icon: <Activity size={18} />, inverseGood: false, showTrend: true },
+                            { id: 'pvc', label: 'PVC', key: 'pvc', unit: 'anos', icon: <Ruler size={18} />, inverseGood: false, showTrend: true },
                           ].filter(m => (selections.composition.items as any)[m.id]).map((m) => {
                             const curVal = currentMetrics[m.key];
                             const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
-                            const diff = cmpVal !== undefined ? curVal - cmpVal : 0;
-                            const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-neutral';
-                            const TrendIcon = diff > 0 ? ArrowUpRight : ArrowDownRight;
                             const isNA = !curVal || curVal <= 0;
+                            const trend = m.showTrend ? getTrendState(curVal, cmpVal, m.inverseGood) : null;
                             
                             return (
                               <div key={m.key} className={`report-metric-box ${isNA ? 'is-na' : ''}`}>
@@ -553,10 +587,10 @@ export function ReportModal({
                                 </div>
 
                                 <div className="report-metric-footer">
-                                  {compareMetrics && curVal != null && cmpVal != null && diff !== 0 ? (
-                                    <span className={`report-metric-trend ${trendClass}`}>
-                                      <TrendIcon size={12} />
-                                      {formatNumber(diff)}
+                                  {trend ? (
+                                    <span className={`report-metric-trend ${trend.className}`}>
+                                      {trend.direction === 'neutral' ? <Minus size={12} /> : trend.direction === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                                      {trend.value}
                                     </span>
                                   ) : <span />}
                                   <span style={{ fontSize: '6pt', color: '#94a3b8' }}>vs. anterior</span>

@@ -319,8 +319,8 @@
   gap: 2px;
 }
 
-.report-metric-trend.trend-up { color: #dc2626; }
-.report-metric-trend.trend-down { color: #16a34a; }
+.report-metric-trend.trend-good { color: #16a34a; }
+.report-metric-trend.trend-bad { color: #dc2626; }
 .report-metric-trend.trend-neutral { color: #64748b; }
 
 /* Cards Layout */
