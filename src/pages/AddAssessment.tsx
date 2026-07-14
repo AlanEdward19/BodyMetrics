@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
 import * as ApiTypes from '../types/api';
@@ -45,6 +45,72 @@ export default function AddAssessment() {
     wristRight: '', kneeRight: '',
     ankle: ''
   });
+
+  const athlete = selectedAthleteId ? getAthleteById(selectedAthleteId) : null;
+
+  const previousAssessment = useMemo(() => {
+    if (!athlete || athlete.physicalAssessments.length === 0) return null;
+    const sorted = athlete.physicalAssessments
+      .map(pa => Mapper.mapPhysicalAssessmentToAssessment(pa, athlete.id))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (isEditing && assessmentId) {
+      const dateToFind = assessmentId.startsWith('pa-') ? assessmentId.replace('pa-', '') : assessmentId;
+      const currentIndex = sorted.findIndex(a => a.date === dateToFind);
+      if (currentIndex !== -1 && currentIndex + 1 < sorted.length) {
+        return sorted[currentIndex + 1];
+      }
+      return null;
+    }
+    return sorted[0] || null;
+  }, [athlete, isEditing, assessmentId, selectedAthleteId]);
+
+  const getPrevValue = (name: string): number | null => {
+    if (!previousAssessment) return null;
+    switch (name) {
+      case 'weight': return previousAssessment.weight;
+      case 'height': return previousAssessment.height;
+      case 'sittingHeight': return previousAssessment.sittingHeight || null;
+      // dobras
+      case 'tricepsRight': return previousAssessment.skinfolds?.tricepsRight ?? null;
+      case 'tricepsLeft': return previousAssessment.skinfolds?.tricepsLeft ?? null;
+      case 'subscapular': return previousAssessment.skinfolds?.subscapular ?? null;
+      case 'chestSkinfold': return previousAssessment.skinfolds?.chest ?? null;
+      case 'midaxillary': return previousAssessment.skinfolds?.midaxillary ?? null;
+      case 'suprailiac': return previousAssessment.skinfolds?.suprailiac ?? null;
+      case 'abdominal': return previousAssessment.skinfolds?.abdominal ?? null;
+      case 'thighRightSkinfold': return previousAssessment.skinfolds?.thighRight ?? null;
+      case 'thighLeftSkinfold': return previousAssessment.skinfolds?.thighLeft ?? null;
+      case 'calfRightSkinfold': return previousAssessment.skinfolds?.calfRight ?? null;
+      case 'calfLeftSkinfold': return previousAssessment.skinfolds?.calfLeft ?? null;
+      // circunferências
+      case 'shoulder': return previousAssessment.circumferences?.shoulder ?? null;
+      case 'chest': return previousAssessment.circumferences?.chest ?? null;
+      case 'armRight': return previousAssessment.circumferences?.armRight ?? null;
+      case 'armLeft': return previousAssessment.circumferences?.armLeft ?? null;
+      case 'waist': return previousAssessment.circumferences?.waist ?? null;
+      case 'hip': return previousAssessment.circumferences?.hip ?? null;
+      case 'thighMidRight': return previousAssessment.circumferences?.thighMidRight ?? null;
+      case 'thighMidLeft': return previousAssessment.circumferences?.thighMidLeft ?? null;
+      case 'calfRight': return previousAssessment.circumferences?.calfRight ?? null;
+      case 'calfLeft': return previousAssessment.circumferences?.calfLeft ?? null;
+      case 'wristRight': return previousAssessment.circumferences?.wristRight ?? null;
+      case 'kneeRight': return previousAssessment.circumferences?.kneeRight ?? null;
+      case 'ankle': return previousAssessment.circumferences?.ankle ?? null;
+      default: return null;
+    }
+  };
+
+  const renderPreviousValueHint = (name: string, unit: string) => {
+    const prevVal = getPrevValue(name);
+    if (prevVal === null || prevVal === undefined) return null;
+
+    return (
+      <div className="prev-val-hint">
+        <span>Anterior: {prevVal.toFixed(2).replace('.', ',')} {unit}</span>
+      </div>
+    );
+  };
 
   useEffect(() => {
     if (athleteId) {
@@ -230,6 +296,7 @@ export default function AddAssessment() {
         />
         {unit && <span className="unit">{unit}</span>}
       </div>
+      {renderPreviousValueHint(name, unit)}
     </div>
   );
 
@@ -345,6 +412,7 @@ export default function AddAssessment() {
                 />
                 <span className="unit">cm</span>
               </div>
+              {renderPreviousValueHint('height', 'cm')}
               <div className={`bench-height-reveal ${useHeightCalc ? 'open' : ''}`}>
                 <div className="bench-height-inner">
                   <div className="bench-height-inner-content">
