@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle2, ChevronDown } from 'lucide-react';
+import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Loading } from './Loading';
 import { useAthletes } from '../hooks/useAthletes';
 import type { AthleteSpreadsheetImportViewModel } from '../types/api';
 import { useSports } from '../contexts/SportContext';
+import { SearchableSelect, NEW_OPTION_PREFIX } from './SearchableSelect';
 import './ImportExcelModal.css';
 
 interface ImportExcelModalProps {
@@ -21,14 +22,14 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
-  const [sportName, setSportName] = useState('');
+  const [sportValue, setSportValue] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<AthleteSpreadsheetImportViewModel | null>(null);
   const [previewData, setPreviewData] = useState<{ headers: string[], rows: any[] } | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const sportName = sportValue.startsWith(NEW_OPTION_PREFIX) ? sportValue.slice(NEW_OPTION_PREFIX.length) : sportValue;
 
   useEffect(() => {
     if (isOpen) {
@@ -38,7 +39,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
       setError(null);
       setSuccess(false);
       setIsProcessing(false);
-      setSportName('');
+      setSportValue('');
       setImportResult(null);
       setPreviewData(null);
       if (fileInputRef.current) {
@@ -46,25 +47,6 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
       }
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const filteredSports = sports.filter(s => 
-    s.name.toLowerCase().includes(sportName.toLowerCase())
-  );
-
-  const handleSportSelect = (name: string) => {
-    setSportName(name);
-    setIsDropdownOpen(false);
-  };
 
   if (!isOpen) return null;
 
@@ -164,7 +146,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
   const cancelAndReset = () => {
     setSelectedFile(null);
     setError(null);
-    setSportName('');
+    setSportValue('');
     setPreviewData(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -226,82 +208,18 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
               <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
                 Esporte <span style={{ color: '#dc2626' }}>*</span>
               </label>
-              <div className="sport-input-group" style={{ position: 'relative' }} ref={dropdownRef}>
-                <div className="input-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <input 
-                    type="text"
-                    className="form-input"
-                    placeholder="Obrigatório: Selecione ou digite o esporte..."
-                    value={sportName}
-                    onChange={(e) => {
-                      setSportName(e.target.value);
-                      setIsDropdownOpen(true);
-                    }}
-                    onFocus={() => setIsDropdownOpen(true)}
-                    style={{ 
-                      width: '100%', 
-                      padding: '0.75rem', 
-                      paddingRight: '2.5rem',
-                      borderRadius: '0.5rem', 
-                      border: '1px solid var(--color-border)', 
-                      backgroundColor: 'var(--color-bg-page)',
-                      transition: 'border-color 0.2s, box-shadow 0.2s'
-                    }}
-                  />
-                  <ChevronDown 
-                    size={18} 
-                    style={{ 
-                      position: 'absolute', 
-                      right: '0.75rem', 
-                      color: 'var(--color-text-muted)',
-                      pointerEvents: 'none',
-                      transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s'
-                    }} 
-                  />
-                </div>
-                
-                {isDropdownOpen && filteredSports.length > 0 && (
-                  <div className="custom-dropdown-list" style={{ 
-                    position: 'absolute', 
-                    top: 'calc(100% + 4px)', 
-                    left: 0, 
-                    right: 0, 
-                    backgroundColor: 'white', 
-                    border: '1px solid var(--color-border)', 
-                    borderRadius: '0.5rem', 
-                    maxHeight: '200px', 
-                    overflowY: 'auto', 
-                    zIndex: 50,
-                    boxShadow: 'var(--shadow-lg)'
-                  }}>
-                    {filteredSports.map(s => (
-                      <div 
-                        key={s.id} 
-                        className="dropdown-item" 
-                        onClick={() => handleSportSelect(s.name)}
-                        style={{ 
-                          padding: '0.75rem 1rem', 
-                          cursor: 'pointer', 
-                          color: 'var(--color-text-main)',
-                          fontSize: '0.875rem',
-                          borderBottom: '1px solid var(--color-bg-page)',
-                          transition: 'background-color 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-bg-page)'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        {s.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <p style={{ fontSize: '0.75rem', color: sportName ? 'var(--color-text-muted)' : '#dc2626', marginTop: '0.5rem', fontWeight: sportName ? 'normal' : '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  {!sportName && <AlertCircle size={14} />}
-                  {sportName ? 'Você pode escolher um esporte existente ou cadastrar um novo apenas digitando o nome.' : 'O campo Esporte é obrigatório para iniciar a importação.'}
-                </p>
-              </div>
+              <SearchableSelect
+                options={sports.map(s => ({ id: s.name, name: s.name }))}
+                value={sportValue}
+                onChange={setSportValue}
+                placeholder="Selecione ou digite o esporte..."
+                creatable
+                createLabel={(term) => `Criar esporte "${term}"`}
+              />
+              <p className={`sport-field-hint ${sportName ? '' : 'sport-field-hint-required'}`}>
+                {!sportName && <AlertCircle size={14} />}
+                {sportName ? 'Você pode escolher um esporte existente ou cadastrar um novo apenas digitando o nome.' : 'O campo Esporte é obrigatório para iniciar a importação.'}
+              </p>
             </div>
 
             <div 
