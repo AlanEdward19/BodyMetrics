@@ -162,13 +162,16 @@ export default function AthleteDashboard() {
     const ccCoxa = (coxaD_C + coxaE_C) / 2;
     const ccPantu = (pantuD_C + pantuE_C) / 2;
 
-    const mmBraco = ccBraco > 0 ? 0.00744 * Math.pow(ccBraco, 2) : 0;
-    const mmCoxa = ccCoxa > 0 ? 0.00088 * Math.pow(ccCoxa, 2) : 0;
-    const mmPantu = ccPantu > 0 ? 0.00441 * Math.pow(ccPantu, 2) : 0;
+    const relBraco = (circ.wristRight || 0) > 0 ? ccBraco / (circ.wristRight || 0) : 0;
+    const diamTornozelo = (circ as any).ankle || 0;
+
+    const mmTermo1 = relBraco > 0 ? 0.00744 * Math.pow(relBraco, 2) : 0;
+    const mmTermo2 = ccBraco > 0 ? 0.00088 * Math.pow(ccBraco, 2) : 0;
+    const mmTermo3 = diamTornozelo > 0 ? 0.00441 * Math.pow(diamTornozelo, 2) : 0;
     
     let massaMuscular = 0;
-    if (alturaM > 0 && (mmBraco > 0 || mmCoxa > 0 || mmPantu > 0)) {
-      massaMuscular = (alturaM * 100 / 100) * (mmBraco + mmCoxa + mmPantu) + (2.4 * fatorSexo) - (0.048 * idade) + fatorRaca + 7.8;
+    if (alturaM > 0 && idade > 0) {
+      massaMuscular = alturaM * (mmTermo1 + mmTermo2 + mmTermo3) + (2.4 * fatorSexo) - (0.048 * idade) + fatorRaca + 7.8;
     }
 
     // Relação Massa Muscular-Ossos (MLG / Ossos)
