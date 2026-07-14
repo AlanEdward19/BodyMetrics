@@ -32,6 +32,21 @@
   max-width: 1000px;
 }
 
+.sport-field-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.5rem;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sport-field-hint-required {
+  color: #dc2626;
+  font-weight: 500;
+}
+
 .import-modal-header {
   padding: 1.5rem;
   display: flex;
