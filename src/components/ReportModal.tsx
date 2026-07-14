@@ -5,6 +5,7 @@ import { X, Upload, ChevronLeft, ChevronRight, Trash2, Download, Scale, Ruler, P
 import { Loading } from './Loading';
 import type { Assessment } from '../types/assessment';
 import type { Athlete } from '../types/athlete';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import './ReportModal.css';
 
 interface ReportModalProps {
@@ -28,7 +29,7 @@ export function ReportModal({
   compareMetrics,
   formula
 }: ReportModalProps) {
-  const [logos, setLogos] = useState<string[]>([]);
+  const [logos, setLogos] = useLocalStorage<string[]>('@BodyMetrics:reportLogos', []);
   const [isGenerating, setIsGenerating] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
