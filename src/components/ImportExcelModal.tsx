@@ -5,6 +5,7 @@ import { Loading } from './Loading';
 import { useAthletes } from '../hooks/useAthletes';
 import type { AthleteSpreadsheetImportViewModel } from '../types/api';
 import { useSports } from '../contexts/SportContext';
+import { useGroups } from '../hooks/useGroups';
 import { SearchableSelect, NEW_OPTION_PREFIX } from './SearchableSelect';
 import './ImportExcelModal.css';
 
@@ -17,6 +18,7 @@ interface ImportExcelModalProps {
 export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { importAthletes } = useAthletes();
   const { sports, refreshSports } = useSports();
+  const { refreshGroups } = useGroups();
   
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -118,8 +120,9 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
       const result = await importAthletes(sportName.trim(), selectedFile);
       setImportResult(result);
       setSuccess(true);
-      // Atualiza esportes também, caso um novo tenha sido criado durante a importação
+      // Atualiza esportes e grupos, caso novos tenham sido criados durante a importação
       refreshSports();
+      refreshGroups();
       
       setTimeout(() => {
         onClose();
@@ -185,7 +188,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
             </div>
             
             {importResult && (
-              <div className="import-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', width: '100%', maxWidth: '400px' }}>
+              <div className="import-stats-grid" style={{ display: 'grid', gridTemplateColumns: importResult.createdGroups > 0 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: '1rem', width: '100%', maxWidth: importResult.createdGroups > 0 ? '520px' : '400px' }}>
                 <div className="stat-item" style={{ backgroundColor: 'var(--color-bg-page)', padding: '1rem', borderRadius: '0.75rem', textAlign: 'center' }}>
                   <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>{importResult.createdAthletes}</span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Atletas Criados</span>
@@ -194,6 +197,12 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                   <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>{importResult.importedAssessments}</span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Avaliações</span>
                 </div>
+                {importResult.createdGroups > 0 && (
+                  <div className="stat-item" style={{ backgroundColor: 'var(--color-bg-page)', padding: '1rem', borderRadius: '0.75rem', textAlign: 'center' }}>
+                    <span style={{ display: 'block', fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)' }}>{importResult.createdGroups}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Grupos Criados</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -219,6 +228,9 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
               <p className={`sport-field-hint ${sportName ? '' : 'sport-field-hint-required'}`}>
                 {!sportName && <AlertCircle size={14} />}
                 {sportName ? 'Você pode escolher um esporte existente ou cadastrar um novo apenas digitando o nome.' : 'O campo Esporte é obrigatório para iniciar a importação.'}
+              </p>
+              <p className="sport-field-hint">
+                Dica: inclua uma coluna opcional <strong>"Time"</strong> na planilha para agrupar automaticamente os atletas importados em grupos.
               </p>
             </div>
 

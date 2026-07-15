@@ -1,20 +1,21 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
+import { useGroups } from '../hooks/useGroups';
 import { AthletePhoto } from '../components/AthletePhoto';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { MetricCard } from '../components/MetricCard';
-import { SearchableSelect } from '../components/SearchableSelect';
+import { SearchableSelect, NEW_OPTION_PREFIX } from '../components/SearchableSelect';
 import { ReportModal } from '../components/ReportModal';
 import { ImportExcelModal } from '../components/ImportExcelModal';
 import { Loading } from '../components/Loading';
 import { AssessmentListModal } from '../components/AssessmentListModal';
 import { 
-  User2, Calendar, Target, Shield, Scale, Percent, 
-  Dumbbell, Activity, Plus, Ruler, ArrowUpRight, 
-  ArrowDownRight, Minus, Pencil, Trash2, Download, 
-  FileSpreadsheet, ClipboardList
+  User2, Calendar, Target, Shield, Scale, Percent,
+  Dumbbell, Activity, Plus, Ruler, ArrowUpRight,
+  ArrowDownRight, Minus, Pencil, Trash2, Download,
+  FileSpreadsheet, ClipboardList, Users, X, Check
 } from 'lucide-react';
 import * as Mapper from '../utils/mapper';
 import type { Assessment } from '../types/assessment';
@@ -24,6 +25,7 @@ export default function AthleteDashboard() {
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId?: string }>();
   const { athletes, getAthleteById, deleteAthlete, updateAthlete, searchAthletes, loadMoreAthletes, refreshAthletes, loading: athletesLoading } = useAthletes();
+  const { groups, getGroupForAthlete, createGroup, addAthleteToGroup, removeAthleteFromGroup } = useGroups();
 
   // Don't auto-select athlete, require explicit selection
   const currentAthleteId = athleteId || null;
@@ -47,6 +49,36 @@ export default function AthleteDashboard() {
   const [isAssessmentListOpen, setIsAssessmentListOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [metricsPage, setMetricsPage] = useState<1 | 2 | 3>(1);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [groupModalValue, setGroupModalValue] = useState('');
+  const [isSavingGroup, setIsSavingGroup] = useState(false);
+
+  const currentGroup = athlete ? getGroupForAthlete(athlete.id) : undefined;
+
+  const openGroupModal = () => {
+    setGroupModalValue(currentGroup?.id || '');
+    setIsGroupModalOpen(true);
+  };
+
+  const handleSaveGroup = async () => {
+    if (!athlete) return;
+    setIsSavingGroup(true);
+    try {
+      if (groupModalValue.startsWith(NEW_OPTION_PREFIX)) {
+        const newGroup = await createGroup(groupModalValue.slice(NEW_OPTION_PREFIX.length));
+        await addAthleteToGroup(newGroup.id, athlete.id);
+      } else if (groupModalValue && groupModalValue !== currentGroup?.id) {
+        await addAthleteToGroup(groupModalValue, athlete.id);
+      } else if (!groupModalValue && currentGroup) {
+        await removeAthleteFromGroup(currentGroup.id, athlete.id);
+      }
+      setIsGroupModalOpen(false);
+    } catch {
+      alert('Não foi possível atualizar o grupo do atleta.');
+    } finally {
+      setIsSavingGroup(false);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
@@ -457,6 +489,14 @@ export default function AthleteDashboard() {
                         >
                           <Trash2 size={18} />
                         </button>
+                        <button
+                          onClick={openGroupModal}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.4rem', border: 'none', backgroundColor: 'var(--color-bg-page)', color: 'var(--color-primary)' }}
+                          title="Gerenciar Grupo"
+                        >
+                          <Users size={18} />
+                        </button>
                       </div>
                     </div>
                     <p className="athlete-subtitle">Avaliação Antropométrica</p>
@@ -475,6 +515,10 @@ export default function AthleteDashboard() {
                       <Badge icon={User2} label="SEXO" value={Mapper.mapSexToLabel(athlete.sex) || '-'} />
                       <div className="badge-divider"></div>
                       <Badge icon={Calendar} label="DATA NASC." value={formatDate(athlete.birthDate)} />
+                      <div className="badge-divider"></div>
+                      <button className="group-badge-btn" onClick={openGroupModal} title="Gerenciar grupo">
+                        <Badge icon={Users} label="GRUPO" value={currentGroup?.name || 'Avulso'} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -759,6 +803,39 @@ export default function AthleteDashboard() {
             <div className="delete-modal-actions">
               <button className="btn btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn btn-primary" style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }} onClick={handleDeleteAthlete}>Sim, Excluir</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isGroupModalOpen && athlete && (
+        <div className="delete-modal-overlay" onClick={() => !isSavingGroup && setIsGroupModalOpen(false)}>
+          <div className="delete-modal-content group-modal-content-wide" onClick={(e) => e.stopPropagation()}>
+            <div className="group-modal-icon">
+              <Users size={32} />
+            </div>
+            <h2 className="delete-modal-title">Grupo do Atleta</h2>
+            <p className="delete-modal-text">
+              Escolha um grupo para <strong>{athlete.fullName}</strong> ou limpe a seleção para deixá-lo avulso.
+            </p>
+            <div style={{ width: '100%', textAlign: 'left' }}>
+              <SearchableSelect
+                options={groups.map(g => ({ id: g.id, name: g.name }))}
+                value={groupModalValue}
+                onChange={setGroupModalValue}
+                placeholder="Sem grupo — atleta avulso"
+                creatable
+                createLabel={(term) => `Criar grupo "${term}"`}
+                disabled={isSavingGroup}
+              />
+            </div>
+            <div className="delete-modal-actions">
+              <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => setIsGroupModalOpen(false)} disabled={isSavingGroup}>
+                <X size={16} /> Cancelar
+              </button>
+              <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={handleSaveGroup} disabled={isSavingGroup}>
+                {isSavingGroup ? <Loading size="sm" variant="white" message="" /> : <><Check size={16} /> Salvar</>}
+              </button>
             </div>
           </div>
         </div>

@@ -148,4 +148,27 @@ export interface AthleteSpreadsheetImportViewModel {
   addedSportSectors: number;
   addedSportCategories: number;
   sportCreated: boolean;
+  createdGroups: number;
+}
+
+export interface AthleteGroupMemberViewModel {
+  id: string;
+  fullName: string;
+}
+
+export interface AthleteGroupViewModel {
+  id: string;
+  name: string;
+  members: AthleteGroupMemberViewModel[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAthleteGroupCommand {
+  name: string;
+}
+
+export interface UpdateAthleteGroupCommand {
+  id: string;
+  name: string;
 }

@@ -187,6 +187,35 @@
   background-color: var(--color-border);
 }
 
+.group-badge-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background-color 0.2s ease;
+}
+
+.group-badge-btn:hover {
+  background-color: var(--color-bg-page);
+}
+
+.group-modal-icon {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.group-modal-content-wide {
+  max-width: 460px;
+}
+
 /* Eval Summary */
 .athlete-eval-summary {
   display: flex;
