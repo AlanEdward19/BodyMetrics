@@ -177,8 +177,8 @@ export default function AthleteDashboard() {
     // Relação Massa Muscular-Ossos (MLG / Ossos)
     const relacaoMusculoOsso = (mlg > 0 && ossos > 0) ? mlg / ossos : 0;
 
-    // Relação Massa Muscular-Gordura (MLG / Gordura)
-    const relacaoMusculoGordura = (mlg > 0 && gordura > 0) ? mlg / gordura : 0;
+    // Relação Massa Muscular-Gordura (Massa Muscular / Gordura)
+    const relacaoMusculoGordura = (massaMuscular > 0 && gordura > 0) ? massaMuscular / gordura : 0;
 
     // PVC (Pico de Velocidade de Crescimento)
     const altSentado = evalData.sittingHeight || 0;
@@ -250,9 +250,20 @@ export default function AthleteDashboard() {
   const renderSymmetryCards = () => {
     if (!currentMetrics) return null;
     const { coxa, pantu, braco } = currentMetrics.simetria;
+    const compareSimetria = compareMetrics?.simetria;
+    const formatTrendValue = (value: number) => {
+      const formatted = formatNumber(value);
+      return formatted === '-' ? '-' : `${formatted} cm`;
+    };
 
-    const renderRow = (title: string, data: { d: number, e: number, diff: number }) => {
+    const renderRow = (
+      title: string,
+      data: { d: number, e: number, diff: number },
+      compareData?: { d: number, e: number, diff: number }
+    ) => {
       const diffSign = data.d > data.e ? '+' : data.d < data.e ? '-' : '';
+      const diffValue = formatNumber(data.diff);
+      const diffDisplay = diffValue === '-' ? '-' : `${diffSign}${diffValue}`;
       return (
         <div className="metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
           <MetricCard
@@ -260,18 +271,36 @@ export default function AthleteDashboard() {
             title={`C/C ${title} D`}
             value={formatNumber(data.d)}
             unit="cm"
+            trend={compareEval ? {
+              direction: data.d > (compareData?.d ?? data.d) ? 'up' : data.d < (compareData?.d ?? data.d) ? 'down' : 'neutral',
+              value: formatTrendValue(Math.abs(data.d - (compareData?.d ?? data.d))),
+              text: 'vs. comparação',
+              isGood: data.d > (compareData?.d ?? data.d)
+            } : undefined}
           />
           <MetricCard
             icon={<Ruler size={24} />}
             title={`C/C ${title} E`}
             value={formatNumber(data.e)}
             unit="cm"
+            trend={compareEval ? {
+              direction: data.e > (compareData?.e ?? data.e) ? 'up' : data.e < (compareData?.e ?? data.e) ? 'down' : 'neutral',
+              value: formatTrendValue(Math.abs(data.e - (compareData?.e ?? data.e))),
+              text: 'vs. comparação',
+              isGood: data.e > (compareData?.e ?? data.e)
+            } : undefined}
           />
           <MetricCard
             icon={<Activity size={24} />}
             title="DIF D/E"
-            value={`${diffSign}${formatNumber(data.diff)}`}
+            value={diffDisplay}
             unit="cm"
+            trend={compareEval ? {
+              direction: data.diff > (compareData?.diff ?? data.diff) ? 'up' : data.diff < (compareData?.diff ?? data.diff) ? 'down' : 'neutral',
+              value: formatTrendValue(Math.abs(data.diff - (compareData?.diff ?? data.diff))),
+              text: 'vs. comparação',
+              isGood: data.diff < (compareData?.diff ?? data.diff)
+            } : undefined}
           />
         </div>
       );
@@ -279,9 +308,9 @@ export default function AthleteDashboard() {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {renderRow('Coxa', coxa)}
-        {renderRow('Panturrilha', pantu)}
-        {renderRow('Braço', braco)}
+        {renderRow('Coxa', coxa, compareSimetria?.coxa)}
+        {renderRow('Panturrilha', pantu, compareSimetria?.pantu)}
+        {renderRow('Braço', braco, compareSimetria?.braco)}
       </div>
     );
   };
