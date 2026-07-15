@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Pencil, Trash2, Check, X, UserMinus, ArrowLeftRight, Users, FolderInput
+  ArrowLeft, Pencil, Trash2, Check, X, UserMinus, ArrowLeftRight, Users, FolderInput, Download
 } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Loading } from '../components/Loading';
 import { SearchableSelect } from '../components/SearchableSelect';
+import { GroupReportModal } from '../components/GroupReportModal';
 import { useGroups } from '../hooks/useGroups';
 import apiService from '../services/api.service';
 import type { AthleteViewModel } from '../types/api';
@@ -30,6 +31,7 @@ export default function GroupDetail() {
   const [nameDraft, setNameDraft] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
   const [pendingMigrate, setPendingMigrate] = useState<{ athleteId: string; athleteName: string; targetGroupId: string; targetGroupName: string } | null>(null);
@@ -223,6 +225,14 @@ export default function GroupDetail() {
               </button>
             </div>
           )}
+          <button
+            className="icon-btn"
+            onClick={() => setIsReportModalOpen(true)}
+            title="Exportar relatório do grupo (ZIP)"
+            disabled={group.members.length === 0}
+          >
+            <Download size={18} />
+          </button>
           <button className="icon-btn icon-btn-danger" onClick={() => setIsDeleteModalOpen(true)} title="Excluir grupo">
             <Trash2 size={18} />
           </button>
@@ -371,6 +381,13 @@ export default function GroupDetail() {
             </div>
           </div>
         </div>
+      )}
+      {isReportModalOpen && (
+        <GroupReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          group={group}
+        />
       )}
     </div>
   );
