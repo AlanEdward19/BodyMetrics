@@ -1,0 +1,303 @@
+.groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.groups-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.groups-header h1 {
+  font-size: 2rem;
+  color: var(--color-text-main);
+  margin-bottom: 0.25rem;
+}
+
+.groups-header p {
+  color: var(--color-text-muted);
+}
+
+.groups-header .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.groups-error {
+  color: var(--color-danger-text);
+  background-color: var(--color-danger-bg);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+}
+
+.groups-empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.groups-empty-icon {
+  background-color: var(--color-bg-page);
+  padding: 1rem;
+  border-radius: 50%;
+  display: inline-flex;
+  margin-bottom: 0.5rem;
+}
+
+.groups-empty-state h2 {
+  font-size: 1.5rem;
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.groups-empty-state p {
+  color: var(--color-text-muted);
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.groups-empty-state .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.group-card {
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  animation: groupCardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes groupCardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.group-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary-light);
+}
+
+.group-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.group-card-icon {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.group-card-arrow {
+  color: var(--color-text-light);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.group-card:hover .group-card-arrow {
+  transform: translateX(3px);
+  color: var(--color-primary);
+}
+
+.group-card-name {
+  margin-top: 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-card-count {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  margin-top: 0.15rem;
+}
+
+.group-card-avatars {
+  display: flex;
+  margin-top: 1rem;
+}
+
+.group-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-bg-card);
+  margin-left: -10px;
+}
+
+.group-avatar:first-child {
+  margin-left: 0;
+}
+
+.group-avatar-more {
+  background-color: var(--color-text-muted);
+}
+
+/* Create group modal */
+.group-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.group-modal-content {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.group-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1.5rem 0.5rem;
+}
+
+.group-modal-header h2 {
+  font-size: 1.25rem;
+  color: var(--color-text-main);
+}
+
+.group-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 1.5rem 1.5rem;
+}
+
+.group-modal-form label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  margin-bottom: 0.25rem;
+}
+
+.group-modal-form input {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.group-modal-form input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-light);
+}
+
+.group-modal-error {
+  color: var(--color-danger-text);
+  font-size: 0.825rem;
+}
+
+.group-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark) !important;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: transparent !important;
+  color: var(--color-text-muted) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-bg-page) !important;
+  color: var(--color-text-main) !important;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  display: flex;
+}
+
+.close-btn:hover:not(:disabled) {
+  background-color: var(--color-bg-page);
+  color: var(--color-text-main);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
