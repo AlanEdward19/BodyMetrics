@@ -20,7 +20,7 @@ Ao comparar avaliações ou visualizar os dados atuais, as seguintes fórmulas s
 - **Somatório de Dobras**: Soma de todas as dobras registradas na avaliação.
 - **Percentual de Gordura (%)**: O usuário deve poder escolher entre as fórmulas de Pollock ou Faulkner.
 - **Relação Massa Muscular-Ossos**: `MLG / Ossos` (índice adimensional).
-- **Relação Massa Muscular-Gordura**: `MLG / Gordura` (índice adimensional).
+- **Relação Massa Muscular-Gordura**: `Massa Muscular / Gordura` (índice adimensional).
 - **PVC (Pico de Velocidade de Crescimento)**: `-9.236 + (0.0002708 * Altura * AlturaSentado) - (0.001663 * Idade * Altura) + (0.007216 * Idade * AlturaSentado) + (0.02292 * Peso / Altura)` — requer campo `sittingHeight` preenchido na avaliação.
 
 ## Comportamento no Preenchimento de Nova Avaliação
