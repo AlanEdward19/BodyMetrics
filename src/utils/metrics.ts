@@ -31,6 +31,16 @@ export interface AthleteMetrics {
   };
 }
 
+export function calculateAge(birthDateStr: string | undefined, referenceDateStr: string | undefined): number {
+  if (!birthDateStr || !referenceDateStr) return 0;
+  const birthDate = new Date(birthDateStr);
+  const refDate = new Date(referenceDateStr);
+  let age = refDate.getFullYear() - birthDate.getFullYear();
+  const m = refDate.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && refDate.getDate() < birthDate.getDate())) age--;
+  return age;
+}
+
 export function calculateMetrics(
   evalData: Assessment | undefined,
   mappedAthlete: Athlete | null,

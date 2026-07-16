@@ -558,22 +558,6 @@
   color: var(--color-primary);
 }
 
-.icon-btn-soon {
-  position: relative;
-}
-
-.icon-btn-soon::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: #f59e0b;
-  border: 1.5px solid var(--color-bg-card);
-}
-
 .delete-modal-title {
   font-size: 1.35rem;
   font-weight: 700;
