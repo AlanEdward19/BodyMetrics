@@ -1,5 +1,5 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
-import { Activity, LayoutDashboard, UserPlus, LogOut } from 'lucide-react';
+import { Activity, LayoutDashboard, UserPlus, LogOut, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Navbar.css';
 
@@ -26,6 +26,12 @@ export default function Navbar() {
             <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               <LayoutDashboard size={18} />
               <span>Dashboard</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/groups" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              <Users size={18} />
+              <span>Grupos</span>
             </NavLink>
           </li>
           <li>

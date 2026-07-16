@@ -5,9 +5,12 @@ import AthleteDashboard from './pages/AthleteDashboard';
 import AddAthlete from './pages/AddAthlete';
 import AddAssessment from './pages/AddAssessment';
 import LoginPage from './pages/LoginPage';
+import GroupsList from './pages/GroupsList';
+import GroupDetail from './pages/GroupDetail';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AthleteProvider } from './contexts/AthleteContext';
 import { SportProvider } from './contexts/SportContext';
+import { GroupProvider } from './contexts/GroupContext';
 import './App.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -37,6 +40,8 @@ function AppContent() {
           <Route path="/dashboard/:athleteId" element={<ProtectedRoute><AthleteDashboard /></ProtectedRoute>} />
           <Route path="/add" element={<ProtectedRoute><AddAthlete /></ProtectedRoute>} />
           <Route path="/edit/:athleteId" element={<ProtectedRoute><AddAthlete /></ProtectedRoute>} />
+          <Route path="/groups" element={<ProtectedRoute><GroupsList /></ProtectedRoute>} />
+          <Route path="/groups/:groupId" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
           <Route path="/add-assessment" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
           <Route path="/add-assessment/:athleteId" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
           <Route path="/edit-assessment/:assessmentId" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
@@ -55,7 +60,9 @@ function App() {
       <AuthProvider>
         <SportProvider>
           <AthleteProvider>
-            <AppContent />
+            <GroupProvider>
+              <AppContent />
+            </GroupProvider>
           </AthleteProvider>
         </SportProvider>
       </AuthProvider>

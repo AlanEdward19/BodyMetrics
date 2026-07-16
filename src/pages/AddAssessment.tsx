@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
 import * as ApiTypes from '../types/api';
 import * as Mapper from '../utils/mapper';
 import { Card } from '../components/Card';
 import { DatePicker } from '../components/DatePicker';
-import { Activity, Scale, Ruler, Droplets, User2, Calculator } from 'lucide-react';
+import { Activity, Scale, Ruler, Droplets, User2, Calculator, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Loading } from '../components/Loading';
 import './AddAssessment.css';
 
@@ -21,6 +21,48 @@ export default function AddAssessment() {
   const [useHeightCalc, setUseHeightCalc] = useState(false);
   const [benchHeight, setBenchHeight] = useState('');
   const [heightFlash, setHeightFlash] = useState(false);
+  const [shakingFields, setShakingFields] = useState<Set<string>>(new Set());
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [showEmptyModal, setShowEmptyModal] = useState(false);
+  const shakeTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const errorTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const triggerShake = (name: string) => {
+    setShakingFields(prev => {
+      const next = new Set(prev);
+      next.add(name);
+      return next;
+    });
+    if (shakeTimeouts.current[name]) clearTimeout(shakeTimeouts.current[name]);
+    shakeTimeouts.current[name] = setTimeout(() => {
+      setShakingFields(prev => {
+        const next = new Set(prev);
+        next.delete(name);
+        return next;
+      });
+    }, 420);
+  };
+
+  const flagInvalidInput = (name: string, message: string) => {
+    triggerShake(name);
+    setFieldErrors(prev => ({ ...prev, [name]: message }));
+    if (errorTimeouts.current[name]) clearTimeout(errorTimeouts.current[name]);
+    errorTimeouts.current[name] = setTimeout(() => {
+      setFieldErrors(prev => {
+        const { [name]: _removed, ...rest } = prev;
+        return rest;
+      });
+    }, 2500);
+  };
+
+  useEffect(() => {
+    const shakes = shakeTimeouts.current;
+    const errors = errorTimeouts.current;
+    return () => {
+      Object.values(shakes).forEach(clearTimeout);
+      Object.values(errors).forEach(clearTimeout);
+    };
+  }, []);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -183,31 +225,74 @@ export default function AddAssessment() {
     }
   }, [assessmentId, athleteId, athletes]);
 
-  useEffect(() => {
-    if (!useHeightCalc) return;
-    const sitting = parseFloat(formData.sittingHeight);
-    const bench = parseFloat(benchHeight);
-    const computed = (!isNaN(sitting) && !isNaN(bench)) ? (sitting + bench).toFixed(2) : '';
-    setFormData(prev => prev.height === computed ? prev : { ...prev, height: computed });
-  }, [useHeightCalc, formData.sittingHeight, benchHeight]);
+  const heightNum = parseFloat(formData.height);
+  const benchNum = parseFloat(benchHeight);
+  const hasBenchHeightConflict = useHeightCalc
+    && benchHeight.trim() !== ''
+    && !isNaN(heightNum) && !isNaN(benchNum)
+    && benchNum >= heightNum;
 
   useEffect(() => {
-    if (!useHeightCalc || !formData.height) return;
+    if (!useHeightCalc) return;
+    const valid = !isNaN(heightNum) && !isNaN(benchNum) && (heightNum - benchNum) > 0;
+    const computed = valid ? (heightNum - benchNum).toFixed(2) : '';
+    setFormData(prev => prev.sittingHeight === computed ? prev : { ...prev, sittingHeight: computed });
+  }, [useHeightCalc, heightNum, benchNum]);
+
+  useEffect(() => {
+    if (!useHeightCalc || !formData.sittingHeight) return;
     setHeightFlash(true);
     const timer = setTimeout(() => setHeightFlash(false), 600);
     return () => clearTimeout(timer);
-  }, [formData.height, useHeightCalc]);
+  }, [formData.sittingHeight, useHeightCalc]);
+
+  useEffect(() => {
+    if (hasBenchHeightConflict) triggerShake('benchHeight');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasBenchHeightConflict]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    if (name !== 'date' && value.includes('-')) {
+      flagInvalidInput(name, 'O valor não pode ser negativo.');
+      setFormData(prev => ({ ...prev, [name]: value.replace(/-/g, '') }));
+      return;
+    }
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBenchHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    if (value.includes('-')) {
+      flagInvalidInput('benchHeight', 'O valor não pode ser negativo.');
+      setBenchHeight(value.replace(/-/g, ''));
+      return;
+    }
+    setBenchHeight(value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAthleteId) return;
+
+    const hasAtLeastOneMeasurement = Object.entries(formData)
+      .filter(([key]) => key !== 'date')
+      .some(([, value]) => {
+        if (value.trim() === '') return false;
+        const num = parseFloat(value);
+        return !isNaN(num) && num > 0;
+      });
+
+    if (!hasAtLeastOneMeasurement) {
+      setShowEmptyModal(true);
+      return;
+    }
+
+    if (hasBenchHeightConflict) {
+      triggerShake('benchHeight');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -284,19 +369,22 @@ export default function AddAssessment() {
     <div className="form-group">
       <label htmlFor={name}>{label}</label>
       <div className={unit ? "input-with-unit" : ""}>
-        <input 
-          type="number" 
+        <input
+          type="number"
           step="0.01"
-          id={name} 
-          name={name} 
+          min="0"
+          id={name}
+          name={name}
           value={(formData as any)[name]}
           onChange={handleChange}
           placeholder="0.00"
-          required
+          className={shakingFields.has(name) ? 'input-shake input-error' : ''}
         />
         {unit && <span className="unit">{unit}</span>}
       </div>
-      {renderPreviousValueHint(name, unit)}
+      {fieldErrors[name] ? (
+        <span className="field-error-text"><AlertCircle size={13} /> {fieldErrors[name]}</span>
+      ) : renderPreviousValueHint(name, unit)}
     </div>
   );
 
@@ -352,7 +440,6 @@ export default function AddAssessment() {
                 name="athleteId" 
                 value={selectedAthleteId} 
                 onChange={(e) => setSelectedAthleteId(e.target.value)}
-                required
                 disabled={isEditing}
               >
                 {athletes.map(a => (
@@ -368,7 +455,6 @@ export default function AddAssessment() {
                   name="date" 
                   value={formData.date}
                   onChange={handleChange}
-                  required 
                 />
               </div>
             </div>
@@ -384,10 +470,11 @@ export default function AddAssessment() {
           </div>
           <div className="grid-3-cols">
             {renderInput('weight', 'Peso', 'kg')}
+            {renderInput('height', 'Altura', 'cm')}
 
             <div className="form-group">
               <div className="height-field-label">
-                <label htmlFor="height">Altura</label>
+                <label htmlFor="sittingHeight">Alt. Sentado</label>
                 <button
                   type="button"
                   className={`calc-toggle ${useHeightCalc ? 'active' : ''}`}
@@ -401,18 +488,24 @@ export default function AddAssessment() {
                 <input
                   type="number"
                   step="0.01"
-                  id="height"
-                  name="height"
-                  value={formData.height}
+                  min="0"
+                  id="sittingHeight"
+                  name="sittingHeight"
+                  value={formData.sittingHeight}
                   onChange={handleChange}
                   placeholder="0.00"
-                  required
                   readOnly={useHeightCalc}
-                  className={useHeightCalc ? `computed-input ${heightFlash ? 'flash' : ''}` : ''}
+                  className={[
+                    useHeightCalc ? 'computed-input' : '',
+                    useHeightCalc && heightFlash ? 'flash' : '',
+                    shakingFields.has('sittingHeight') ? 'input-shake input-error' : ''
+                  ].filter(Boolean).join(' ')}
                 />
                 <span className="unit">cm</span>
               </div>
-              {renderPreviousValueHint('height', 'cm')}
+              {fieldErrors['sittingHeight'] ? (
+                <span className="field-error-text"><AlertCircle size={13} /> {fieldErrors['sittingHeight']}</span>
+              ) : renderPreviousValueHint('sittingHeight', 'cm')}
               <div className={`bench-height-reveal ${useHeightCalc ? 'open' : ''}`}>
                 <div className="bench-height-inner">
                   <div className="bench-height-inner-content">
@@ -421,21 +514,34 @@ export default function AddAssessment() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         id="benchHeight"
                         name="benchHeight"
                         value={benchHeight}
-                        onChange={(e) => setBenchHeight(e.target.value)}
+                        onChange={handleBenchHeightChange}
                         placeholder="0.00"
+                        className={[
+                          shakingFields.has('benchHeight') ? 'input-shake' : '',
+                          (shakingFields.has('benchHeight') || hasBenchHeightConflict) ? 'input-error' : ''
+                        ].filter(Boolean).join(' ')}
                       />
                       <span className="unit">cm</span>
                     </div>
-                    <span className="field-hint">Alt. Sentado + Banco = Altura</span>
+                    {fieldErrors['benchHeight'] ? (
+                      <span className="field-error-text">
+                        <AlertCircle size={13} /> {fieldErrors['benchHeight']}
+                      </span>
+                    ) : hasBenchHeightConflict ? (
+                      <span className="field-error-text">
+                        <AlertCircle size={13} /> Altura do banco deve ser menor que a altura em pé.
+                      </span>
+                    ) : (
+                      <span className="field-hint">Alt. Sentado = Altura - Banco</span>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
-
-            {renderInput('sittingHeight', 'Alt. Sentado', 'cm')}
           </div>
         </Card>
 
@@ -496,6 +602,25 @@ export default function AddAssessment() {
           </button>
         </div>
       </form>
+
+      {showEmptyModal && (
+        <div className="assessment-modal-overlay" onClick={() => setShowEmptyModal(false)}>
+          <div className="assessment-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="assessment-modal-icon">
+              <AlertTriangle size={32} />
+            </div>
+            <h2 className="assessment-modal-title">Nenhuma medida preenchida</h2>
+            <p className="assessment-modal-text">
+              Preencha pelo menos um campo com um valor maior que zero antes de salvar a avaliação.
+            </p>
+            <div className="assessment-modal-actions">
+              <button type="button" className="btn btn-primary" onClick={() => setShowEmptyModal(false)}>
+                Entendi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

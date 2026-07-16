@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
 import { useSports } from '../contexts/SportContext';
+import { useGroups } from '../hooks/useGroups';
 import * as ApiTypes from '../types/api';
 import * as Mapper from '../utils/mapper';
 import { Card } from '../components/Card';
@@ -17,6 +18,7 @@ import './AddAthlete.css';
 export default function AddAthlete() {
   const { addAthlete, updateAthlete, getAthleteById, loading: athletesLoading } = useAthletes();
   const { sports, loadMoreSports, addSport, updateSportInCache, loading: sportsLoading } = useSports();
+  const { groups, createGroup, addAthleteToGroup, removeAthleteFromGroup, getGroupForAthlete } = useGroups();
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId: string }>();
   const isEditing = !!athleteId;
@@ -33,6 +35,9 @@ export default function AddAthlete() {
     sex: ApiTypes.Sex.Male as ApiTypes.Sex,
     ethnicity: ApiTypes.Ethnicity.Caucasian as ApiTypes.Ethnicity,
   });
+
+  const [groupId, setGroupId] = useState('');
+  const [originalGroupId, setOriginalGroupId] = useState('');
 
   const [profilePhoto, setProfilePhoto] = useState<ApiTypes.ProfilePhotoUpload | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
@@ -61,9 +66,12 @@ export default function AddAthlete() {
         if (athlete.profilePhoto?.accessUrl) {
           setPhotoPreview(athlete.profilePhoto.accessUrl);
         }
+        const currentGroup = getGroupForAthlete(athleteId);
+        setGroupId(currentGroup?.id || '');
+        setOriginalGroupId(currentGroup?.id || '');
       }
     }
-  }, [isEditing, athleteId, getAthleteById]);
+  }, [isEditing, athleteId, getAthleteById, getGroupForAthlete]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,11 +134,23 @@ export default function AddAthlete() {
         profilePhoto: profilePhoto,
       };
 
+      let savedAthleteId: string;
       if (isEditing && athleteId) {
         await updateAthlete(athleteId, { ...athleteData, id: athleteId });
+        savedAthleteId = athleteId;
       } else {
-        await addAthlete(athleteData);
+        savedAthleteId = await addAthlete(athleteData);
       }
+
+      if (groupId.startsWith(NEW_OPTION_PREFIX)) {
+        const newGroup = await createGroup(groupId.slice(NEW_OPTION_PREFIX.length));
+        await addAthleteToGroup(newGroup.id, savedAthleteId);
+      } else if (groupId && groupId !== originalGroupId) {
+        await addAthleteToGroup(groupId, savedAthleteId);
+      } else if (!groupId && originalGroupId) {
+        await removeAthleteFromGroup(originalGroupId, savedAthleteId);
+      }
+
       navigate(-1);
     } catch (error) {
       console.error('Erro ao salvar:', error);
@@ -264,6 +284,19 @@ export default function AddAthlete() {
               placeholder="Ex: João Silva"
               value={formData.name}
               onChange={handleChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="groupId">Grupo / Time (opcional)</label>
+            <SearchableSelect
+              options={groups.map(g => ({ id: g.id, name: g.name }))}
+              value={groupId}
+              onChange={setGroupId}
+              placeholder="Sem grupo — atleta avulso"
+              noOptionsMessage="Nenhum grupo cadastrado"
+              creatable
+              createLabel={(term) => `Criar grupo "${term}"`}
             />
           </div>
 

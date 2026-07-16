@@ -68,6 +68,8 @@ class ApiService {
     sector?: string;
     category?: string;
     phase?: Types.Phase;
+    groupId?: string;
+    includeGrouped?: boolean;
   }): Promise<Types.PagedResponse<Types.AthleteViewModel>> {
     const response = await this.api.get<Types.PagedResponse<Types.AthleteViewModel>>('/api/athletes', { params });
     return response.data;
@@ -103,6 +105,41 @@ class ApiService {
       },
     });
     return response.data;
+  }
+
+  // --- ATHLETE GROUPS ENDPOINTS ---
+
+  async listGroups(): Promise<Types.AthleteGroupViewModel[]> {
+    const response = await this.api.get<Types.AthleteGroupViewModel[]>('/api/athlete-groups');
+    return response.data;
+  }
+
+  async getGroupById(id: string): Promise<Types.AthleteGroupViewModel> {
+    const response = await this.api.get<Types.AthleteGroupViewModel>(`/api/athlete-groups/${id}`);
+    return response.data;
+  }
+
+  async createGroup(command: Types.CreateAthleteGroupCommand): Promise<Types.AthleteGroupViewModel> {
+    const response = await this.api.post<Types.AthleteGroupViewModel>('/api/athlete-groups', command);
+    return response.data;
+  }
+
+  async updateGroup(id: string, command: Types.UpdateAthleteGroupCommand): Promise<Types.AthleteGroupViewModel> {
+    const response = await this.api.put<Types.AthleteGroupViewModel>(`/api/athlete-groups/${id}`, command);
+    return response.data;
+  }
+
+  async deleteGroup(id: string): Promise<void> {
+    await this.api.delete(`/api/athlete-groups/${id}`);
+  }
+
+  async addAthleteToGroup(groupId: string, athleteId: string): Promise<Types.AthleteGroupViewModel> {
+    const response = await this.api.post<Types.AthleteGroupViewModel>(`/api/athlete-groups/${groupId}/members/${athleteId}`);
+    return response.data;
+  }
+
+  async removeAthleteFromGroup(groupId: string, athleteId: string): Promise<void> {
+    await this.api.delete(`/api/athlete-groups/${groupId}/members/${athleteId}`);
   }
 }
 

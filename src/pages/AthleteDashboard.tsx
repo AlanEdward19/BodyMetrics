@@ -1,29 +1,32 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAthletes } from '../hooks/useAthletes';
+import { useGroups } from '../hooks/useGroups';
 import { AthletePhoto } from '../components/AthletePhoto';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { MetricCard } from '../components/MetricCard';
-import { SearchableSelect } from '../components/SearchableSelect';
+import { SearchableSelect, NEW_OPTION_PREFIX } from '../components/SearchableSelect';
 import { ReportModal } from '../components/ReportModal';
 import { ImportExcelModal } from '../components/ImportExcelModal';
 import { Loading } from '../components/Loading';
 import { AssessmentListModal } from '../components/AssessmentListModal';
 import { 
-  User2, Calendar, Target, Shield, Scale, Percent, 
-  Dumbbell, Activity, Plus, Ruler, ArrowUpRight, 
-  ArrowDownRight, Minus, Pencil, Trash2, Download, 
-  FileSpreadsheet, ClipboardList
+  User2, Calendar, Target, Shield, Scale, Percent,
+  Dumbbell, Activity, Plus, Ruler, ArrowUpRight,
+  ArrowDownRight, Minus, Pencil, Trash2, Download,
+  FileSpreadsheet, ClipboardList, Users, X, Check
 } from 'lucide-react';
 import * as Mapper from '../utils/mapper';
-import type { Assessment } from '../types/assessment';
+import { calculateMetrics } from '../utils/metrics';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import './AthleteDashboard.css';
 
 export default function AthleteDashboard() {
   const navigate = useNavigate();
   const { athleteId } = useParams<{ athleteId?: string }>();
   const { athletes, getAthleteById, deleteAthlete, updateAthlete, searchAthletes, loadMoreAthletes, refreshAthletes, loading: athletesLoading } = useAthletes();
+  const { groups, getGroupForAthlete, createGroup, addAthleteToGroup, removeAthleteFromGroup } = useGroups();
 
   // Don't auto-select athlete, require explicit selection
   const currentAthleteId = athleteId || null;
@@ -38,7 +41,10 @@ export default function AthleteDashboard() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [athlete]);
 
-  const [selectedFormula, setSelectedFormula] = useState<'pollock' | 'faulkner'>('pollock');
+  const [selectedFormula, setSelectedFormula] = useLocalStorage<'pollock' | 'faulkner'>(
+    '@BodyMetrics:selectedFormula',
+    'pollock'
+  );
   const [currentEvalId, setCurrentEvalId] = useState<string>('');
   const [compareEvalId, setCompareEvalId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'dobras' | 'circunferencias'>('dobras');
@@ -47,6 +53,36 @@ export default function AthleteDashboard() {
   const [isAssessmentListOpen, setIsAssessmentListOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [metricsPage, setMetricsPage] = useState<1 | 2 | 3>(1);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [groupModalValue, setGroupModalValue] = useState('');
+  const [isSavingGroup, setIsSavingGroup] = useState(false);
+
+  const currentGroup = athlete ? getGroupForAthlete(athlete.id) : undefined;
+
+  const openGroupModal = () => {
+    setGroupModalValue(currentGroup?.id || '');
+    setIsGroupModalOpen(true);
+  };
+
+  const handleSaveGroup = async () => {
+    if (!athlete) return;
+    setIsSavingGroup(true);
+    try {
+      if (groupModalValue.startsWith(NEW_OPTION_PREFIX)) {
+        const newGroup = await createGroup(groupModalValue.slice(NEW_OPTION_PREFIX.length));
+        await addAthleteToGroup(newGroup.id, athlete.id);
+      } else if (groupModalValue && groupModalValue !== currentGroup?.id) {
+        await addAthleteToGroup(groupModalValue, athlete.id);
+      } else if (!groupModalValue && currentGroup) {
+        await removeAthleteFromGroup(currentGroup.id, athlete.id);
+      }
+      setIsGroupModalOpen(false);
+    } catch {
+      alert('Não foi possível atualizar o grupo do atleta.');
+    } finally {
+      setIsSavingGroup(false);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
@@ -94,131 +130,8 @@ export default function AthleteDashboard() {
   const currentEval = assessments.find(a => a.id === currentEvalId);
   const compareEval = assessments.find(a => a.id === compareEvalId);
 
-  // Calculations (Restoring the robust logic from the original version)
-  const calculateMetrics = useCallback((evalData?: Assessment) => {
-    if (!evalData) return null;
-
-    let idade = 0;
-    if (mappedAthlete && mappedAthlete.birthDate && evalData.date) {
-      const evalDate = new Date(evalData.date);
-      const birthDate = new Date(mappedAthlete.birthDate);
-      const diffTime = evalDate.getTime() - birthDate.getTime();
-      idade = diffTime / (1000 * 60 * 60 * 24 * 365.25);
-    }
-
-    const peso = evalData.weight;
-    const altura = evalData.height;
-
-    // Somatório das dobras
-    const sf: Partial<Assessment['skinfolds']> = evalData.skinfolds || {};
-    const sumDobras = (sf.tricepsRight || 0) +
-      (sf.tricepsLeft || 0) +
-      (sf.subscapular || 0) +
-      (sf.chest || 0) +
-      (sf.midaxillary || 0) +
-      (sf.suprailiac || 0) +
-      (sf.abdominal || 0) +
-      (sf.thighRight || 0);
-
-    // Formula de Pollock
-    let pollock = 0;
-    if (sumDobras > 0 && idade > 0) {
-      const densidade = 1.112 - (0.00043499 * sumDobras) + (0.00000055 * Math.pow(sumDobras, 2)) - (0.00028826 * idade);
-      pollock = (495 / densidade) - 450;
-    }
-
-    // Formula de Faulkner
-    const faulknerSum = (sf.tricepsRight || 0) + (sf.subscapular || 0) + (sf.suprailiac || 0) + (sf.abdominal || 0);
-    const faulkner = faulknerSum > 0 ? (faulknerSum * 0.153) + 5.783 : 0;
-
-    const percentualGordura = selectedFormula === 'pollock' ? Math.max(0, pollock) : Math.max(0, faulkner);
-    const gordura = (peso * percentualGordura) / 100;
-
-    const circ: Partial<Assessment['circumferences']> = evalData.circumferences || {};
-    const punhoM = (circ.wristRight || 0) / 100;
-    const joelhoM = (circ.kneeRight || 0) / 100;
-    const alturaM = altura / 100;
-
-    let ossos = 0;
-    if (punhoM > 0 && joelhoM > 0 && alturaM > 0) {
-      ossos = 3.02 * Math.pow(400 * punhoM * joelhoM * Math.pow(alturaM, 2), 0.712);
-    }
-
-    const mlg = (gordura > 0 && ossos > 0) ? peso - gordura - ossos : peso - gordura;
-
-    // Fatores
-    const fatorSexo = mappedAthlete?.gender === 'Feminino' ? 0 : 1;
-    const fatorRaca = mappedAthlete?.race === 'Negro' ? 1.1 : mappedAthlete?.race === 'Asiático' ? -2 : 0;
-
-    // Medidas Corrigidas
-    const coxaD_C = (circ.thighMidRight || 0) > 0 ? (circ.thighMidRight || 0) - (((sf.thighRight || 0) / 10) * 3.16) : 0;
-    const coxaE_C = (circ.thighMidLeft || 0) > 0 ? (circ.thighMidLeft || 0) - (((sf.thighLeft || 0) / 10) * 3.16) : 0;
-    const pantuD_C = (circ.calfRight || 0) > 0 ? (circ.calfRight || 0) - (((sf.calfRight || 0) / 10) * 3.16) : 0;
-    const pantuE_C = (circ.calfLeft || 0) > 0 ? (circ.calfLeft || 0) - (((sf.calfLeft || 0) / 10) * 3.16) : 0;
-    const bracoD_C = (circ.armRight || 0) > 0 ? (circ.armRight || 0) - (((sf.tricepsRight || 0) / 10) * 3.16) : 0;
-    const bracoE_C = (circ.armLeft || 0) > 0 ? (circ.armLeft || 0) - (((sf.tricepsLeft || 0) / 10) * 3.16) : 0;
-
-    const ccBraco = (bracoD_C + bracoE_C) / 2;
-    const ccCoxa = (coxaD_C + coxaE_C) / 2;
-    const ccPantu = (pantuD_C + pantuE_C) / 2;
-
-    const mmBraco = ccBraco > 0 ? 0.00744 * Math.pow(ccBraco, 2) : 0;
-    const mmCoxa = ccCoxa > 0 ? 0.00088 * Math.pow(ccCoxa, 2) : 0;
-    const mmPantu = ccPantu > 0 ? 0.00441 * Math.pow(ccPantu, 2) : 0;
-    
-    let massaMuscular = 0;
-    if (alturaM > 0 && (mmBraco > 0 || mmCoxa > 0 || mmPantu > 0)) {
-      massaMuscular = (alturaM * 100 / 100) * (mmBraco + mmCoxa + mmPantu) + (2.4 * fatorSexo) - (0.048 * idade) + fatorRaca + 7.8;
-    }
-
-    // Relação Massa Muscular-Ossos (MLG / Ossos)
-    const relacaoMusculoOsso = (mlg > 0 && ossos > 0) ? mlg / ossos : 0;
-
-    // Relação Massa Muscular-Gordura (MLG / Gordura)
-    const relacaoMusculoGordura = (mlg > 0 && gordura > 0) ? mlg / gordura : 0;
-
-    // PVC (Pico de Velocidade de Crescimento)
-    const altSentado = evalData.sittingHeight || 0;
-    let pvc = 0;
-    if (altSentado > 0 && altura > 0 && idade > 0 && peso > 0) {
-      pvc = -9.236
-        + (0.0002708 * (altura * altSentado))
-        - (0.001663 * (idade * altura))
-        + (0.007216 * (idade * altSentado))
-        + (0.02292 * (peso / altura));
-    }
-
-    return {
-      peso,
-      altura,
-      gordura,
-      sumDobras,
-      ossos,
-      mlg,
-      percentualGordura,
-      massaMuscular,
-      relacaoMusculoOsso,
-      relacaoMusculoGordura,
-      pvc,
-      simetria: {
-        coxa: { d: coxaD_C, e: coxaE_C, diff: Math.abs(coxaD_C - coxaE_C) },
-        pantu: { d: pantuD_C, e: pantuE_C, diff: Math.abs(pantuD_C - pantuE_C) },
-        braco: { d: bracoD_C, e: bracoE_C, diff: Math.abs(bracoD_C - bracoE_C) }
-      },
-      relacao: {
-        coxa: (circ.kneeRight || 0) > 0 ? ccCoxa / (circ.kneeRight || 0) : 0,
-        pantu: ((circ as any).ankle || 0) > 0 ? ccPantu / ((circ as any).ankle || 0) : 0,
-        braco: (circ.wristRight || 0) > 0 ? ccBraco / (circ.wristRight || 0) : 0,
-        ccCoxa, ccPantu, ccBraco,
-        diamJoelho: circ.kneeRight || 0,
-        diamTornozelo: (circ as any).ankle || 0,
-        diamPunho: circ.wristRight || 0
-      }
-    };
-  }, [mappedAthlete, selectedFormula]);
-
-  const currentMetrics = calculateMetrics(currentEval);
-  const compareMetrics = calculateMetrics(compareEval);
+  const currentMetrics = calculateMetrics(currentEval, mappedAthlete, selectedFormula);
+  const compareMetrics = calculateMetrics(compareEval, mappedAthlete, selectedFormula);
 
   const formatNumber = (val: any) => {
     if (val === null || val === undefined || isNaN(val) || typeof val !== 'number' || val <= 0) return '-';
@@ -247,9 +160,20 @@ export default function AthleteDashboard() {
   const renderSymmetryCards = () => {
     if (!currentMetrics) return null;
     const { coxa, pantu, braco } = currentMetrics.simetria;
+    const compareSimetria = compareMetrics?.simetria;
+    const formatTrendValue = (value: number) => {
+      const formatted = formatNumber(value);
+      return formatted === '-' ? '-' : `${formatted} cm`;
+    };
 
-    const renderRow = (title: string, data: { d: number, e: number, diff: number }) => {
+    const renderRow = (
+      title: string,
+      data: { d: number, e: number, diff: number },
+      compareData?: { d: number, e: number, diff: number }
+    ) => {
       const diffSign = data.d > data.e ? '+' : data.d < data.e ? '-' : '';
+      const diffValue = formatNumber(data.diff);
+      const diffDisplay = diffValue === '-' ? '-' : `${diffSign}${diffValue}`;
       return (
         <div className="metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
           <MetricCard
@@ -257,18 +181,36 @@ export default function AthleteDashboard() {
             title={`C/C ${title} D`}
             value={formatNumber(data.d)}
             unit="cm"
+            trend={compareEval ? {
+              direction: data.d > (compareData?.d ?? data.d) ? 'up' : data.d < (compareData?.d ?? data.d) ? 'down' : 'neutral',
+              value: formatTrendValue(Math.abs(data.d - (compareData?.d ?? data.d))),
+              text: 'vs. comparação',
+              isGood: data.d > (compareData?.d ?? data.d)
+            } : undefined}
           />
           <MetricCard
             icon={<Ruler size={24} />}
             title={`C/C ${title} E`}
             value={formatNumber(data.e)}
             unit="cm"
+            trend={compareEval ? {
+              direction: data.e > (compareData?.e ?? data.e) ? 'up' : data.e < (compareData?.e ?? data.e) ? 'down' : 'neutral',
+              value: formatTrendValue(Math.abs(data.e - (compareData?.e ?? data.e))),
+              text: 'vs. comparação',
+              isGood: data.e > (compareData?.e ?? data.e)
+            } : undefined}
           />
           <MetricCard
             icon={<Activity size={24} />}
             title="DIF D/E"
-            value={`${diffSign}${formatNumber(data.diff)}`}
+            value={diffDisplay}
             unit="cm"
+            trend={compareEval ? {
+              direction: data.diff > (compareData?.diff ?? data.diff) ? 'up' : data.diff < (compareData?.diff ?? data.diff) ? 'down' : 'neutral',
+              value: formatTrendValue(Math.abs(data.diff - (compareData?.diff ?? data.diff))),
+              text: 'vs. comparação',
+              isGood: data.diff < (compareData?.diff ?? data.diff)
+            } : undefined}
           />
         </div>
       );
@@ -276,9 +218,9 @@ export default function AthleteDashboard() {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {renderRow('Coxa', coxa)}
-        {renderRow('Panturrilha', pantu)}
-        {renderRow('Braço', braco)}
+        {renderRow('Coxa', coxa, compareSimetria?.coxa)}
+        {renderRow('Panturrilha', pantu, compareSimetria?.pantu)}
+        {renderRow('Braço', braco, compareSimetria?.braco)}
       </div>
     );
   };
@@ -454,6 +396,14 @@ export default function AthleteDashboard() {
                         >
                           <Trash2 size={18} />
                         </button>
+                        <button
+                          onClick={openGroupModal}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.4rem', border: 'none', backgroundColor: 'var(--color-bg-page)', color: 'var(--color-primary)' }}
+                          title="Gerenciar Grupo"
+                        >
+                          <Users size={18} />
+                        </button>
                       </div>
                     </div>
                     <p className="athlete-subtitle">Avaliação Antropométrica</p>
@@ -472,6 +422,10 @@ export default function AthleteDashboard() {
                       <Badge icon={User2} label="SEXO" value={Mapper.mapSexToLabel(athlete.sex) || '-'} />
                       <div className="badge-divider"></div>
                       <Badge icon={Calendar} label="DATA NASC." value={formatDate(athlete.birthDate)} />
+                      <div className="badge-divider"></div>
+                      <button className="group-badge-btn" onClick={openGroupModal} title="Gerenciar grupo">
+                        <Badge icon={Users} label="GRUPO" value={currentGroup?.name || 'Avulso'} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -518,7 +472,7 @@ export default function AthleteDashboard() {
                           <span className="eval-label">FÓRMULA %G</span>
                           <select
                             value={selectedFormula}
-                            onChange={e => setSelectedFormula(e.target.value as any)}
+                            onChange={e => setSelectedFormula(e.target.value as 'pollock' | 'faulkner')}
                             className="eval-select"
                           >
                             <option value="pollock">Pollock</option>
@@ -761,6 +715,39 @@ export default function AthleteDashboard() {
         </div>
       )}
 
+      {isGroupModalOpen && athlete && (
+        <div className="delete-modal-overlay" onClick={() => !isSavingGroup && setIsGroupModalOpen(false)}>
+          <div className="delete-modal-content group-modal-content-wide" onClick={(e) => e.stopPropagation()}>
+            <div className="group-modal-icon">
+              <Users size={32} />
+            </div>
+            <h2 className="delete-modal-title">Grupo do Atleta</h2>
+            <p className="delete-modal-text">
+              Escolha um grupo para <strong>{athlete.fullName}</strong> ou limpe a seleção para deixá-lo avulso.
+            </p>
+            <div style={{ width: '100%', textAlign: 'left' }}>
+              <SearchableSelect
+                options={groups.map(g => ({ id: g.id, name: g.name }))}
+                value={groupModalValue}
+                onChange={setGroupModalValue}
+                placeholder="Sem grupo — atleta avulso"
+                creatable
+                createLabel={(term) => `Criar grupo "${term}"`}
+                disabled={isSavingGroup}
+              />
+            </div>
+            <div className="delete-modal-actions">
+              <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => setIsGroupModalOpen(false)} disabled={isSavingGroup}>
+                <X size={16} /> Cancelar
+              </button>
+              <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={handleSaveGroup} disabled={isSavingGroup}>
+                {isSavingGroup ? <Loading size="sm" variant="white" message="" /> : <><Check size={16} /> Salvar</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isReportModalOpen && currentEval && athlete && (
         <ReportModal 
           isOpen={isReportModalOpen}
@@ -771,6 +758,7 @@ export default function AthleteDashboard() {
           currentMetrics={currentMetrics!}
           compareMetrics={compareMetrics || undefined}
           formula={selectedFormula}
+          athleteGroup={currentGroup}
         />
       )}
 
