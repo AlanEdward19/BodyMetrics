@@ -155,14 +155,15 @@ export function ReportOptionsSidebar({
 
       <div className="report-sections-manager">
         {showGroupAverageToggle && (
-          <div className="report-option-toggle">
-            <label className="item-checkbox">
+          <div className="report-toggle-row">
+            <span className="report-toggle-label">Mostrar média do grupo nos cards</span>
+            <label className="switch">
               <input
                 type="checkbox"
                 checked={showGroupAverage}
                 onChange={() => setShowGroupAverage(prev => !prev)}
               />
-              Mostrar media do grupo nos cards
+              <span className="switch-track"><span className="switch-thumb" /></span>
             </label>
           </div>
         )}

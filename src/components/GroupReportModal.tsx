@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import JSZip from 'jszip';
-import { X, Download, CheckCircle2, Users as UsersIcon } from 'lucide-react';
+import { X, Download, CheckCircle2, Users as UsersIcon, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import { Loading } from './Loading';
 import { ReportPaper } from './ReportPaper';
 import { ReportOptionsSidebar } from './ReportOptionsSidebar';
@@ -31,6 +31,12 @@ interface RenderData {
   compareEval?: Assessment;
   currentMetrics: any;
   compareMetrics: any;
+}
+
+interface PreviewItem {
+  memberId: string;
+  memberName: string;
+  data: RenderData;
 }
 
 const average = (values: number[]) => {
@@ -100,6 +106,8 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export function GroupReportModal({ isOpen, onClose, group, filteredMembers }: GroupReportModalProps) {
   const members = filteredMembers ?? group.members;
+  const memberIdsKey = members.map(m => m.id).join(',');
+
   const [logos, setLogos] = useLocalStorage<string[]>('@BodyMetrics:reportLogos', []);
   const [selections, setSelections] = useState(createDefaultReportSelections());
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -109,8 +117,15 @@ export function GroupReportModal({ isOpen, onClose, group, filteredMembers }: Gr
     skinfolds: false,
     circumferences: false
   });
-  const [formula, setFormula] = useState<'pollock' | 'faulkner'>('pollock');
+  const [formula, setFormula] = useLocalStorage<'pollock' | 'faulkner'>('@BodyMetrics:reportFormula', 'pollock');
   const [showGroupAverage, setShowGroupAverage] = useState(false);
+
+  // Prévia paginada: carregada uma vez por combinação de membros/fórmula, reaproveitada na exportação
+  const [previewReports, setPreviewReports] = useState<PreviewItem[]>([]);
+  const [previewSkipped, setPreviewSkipped] = useState<string[]>([]);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const previewRequestId = useRef(0);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState<{ current: number; total: number; name: string } | null>(null);
@@ -118,9 +133,13 @@ export function GroupReportModal({ isOpen, onClose, group, filteredMembers }: Gr
   const [successCount, setSuccessCount] = useState(0);
   const [skipped, setSkipped] = useState<string[]>([]);
   const [renderData, setRenderData] = useState<RenderData | null>(null);
-  const [groupAverageMetrics, setGroupAverageMetrics] = useState<AthleteMetrics | null>(null);
 
   const hiddenReportRef = useRef<HTMLDivElement>(null);
+
+  const groupAverageMetrics = useMemo(() => {
+    if (!showGroupAverage || previewReports.length === 0) return null;
+    return calculateGroupAverageMetrics(previewReports.map(item => item.data.currentMetrics as AthleteMetrics));
+  }, [showGroupAverage, previewReports]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -130,95 +149,108 @@ export function GroupReportModal({ isOpen, onClose, group, filteredMembers }: Gr
       setSuccessCount(0);
       setSkipped([]);
       setRenderData(null);
-      setGroupAverageMetrics(null);
+      setPreviewReports([]);
+      setPreviewSkipped([]);
+      setPreviewIndex(0);
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen || members.length === 0) return;
+    const requestId = ++previewRequestId.current;
+    setIsLoadingPreview(true);
+    setPreviewIndex(0);
+
+    (async () => {
+      const prepared: PreviewItem[] = [];
+      const skippedNames: string[] = [];
+
+      for (const member of members) {
+        try {
+          const fullAthlete = await apiService.getAthleteById(member.id);
+          const mappedAthlete = Mapper.mapNewToOldAthlete(fullAthlete);
+          const assessments = fullAthlete.physicalAssessments
+            .map(pa => Mapper.mapPhysicalAssessmentToAssessment(pa, fullAthlete.id))
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+          if (assessments.length === 0) {
+            skippedNames.push(member.fullName);
+            continue;
+          }
+
+          const currentEval = assessments[0];
+          const compareEval = assessments[1];
+          const currentMetrics = calculateMetrics(currentEval, mappedAthlete, formula);
+          const compareMetrics = calculateMetrics(compareEval, mappedAthlete, formula);
+
+          if (!currentMetrics) {
+            skippedNames.push(member.fullName);
+            continue;
+          }
+
+          prepared.push({
+            memberId: member.id,
+            memberName: member.fullName,
+            data: { athlete: mappedAthlete, currentEval, compareEval, currentMetrics, compareMetrics }
+          });
+        } catch (err) {
+          console.error('Erro ao carregar prévia do atleta', member.fullName, err);
+          skippedNames.push(member.fullName);
+        }
+      }
+
+      if (previewRequestId.current !== requestId) return;
+      setPreviewReports(prepared);
+      setPreviewSkipped(skippedNames);
+      setIsLoadingPreview(false);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, memberIdsKey, formula]);
+
   if (!isOpen) return null;
 
+  const goToPrevPreview = () => setPreviewIndex(i => Math.max(0, i - 1));
+  const goToNextPreview = () => setPreviewIndex(i => Math.min(previewReports.length - 1, i + 1));
+
   const handleGenerate = async () => {
-    if (members.length === 0) return;
+    if (previewReports.length === 0) return;
 
     setIsGenerating(true);
     setFinished(false);
-    setSkipped([]);
-    setGroupAverageMetrics(null);
 
     const zip = new JSZip();
-    const skippedNames: string[] = [];
+    const skippedNames: string[] = [...previewSkipped];
     const usedNames = new Set<string>();
-    const preparedReports: Array<{
-      memberId: string;
-      memberName: string;
-      data: RenderData;
-    }> = [];
 
-    for (let i = 0; i < members.length; i++) {
-      const member = members[i];
-      setProgress({ current: i + 1, total: members.length, name: member.fullName });
+    for (let i = 0; i < previewReports.length; i++) {
+      const item = previewReports[i];
+      setProgress({ current: i + 1, total: previewReports.length, name: item.memberName });
 
       try {
-        const fullAthlete = await apiService.getAthleteById(member.id);
-        const mappedAthlete = Mapper.mapNewToOldAthlete(fullAthlete);
-        const assessments = fullAthlete.physicalAssessments
-          .map(pa => Mapper.mapPhysicalAssessmentToAssessment(pa, fullAthlete.id))
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-        if (assessments.length === 0) {
-          skippedNames.push(member.fullName);
-          continue;
-        }
-
-        const currentEval = assessments[0];
-        const compareEval = assessments[1];
-        const currentMetrics = calculateMetrics(currentEval, mappedAthlete, formula);
-        const compareMetrics = calculateMetrics(compareEval, mappedAthlete, formula);
-
-        if (!currentMetrics) {
-          skippedNames.push(member.fullName);
-          continue;
-        }
-
-        preparedReports.push({
-          memberId: member.id,
-          memberName: member.fullName,
-          data: { athlete: mappedAthlete, currentEval, compareEval, currentMetrics, compareMetrics }
+        flushSync(() => {
+          setRenderData(item.data);
         });
+
+        if (!hiddenReportRef.current) {
+          skippedNames.push(item.memberName);
+          continue;
+        }
+
+        const pdf = await generatePdfFromNode(hiddenReportRef.current);
+        const blob = pdf.output('blob');
+
+        let fileName = sanitizeFileName(item.memberName) || item.memberId;
+        if (usedNames.has(fileName)) {
+          let n = 2;
+          while (usedNames.has(`${fileName}_${n}`)) n++;
+          fileName = `${fileName}_${n}`;
+        }
+        usedNames.add(fileName);
+        zip.file(`${fileName}.pdf`, blob);
       } catch (err) {
-        console.error('Erro ao gerar relatório do atleta', member.fullName, err);
-        skippedNames.push(member.fullName);
-      }
-    }
-
-    const groupAverageMetrics = showGroupAverage
-      ? calculateGroupAverageMetrics(preparedReports.map(item => item.data.currentMetrics as AthleteMetrics))
-      : null;
-    setGroupAverageMetrics(groupAverageMetrics);
-
-    for (let i = 0; i < preparedReports.length; i++) {
-      const item = preparedReports[i];
-      setProgress({ current: i + 1, total: preparedReports.length, name: item.memberName });
-
-      flushSync(() => {
-        setRenderData(item.data);
-      });
-
-      if (!hiddenReportRef.current) {
+        console.error('Erro ao gerar relatório do atleta', item.memberName, err);
         skippedNames.push(item.memberName);
-        continue;
       }
-
-      const pdf = await generatePdfFromNode(hiddenReportRef.current);
-      const blob = pdf.output('blob');
-
-      let fileName = sanitizeFileName(item.memberName) || item.memberId;
-      if (usedNames.has(fileName)) {
-        let n = 2;
-        while (usedNames.has(`${fileName}_${n}`)) n++;
-        fileName = `${fileName}_${n}`;
-      }
-      usedNames.add(fileName);
-      zip.file(`${fileName}.pdf`, blob);
     }
 
     setRenderData(null);
@@ -234,6 +266,8 @@ export function GroupReportModal({ isOpen, onClose, group, filteredMembers }: Gr
     setIsGenerating(false);
     setFinished(true);
   };
+
+  const currentPreview = previewReports[previewIndex];
 
   return (
     <div className="report-modal-overlay">
@@ -270,9 +304,9 @@ export function GroupReportModal({ isOpen, onClose, group, filteredMembers }: Gr
                 <button
                   className="btn btn-primary w-full"
                   onClick={handleGenerate}
-                  disabled={isGenerating || members.length === 0}
+                  disabled={isGenerating || isLoadingPreview || previewReports.length === 0}
                 >
-                  {isGenerating ? 'Gerando...' : <><Download size={18} /> Baixar ZIP ({members.length})</>}
+                  {isGenerating ? 'Gerando...' : <><Download size={18} /> Baixar ZIP ({previewReports.length})</>}
                 </button>
               </>
             }
@@ -280,37 +314,108 @@ export function GroupReportModal({ isOpen, onClose, group, filteredMembers }: Gr
 
           <div className="group-report-preview-area">
             {isGenerating && progress && (
-              <Loading message={`Gerando relatório ${progress.current}/${progress.total}: ${progress.name}...`} />
-            )}
-
-            {!isGenerating && finished && (
-              <div className="group-report-summary">
-                <div className="group-report-summary-icon">
-                  <CheckCircle2 size={48} />
-                </div>
-                <h3>Exportação concluída!</h3>
-                <p>{successCount} de {members.length} relatório(s) gerado(s) e baixado(s) em .zip.</p>
-                {skipped.length > 0 && (
-                  <div className="group-report-skipped">
-                    <p className="group-report-skipped-title">Sem avaliação cadastrada (ignorados):</p>
-                    <ul>
-                      {skipped.map(name => <li key={name}>{name}</li>)}
-                    </ul>
-                  </div>
-                )}
+              <div className="group-report-preview-centered">
+                <Loading message={`Gerando relatório ${progress.current}/${progress.total}: ${progress.name}...`} />
               </div>
             )}
 
-            {!isGenerating && !finished && (
-              <div className="group-report-intro">
-                <div className="group-report-intro-icon">
-                  <UsersIcon size={40} />
+            {!isGenerating && finished && (
+              <div className="group-report-preview-centered">
+                <div className="group-report-summary">
+                  <div className="group-report-summary-icon">
+                    <CheckCircle2 size={48} />
+                  </div>
+                  <h3>Exportação concluída!</h3>
+                  <p>{successCount} de {members.length} relatório(s) gerado(s) e baixado(s) em .zip.</p>
+                  {skipped.length > 0 && (
+                    <div className="group-report-skipped">
+                      <p className="group-report-skipped-title">Sem avaliação cadastrada (ignorados):</p>
+                      <ul>
+                        {skipped.map(name => <li key={name}>{name}</li>)}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-                <h3>{group.name}</h3>
-                <p>{members.length} {members.length === 1 ? 'atleta' : 'atletas'} — um PDF será gerado para cada um com avaliações cadastradas, reunidos em um único arquivo .zip.</p>
-                <ul className="group-report-member-list">
-                  {members.map(m => <li key={m.id}>{m.fullName}</li>)}
-                </ul>
+              </div>
+            )}
+
+            {!isGenerating && !finished && isLoadingPreview && (
+              <div className="group-report-preview-centered">
+                <Loading message="Carregando prévias dos atletas..." />
+              </div>
+            )}
+
+            {!isGenerating && !finished && !isLoadingPreview && previewReports.length === 0 && (
+              <div className="group-report-preview-centered">
+                <div className="group-report-intro">
+                  <div className="group-report-intro-icon">
+                    <UsersIcon size={40} />
+                  </div>
+                  <h3>{group.name}</h3>
+                  <p>Nenhum atleta selecionado possui avaliação cadastrada para gerar relatório.</p>
+                </div>
+              </div>
+            )}
+
+            {!isGenerating && !finished && !isLoadingPreview && currentPreview && (
+              <div className="group-report-preview-carousel">
+                <div className="preview-athlete-label">{currentPreview.memberName}</div>
+
+                <div className="group-report-preview-scroll">
+                  <div key={currentPreview.memberId} className="preview-fade-in">
+                    <ReportPaper
+                      athlete={currentPreview.data.athlete}
+                      currentEval={currentPreview.data.currentEval}
+                      compareEval={currentPreview.data.compareEval}
+                      currentMetrics={currentPreview.data.currentMetrics}
+                      compareMetrics={currentPreview.data.compareMetrics}
+                      formula={formula}
+                      logos={logos}
+                      selections={selections}
+                      showGroupAverage={showGroupAverage}
+                      groupAverageMetrics={groupAverageMetrics}
+                    />
+                  </div>
+                </div>
+
+                {previewReports.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      className="preview-nav-btn preview-nav-prev"
+                      onClick={goToPrevPreview}
+                      disabled={previewIndex === 0}
+                      aria-label="Atleta anterior"
+                    >
+                      <ChevronLeft size={22} />
+                    </button>
+                    <button
+                      type="button"
+                      className="preview-nav-btn preview-nav-next"
+                      onClick={goToNextPreview}
+                      disabled={previewIndex === previewReports.length - 1}
+                      aria-label="Próximo atleta"
+                    >
+                      <ChevronRight size={22} />
+                    </button>
+                  </>
+                )}
+
+                <div className="preview-page-indicator" key={previewIndex}>
+                  {previewIndex + 1} / {previewReports.length}
+                </div>
+
+                {previewSkipped.length > 0 && (
+                  <div className="preview-skipped-banner" tabIndex={0}>
+                    <AlertCircle size={13} /> {previewSkipped.length} sem avaliação (não {previewSkipped.length === 1 ? 'entrará' : 'entrarão'} no ZIP)
+                    <div className="preview-skipped-tooltip">
+                      <span className="preview-skipped-tooltip-title">Sem avaliação cadastrada</span>
+                      <ul>
+                        {previewSkipped.map(name => <li key={name}>{name}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

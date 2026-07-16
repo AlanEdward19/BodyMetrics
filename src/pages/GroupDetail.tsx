@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Pencil, Trash2, Check, X, UserMinus, ArrowLeftRight, Users, FolderInput, Download
+  ArrowLeft, Pencil, Trash2, Check, X, UserMinus, ArrowLeftRight, Users, FolderInput, Archive, FileText, Clock, SlidersHorizontal, RotateCcw
 } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Loading } from '../components/Loading';
@@ -32,6 +32,7 @@ export default function GroupDetail() {
   const [isSavingName, setIsSavingName] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isSummaryComingSoonOpen, setIsSummaryComingSoonOpen] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
   const [pendingMigrate, setPendingMigrate] = useState<{ athleteId: string; athleteName: string; targetGroupId: string; targetGroupName: string } | null>(null);
@@ -215,7 +216,8 @@ export default function GroupDetail() {
     return matchesSport && matchesCategory && matchesSector;
   });
 
-  const hasActiveFilters = selectedSports.length > 0 || selectedCategories.length > 0 || selectedSectors.length > 0;
+  const activeFilterCount = selectedSports.length + selectedCategories.length + selectedSectors.length;
+  const hasActiveFilters = activeFilterCount > 0;
 
   const renderFilterGroup = (
     label: string,
@@ -227,18 +229,25 @@ export default function GroupDetail() {
 
     return (
       <div className="group-filter-block">
-        <span className="group-filter-label">{label}</span>
+        <span className="group-filter-label">
+          {label}
+          {selectedValues.length > 0 && <span className="group-filter-count">{selectedValues.length}</span>}
+        </span>
         <div className="group-filter-options">
-          {options.map(option => (
-            <button
-              key={option}
-              type="button"
-              className={`group-filter-chip ${selectedValues.includes(option) ? 'active' : ''}`}
-              onClick={() => toggleFilterValue(option, setter)}
-            >
-              {option}
-            </button>
-          ))}
+          {options.map(option => {
+            const isActive = selectedValues.includes(option);
+            return (
+              <button
+                key={option}
+                type="button"
+                className={`group-filter-chip ${isActive ? 'active' : ''}`}
+                onClick={() => toggleFilterValue(option, setter)}
+              >
+                {isActive && <Check size={13} className="group-filter-chip-check" />}
+                {option}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -283,10 +292,17 @@ export default function GroupDetail() {
           <button
             className="icon-btn"
             onClick={() => setIsReportModalOpen(true)}
-            title="Exportar relatório do grupo (ZIP)"
+            title="Exportar relatórios individuais (ZIP)"
             disabled={group.members.length === 0}
           >
-            <Download size={18} />
+            <Archive size={18} />
+          </button>
+          <button
+            className="icon-btn icon-btn-soon"
+            onClick={() => setIsSummaryComingSoonOpen(true)}
+            title="Relatório resumido do grupo (em breve)"
+          >
+            <FileText size={18} />
           </button>
           <button className="icon-btn icon-btn-danger" onClick={() => setIsDeleteModalOpen(true)} title="Excluir grupo">
             <Trash2 size={18} />
@@ -297,14 +313,22 @@ export default function GroupDetail() {
         </p>
       </Card>
 
-      <Card className="group-filters-card">
+      <Card className={`group-filters-card ${hasActiveFilters ? 'has-active-filters' : ''}`}>
         <div className="group-filters-header">
-          <div>
-            <h3>Filtros dos atletas</h3>
-            <p>Combine filtros por esporte, categoria e setor. A exportação usa exatamente esta seleção.</p>
+          <div className="group-filters-heading">
+            <div className="group-filters-icon">
+              <SlidersHorizontal size={18} />
+            </div>
+            <div>
+              <h3>
+                Filtros dos atletas
+                {hasActiveFilters && <span className="group-filters-badge">{activeFilterCount}</span>}
+              </h3>
+              <p>Combine filtros por esporte, categoria e setor. A exportação usa exatamente esta seleção.</p>
+            </div>
           </div>
-          <button type="button" className="btn btn-secondary" onClick={clearFilters} disabled={!hasActiveFilters}>
-            Limpar filtros
+          <button type="button" className="group-filters-clear-btn" onClick={clearFilters} disabled={!hasActiveFilters}>
+            <RotateCcw size={14} /> Limpar filtros
           </button>
         </div>
         <div className="group-filters-grid">
@@ -345,6 +369,7 @@ export default function GroupDetail() {
             <thead>
               <tr>
                 <th>Atleta</th>
+                <th></th>
                 <th style={{ width: '1%' }}></th>
               </tr>
             </thead>
@@ -352,13 +377,13 @@ export default function GroupDetail() {
               {filteredMembers.map((member, index) => (
                 <tr key={member.id} className="group-member-row" style={{ animationDelay: `${index * 30}ms` }}>
                   <td>
-                    <div className="member-info-cell">
-                      <Link to={`/dashboard/${member.id}`} className="member-name-link">{member.fullName}</Link>
-                      <div className="member-tags">
-                        {member.sportName && <span className="member-tag">{member.sportName}</span>}
-                        {member.category && <span className="member-tag">{member.category}</span>}
-                        {member.sector && <span className="member-tag">{member.sector}</span>}
-                      </div>
+                    <Link to={`/dashboard/${member.id}`} className="member-name-link">{member.fullName}</Link>
+                  </td>
+                  <td>
+                    <div className="member-tags">
+                      {member.sportName && <span className="member-tag">{member.sportName}</span>}
+                      {member.category && <span className="member-tag">{member.category}</span>}
+                      {member.sector && <span className="member-tag">{member.sector}</span>}
                     </div>
                   </td>
                   <td>
@@ -474,6 +499,23 @@ export default function GroupDetail() {
           group={group}
           filteredMembers={filteredMembers}
         />
+      )}
+
+      {isSummaryComingSoonOpen && (
+        <div className="delete-modal-overlay" onClick={() => setIsSummaryComingSoonOpen(false)}>
+          <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="delete-modal-icon info-modal-icon">
+              <Clock size={32} />
+            </div>
+            <h2 className="delete-modal-title">Em breve</h2>
+            <p className="delete-modal-text">
+              O relatório resumido do grupo ainda está em desenvolvimento e será disponibilizado em uma próxima atualização.
+            </p>
+            <div className="delete-modal-actions">
+              <button className="btn btn-primary" onClick={() => setIsSummaryComingSoonOpen(false)}>Entendi</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -79,7 +79,7 @@ const isAnySelected = (selections: ReportSelections, section: keyof ReportSelect
 
 const getAverageText = (value?: number, unit?: string) => {
   if (value === undefined || value === null || Number.isNaN(value) || value <= 0) return null;
-  return `Media grupo: ${formatNumber(value)}${unit ? ` ${unit}` : ''}`;
+  return `Média: ${formatNumber(value)}${unit ? ` ${unit}` : ''}`;
 };
 
 export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function ReportPaper({
