@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Pencil, Trash2, Check, X, UserMinus, ArrowLeftRight, Users, FolderInput, Archive, FileText, Clock, SlidersHorizontal, RotateCcw
+  ArrowLeft, Pencil, Trash2, Check, X, UserMinus, ArrowLeftRight, Users, FolderInput, Archive, FileText, SlidersHorizontal, RotateCcw
 } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Loading } from '../components/Loading';
 import { SearchableSelect } from '../components/SearchableSelect';
 import { GroupReportModal } from '../components/GroupReportModal';
+import { GroupSimplifiedReportModal } from '../components/GroupSimplifiedReportModal';
 import { useGroups } from '../hooks/useGroups';
 import apiService from '../services/api.service';
 import type { AthleteViewModel } from '../types/api';
@@ -32,7 +33,7 @@ export default function GroupDetail() {
   const [isSavingName, setIsSavingName] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isSummaryComingSoonOpen, setIsSummaryComingSoonOpen] = useState(false);
+  const [isSimplifiedReportModalOpen, setIsSimplifiedReportModalOpen] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
   const [pendingMigrate, setPendingMigrate] = useState<{ athleteId: string; athleteName: string; targetGroupId: string; targetGroupName: string } | null>(null);
@@ -298,9 +299,10 @@ export default function GroupDetail() {
             <Archive size={18} />
           </button>
           <button
-            className="icon-btn icon-btn-soon"
-            onClick={() => setIsSummaryComingSoonOpen(true)}
-            title="Relatório resumido do grupo (em breve)"
+            className="icon-btn"
+            onClick={() => setIsSimplifiedReportModalOpen(true)}
+            title="Relatório resumido do grupo"
+            disabled={group.members.length === 0}
           >
             <FileText size={18} />
           </button>
@@ -501,21 +503,13 @@ export default function GroupDetail() {
         />
       )}
 
-      {isSummaryComingSoonOpen && (
-        <div className="delete-modal-overlay" onClick={() => setIsSummaryComingSoonOpen(false)}>
-          <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="delete-modal-icon info-modal-icon">
-              <Clock size={32} />
-            </div>
-            <h2 className="delete-modal-title">Em breve</h2>
-            <p className="delete-modal-text">
-              O relatório resumido do grupo ainda está em desenvolvimento e será disponibilizado em uma próxima atualização.
-            </p>
-            <div className="delete-modal-actions">
-              <button className="btn btn-primary" onClick={() => setIsSummaryComingSoonOpen(false)}>Entendi</button>
-            </div>
-          </div>
-        </div>
+      {isSimplifiedReportModalOpen && (
+        <GroupSimplifiedReportModal
+          isOpen={isSimplifiedReportModalOpen}
+          onClose={() => setIsSimplifiedReportModalOpen(false)}
+          group={group}
+          filteredMembers={filteredMembers}
+        />
       )}
     </div>
   );

@@ -1,0 +1,215 @@
+.simplified-report-sidebar-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.simplified-report-sidebar-icon {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.simplified-report-sidebar-intro h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: var(--color-text-main);
+}
+
+.simplified-report-sidebar-intro p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.simplified-report-columns {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 1.25rem;
+}
+
+.simplified-report-columns .items-control {
+  animation: none;
+}
+
+.simplified-report-avg-tag {
+  margin-left: auto;
+  font-size: 6.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #a16207;
+  background-color: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.simplified-report-preview-area {
+  padding: 0;
+}
+
+.simplified-report-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.simplified-report-skipped-banner {
+  position: static;
+  transform: none;
+  margin-bottom: 1rem;
+  align-self: center;
+}
+
+.simplified-report-paper {
+  animation: simplifiedReportFadeIn 0.3s ease-out;
+}
+
+@keyframes simplifiedReportFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.simplified-report-paper .report-header {
+  justify-content: flex-start;
+}
+
+.simplified-report-paper .report-title-area {
+  text-align: left;
+  width: 100%;
+}
+
+.simplified-report-title-icon {
+  vertical-align: -3px;
+  margin-right: 8px;
+  color: #117a3a;
+}
+
+/* Legenda de faixas de %gordura */
+.simplified-report-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+}
+
+.simplified-report-sidebar-intro + .simplified-report-legend {
+  margin-top: 0;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.simplified-report-legend-title {
+  font-size: 7.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-right: 2px;
+}
+
+.simplified-report-legend-chip {
+  font-size: 7.5pt;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+/* Cards por atleta */
+.simplified-athlete-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.simplified-athlete-name {
+  color: #0f172a !important;
+  font-size: 11.5pt !important;
+}
+
+.simplified-athlete-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.simplified-athlete-tag {
+  font-size: 7.5pt;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background-color: #e2e8f0;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.simplified-athlete-tag-count {
+  background-color: #117a3a;
+  color: #ffffff;
+}
+
+.simplified-report-avg-card {
+  border: 2px solid #117a3a;
+  box-shadow: 0 4px 14px rgba(17, 122, 58, 0.12);
+}
+
+.simplified-report-avg-card .report-section-header {
+  background-color: #e8f5ed;
+}
+
+.simplified-report-avg-card .report-section-title {
+  color: #117a3a;
+}
+
+/* Badges coloridos de %gordura (amarelo <8 / verde 8-9,99 / laranja 10-11,99 / vermelho >=12) */
+.simplified-fat-badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 15pt !important;
+}
+
+.simplified-fat-yellow,
+.simplified-report-legend-chip.simplified-fat-yellow {
+  background-color: #fef9c3;
+  color: #854d0e !important;
+  border-color: #fde047;
+}
+
+.simplified-fat-green,
+.simplified-report-legend-chip.simplified-fat-green {
+  background-color: #dcfce7;
+  color: #15803d !important;
+  border-color: #86efac;
+}
+
+.simplified-fat-orange,
+.simplified-report-legend-chip.simplified-fat-orange {
+  background-color: #ffedd5;
+  color: #c2410c !important;
+  border-color: #fdba74;
+}
+
+.simplified-fat-red,
+.simplified-report-legend-chip.simplified-fat-red {
+  background-color: #fee2e2;
+  color: #b91c1c !important;
+  border-color: #fca5a5;
+}
