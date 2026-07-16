@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import * as Mapper from '../utils/mapper';
 import { calculateMetrics } from '../utils/metrics';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import './AthleteDashboard.css';
 
 export default function AthleteDashboard() {
@@ -40,7 +41,10 @@ export default function AthleteDashboard() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [athlete]);
 
-  const [selectedFormula, setSelectedFormula] = useState<'pollock' | 'faulkner'>('pollock');
+  const [selectedFormula, setSelectedFormula] = useLocalStorage<'pollock' | 'faulkner'>(
+    '@BodyMetrics:selectedFormula',
+    'pollock'
+  );
   const [currentEvalId, setCurrentEvalId] = useState<string>('');
   const [compareEvalId, setCompareEvalId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'dobras' | 'circunferencias'>('dobras');
@@ -468,7 +472,7 @@ export default function AthleteDashboard() {
                           <span className="eval-label">FÓRMULA %G</span>
                           <select
                             value={selectedFormula}
-                            onChange={e => setSelectedFormula(e.target.value as any)}
+                            onChange={e => setSelectedFormula(e.target.value as 'pollock' | 'faulkner')}
                             className="eval-select"
                           >
                             <option value="pollock">Pollock</option>
@@ -754,6 +758,7 @@ export default function AthleteDashboard() {
           currentMetrics={currentMetrics!}
           compareMetrics={compareMetrics || undefined}
           formula={selectedFormula}
+          athleteGroup={currentGroup}
         />
       )}
 

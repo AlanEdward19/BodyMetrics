@@ -16,7 +16,7 @@ Ao comparar avaliações ou visualizar os dados atuais, as seguintes fórmulas s
 - **Ossos (kg)**: `3.02 * (400 * (Circuferencia D. Punho / 100 ) * (Circuferencia D. Joelho / 100 ) * ((Altura / 100)^2))^0.712`
 - **Gordura (kg)**: `(Peso * Percentual de Gordura) / 100`
 - **Massa Livre de Gordura (MLG em kg)**: `Peso - Gordura - Ossos`
-- **Massa Muscular (kg)**: `(Altura / 100) * ((0.00744 * (Relação M/O Braço^2)) + (0.00088 * (Circunferência Braço Corrigida^2)) + (0.00441 * (Tornozelo^2))) + (2.4 * Sexo) - (0.048 * Idade) + Raça + 7.8` onde Relação M/O Braço é `Circunferência Braço Corrigida / Diâmetro Punho`, Sexo é 1 para masculino e 0 para feminino, Raça é 0 para branco, 1.1 para negro e -2 para asiático, e Tornozelo é o valor registrado de circunferência/diâmetro do tornozelo.
+- **Massa Muscular (kg)**: `(Altura / 100) * ((0.00744 * (Relação M/O Braço^2)) + (0.00088 * (Circunferência Braço Corrigida^2)) + (0.00441 * (Tornozelo^2))) + (2.4 * Sexo) - (0.048 * Idade) + Raça + 7.8` onde Relação M/O Braço é `Circunferência Braço Corrigida / Diâmetro Punho`, Sexo é 1 para masculino e 0 para feminino, Raça é 0 para branco, 1.1 para negro e -2 para asiático, e Tornozelo é o valor registrado de circunferência/diâmetro do tornozelo. Esse valor só deve ser calculado quando existir ao menos um insumo válido da própria fórmula.
 - **Somatório de Dobras**: Soma de todas as dobras registradas na avaliação.
 - **Percentual de Gordura (%)**: O usuário deve poder escolher entre as fórmulas de Pollock ou Faulkner.
 - **Relação Massa Muscular-Ossos**: `MLG / Ossos` (índice adimensional).
@@ -25,3 +25,8 @@ Ao comparar avaliações ou visualizar os dados atuais, as seguintes fórmulas s
 
 ## Comportamento no Preenchimento de Nova Avaliação
 - **Comparação em Tempo Real**: Durante o input dos campos no formulário de Nova Avaliação ou Edição, o sistema exibe abaixo de cada campo o valor registrado na avaliação anterior imediatamente anterior.
+- **Cálculo via Banco em Alt. Sentado**: O recurso "Calcular via banco" fica no campo Altura Sentado e utiliza a fórmula `Altura Sentado = Altura - Banco`.
+- **Sem obrigatoriedade por campo**: Nenhum campo individual da tela de avaliação é obrigatório no frontend, mas o envio exige pelo menos um campo de medida preenchido.
+
+## Preferências de Visualização no Dashboard
+- A fórmula de percentual de gordura selecionada no dashboard (Pollock/Faulkner) deve persistir após refresh da página, mantendo a última escolha do usuário.

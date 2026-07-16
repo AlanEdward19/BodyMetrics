@@ -185,18 +185,18 @@ export default function AddAssessment() {
 
   useEffect(() => {
     if (!useHeightCalc) return;
-    const sitting = parseFloat(formData.sittingHeight);
+    const height = parseFloat(formData.height);
     const bench = parseFloat(benchHeight);
-    const computed = (!isNaN(sitting) && !isNaN(bench)) ? (sitting + bench).toFixed(2) : '';
-    setFormData(prev => prev.height === computed ? prev : { ...prev, height: computed });
-  }, [useHeightCalc, formData.sittingHeight, benchHeight]);
+    const computed = (!isNaN(height) && !isNaN(bench)) ? (height - bench).toFixed(2) : '';
+    setFormData(prev => prev.sittingHeight === computed ? prev : { ...prev, sittingHeight: computed });
+  }, [useHeightCalc, formData.height, benchHeight]);
 
   useEffect(() => {
-    if (!useHeightCalc || !formData.height) return;
+    if (!useHeightCalc || !formData.sittingHeight) return;
     setHeightFlash(true);
     const timer = setTimeout(() => setHeightFlash(false), 600);
     return () => clearTimeout(timer);
-  }, [formData.height, useHeightCalc]);
+  }, [formData.sittingHeight, useHeightCalc]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -208,6 +208,16 @@ export default function AddAssessment() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAthleteId) return;
+
+    const hasAtLeastOneMeasurement = Object.entries(formData)
+      .filter(([key]) => key !== 'date')
+      .some(([, value]) => value.trim() !== '');
+
+    if (!hasAtLeastOneMeasurement) {
+      alert('Preencha pelo menos um campo da avaliação antes de salvar.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -292,7 +302,6 @@ export default function AddAssessment() {
           value={(formData as any)[name]}
           onChange={handleChange}
           placeholder="0.00"
-          required
         />
         {unit && <span className="unit">{unit}</span>}
       </div>
@@ -352,7 +361,6 @@ export default function AddAssessment() {
                 name="athleteId" 
                 value={selectedAthleteId} 
                 onChange={(e) => setSelectedAthleteId(e.target.value)}
-                required
                 disabled={isEditing}
               >
                 {athletes.map(a => (
@@ -368,7 +376,6 @@ export default function AddAssessment() {
                   name="date" 
                   value={formData.date}
                   onChange={handleChange}
-                  required 
                 />
               </div>
             </div>
@@ -384,10 +391,11 @@ export default function AddAssessment() {
           </div>
           <div className="grid-3-cols">
             {renderInput('weight', 'Peso', 'kg')}
+            {renderInput('height', 'Altura', 'cm')}
 
             <div className="form-group">
               <div className="height-field-label">
-                <label htmlFor="height">Altura</label>
+                <label htmlFor="sittingHeight">Alt. Sentado</label>
                 <button
                   type="button"
                   className={`calc-toggle ${useHeightCalc ? 'active' : ''}`}
@@ -401,18 +409,17 @@ export default function AddAssessment() {
                 <input
                   type="number"
                   step="0.01"
-                  id="height"
-                  name="height"
-                  value={formData.height}
+                  id="sittingHeight"
+                  name="sittingHeight"
+                  value={formData.sittingHeight}
                   onChange={handleChange}
                   placeholder="0.00"
-                  required
                   readOnly={useHeightCalc}
                   className={useHeightCalc ? `computed-input ${heightFlash ? 'flash' : ''}` : ''}
                 />
                 <span className="unit">cm</span>
               </div>
-              {renderPreviousValueHint('height', 'cm')}
+              {renderPreviousValueHint('sittingHeight', 'cm')}
               <div className={`bench-height-reveal ${useHeightCalc ? 'open' : ''}`}>
                 <div className="bench-height-inner">
                   <div className="bench-height-inner-content">
@@ -429,13 +436,11 @@ export default function AddAssessment() {
                       />
                       <span className="unit">cm</span>
                     </div>
-                    <span className="field-hint">Alt. Sentado + Banco = Altura</span>
+                    <span className="field-hint">Alt. Sentado = Altura - Banco</span>
                   </div>
                 </div>
               </div>
             </div>
-
-            {renderInput('sittingHeight', 'Alt. Sentado', 'cm')}
           </div>
         </Card>
 

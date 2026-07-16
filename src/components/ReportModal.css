@@ -352,6 +352,14 @@
   letter-spacing: 0.5px;
 }
 
+.report-option-toggle {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: #f8fafc;
+}
+
 .section-control {
   background-color: #f8fafc;
   border: 1px solid var(--color-border);
@@ -360,6 +368,18 @@
   margin-bottom: 12px;
   overflow: hidden;
   transition: all 0.2s ease;
+}
+
+.report-metric-average {
+  margin-top: -4px;
+  font-size: 7pt;
+  font-weight: 700;
+  color: #a16207;
+  background-color: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  padding: 2px 8px;
+  width: fit-content;
 }
 
 .section-control.expanded {

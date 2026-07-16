@@ -3,6 +3,7 @@ import { Scale, Ruler, Percent, Activity, Shield, Dumbbell, ArrowUpRight, ArrowD
 import type { Assessment } from '../types/assessment';
 import type { Athlete } from '../types/athlete';
 import type { ReportSelections } from '../types/report';
+import type { AthleteMetrics } from '../utils/metrics';
 
 interface ReportPaperProps {
   athlete: Athlete;
@@ -13,6 +14,8 @@ interface ReportPaperProps {
   formula: string;
   logos: string[];
   selections: ReportSelections;
+  showGroupAverage?: boolean;
+  groupAverageMetrics?: AthleteMetrics | null;
 }
 
 const formatDate = (dateStr?: string) => {
@@ -74,8 +77,13 @@ const isAnySelected = (selections: ReportSelections, section: keyof ReportSelect
   return Object.values(selections[section].items).some(v => v);
 };
 
+const getAverageText = (value?: number, unit?: string) => {
+  if (value === undefined || value === null || Number.isNaN(value) || value <= 0) return null;
+  return `Media grupo: ${formatNumber(value)}${unit ? ` ${unit}` : ''}`;
+};
+
 export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function ReportPaper({
-  athlete, currentEval, compareEval, currentMetrics, compareMetrics, formula, logos, selections
+  athlete, currentEval, compareEval, currentMetrics, compareMetrics, formula, logos, selections, showGroupAverage = false, groupAverageMetrics = null
 }, ref) {
   const currentAge = calculateAge(athlete.birthDate, currentEval?.date);
 
@@ -171,6 +179,9 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                     const cmpVal = compareMetrics ? compareMetrics[m.key] : undefined;
                     const isNA = !curVal || curVal <= 0;
                     const trend = m.showTrend ? getTrendState(curVal, cmpVal, m.inverseGood) : null;
+                    const avgText = showGroupAverage
+                      ? getAverageText(groupAverageMetrics?.[m.key as keyof AthleteMetrics] as number | undefined, m.unit)
+                      : null;
 
                     return (
                       <div key={m.key} className={`report-metric-box ${isNA ? 'is-na' : ''}`}>
@@ -185,6 +196,8 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-value">{formatNumber(curVal)}</span>
                           <span className="report-metric-unit">{m.unit}</span>
                         </div>
+
+                        {avgText && <div className="report-metric-average">{avgText}</div>}
 
                         <div className="report-metric-footer">
                           {trend ? (
@@ -215,13 +228,16 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
             <div className="report-section-body" style={{ padding: '20px' }}>
               <div className="report-symmetry-container">
                 {[
-                  { label: 'Coxa', data: currentMetrics?.simetria?.coxa },
-                  { label: 'Panturrilha', data: currentMetrics?.simetria?.pantu },
-                  { label: 'Braço', data: currentMetrics?.simetria?.braco }
+                  { label: 'Coxa', metricKey: 'coxa' as const, data: currentMetrics?.simetria?.coxa },
+                  { label: 'Panturrilha', metricKey: 'pantu' as const, data: currentMetrics?.simetria?.pantu },
+                  { label: 'Braço', metricKey: 'braco' as const, data: currentMetrics?.simetria?.braco }
                 ].filter(item => (selections.symmetry.items as any)[item.label]).map((item, idx) => {
                   const isD_NA = !item.data?.d || item.data?.d <= 0;
                   const isE_NA = !item.data?.e || item.data?.e <= 0;
                   const isDiff_NA = isD_NA || isE_NA;
+                  const avgD = showGroupAverage ? getAverageText(groupAverageMetrics?.simetria?.[item.metricKey]?.d, 'cm') : null;
+                  const avgE = showGroupAverage ? getAverageText(groupAverageMetrics?.simetria?.[item.metricKey]?.e, 'cm') : null;
+                  const avgDiff = showGroupAverage ? getAverageText(groupAverageMetrics?.simetria?.[item.metricKey]?.diff, 'cm') : null;
 
                   return (
                     <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
@@ -235,6 +251,7 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-unit">cm</span>
                         </div>
                         <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Direito</span></div>
+                        {avgD && <div className="report-metric-average">{avgD}</div>}
                       </div>
 
                       <div className={`report-metric-box ${isE_NA ? 'is-na' : ''}`}>
@@ -247,6 +264,7 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-unit">cm</span>
                         </div>
                         <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Esquerdo</span></div>
+                        {avgE && <div className="report-metric-average">{avgE}</div>}
                       </div>
 
                       <div className={`report-metric-box ${isDiff_NA ? 'is-na' : ''}`}>
@@ -259,6 +277,7 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-unit">cm</span>
                         </div>
                         <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Assimetria</span></div>
+                        {avgDiff && <div className="report-metric-average">{avgDiff}</div>}
                       </div>
                     </div>
                   );
@@ -279,13 +298,46 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
             <div className="report-section-body" style={{ padding: '20px' }}>
               <div className="report-relations-container">
                 {[
-                  { label: 'Coxa / Fêmur', titleMedia: 'Coxa', titleOsso: 'Fêmur', media: currentMetrics?.relacao?.ccCoxa, osso: currentMetrics?.relacao?.diamJoelho, relacao: currentMetrics?.relacao?.coxa },
-                  { label: 'Panturrilha / Tornozelo', titleMedia: 'Pantu.', titleOsso: 'Tornozelo', media: currentMetrics?.relacao?.ccPantu, osso: currentMetrics?.relacao?.diamTornozelo, relacao: currentMetrics?.relacao?.pantu },
-                  { label: 'Braço / Úmero', titleMedia: 'Braço', titleOsso: 'Úmero', media: currentMetrics?.relacao?.ccBraco, osso: currentMetrics?.relacao?.diamPunho, relacao: currentMetrics?.relacao?.braco }
+                  {
+                    label: 'Coxa / Fêmur',
+                    titleMedia: 'Coxa',
+                    titleOsso: 'Fêmur',
+                    media: currentMetrics?.relacao?.ccCoxa,
+                    osso: currentMetrics?.relacao?.diamJoelho,
+                    relacao: currentMetrics?.relacao?.coxa,
+                    relacaoKey: 'coxa' as const,
+                    mediaKey: 'ccCoxa' as const,
+                    ossoKey: 'diamJoelho' as const
+                  },
+                  {
+                    label: 'Panturrilha / Tornozelo',
+                    titleMedia: 'Pantu.',
+                    titleOsso: 'Tornozelo',
+                    media: currentMetrics?.relacao?.ccPantu,
+                    osso: currentMetrics?.relacao?.diamTornozelo,
+                    relacao: currentMetrics?.relacao?.pantu,
+                    relacaoKey: 'pantu' as const,
+                    mediaKey: 'ccPantu' as const,
+                    ossoKey: 'diamTornozelo' as const
+                  },
+                  {
+                    label: 'Braço / Úmero',
+                    titleMedia: 'Braço',
+                    titleOsso: 'Úmero',
+                    media: currentMetrics?.relacao?.ccBraco,
+                    osso: currentMetrics?.relacao?.diamPunho,
+                    relacao: currentMetrics?.relacao?.braco,
+                    relacaoKey: 'braco' as const,
+                    mediaKey: 'ccBraco' as const,
+                    ossoKey: 'diamPunho' as const
+                  }
                 ].filter(item => (selections.relations.items as any)[item.label]).map((item, idx) => {
                   const isMedia_NA = !item.media || item.media <= 0;
                   const isOsso_NA = !item.osso || item.osso <= 0;
                   const isRel_NA = isMedia_NA || isOsso_NA;
+                  const avgMedia = showGroupAverage ? getAverageText(groupAverageMetrics?.relacao?.[item.mediaKey], 'cm') : null;
+                  const avgOsso = showGroupAverage ? getAverageText(groupAverageMetrics?.relacao?.[item.ossoKey], 'cm') : null;
+                  const avgRel = showGroupAverage ? getAverageText(groupAverageMetrics?.relacao?.[item.relacaoKey], 'indice') : null;
 
                   return (
                     <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
@@ -299,6 +351,7 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-unit">cm</span>
                         </div>
                         <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Média Corrigida</span></div>
+                        {avgMedia && <div className="report-metric-average">{avgMedia}</div>}
                       </div>
 
                       <div className={`report-metric-box ${isOsso_NA ? 'is-na' : ''}`}>
@@ -311,6 +364,7 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-unit">cm</span>
                         </div>
                         <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Diâmetro Ósseo</span></div>
+                        {avgOsso && <div className="report-metric-average">{avgOsso}</div>}
                       </div>
 
                       <div className={`report-metric-box ${isRel_NA ? 'is-na' : ''}`}>
@@ -323,6 +377,7 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-unit">índice</span>
                         </div>
                         <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Índice Cine.</span></div>
+                        {avgRel && <div className="report-metric-average">{avgRel}</div>}
                       </div>
                     </div>
                   );

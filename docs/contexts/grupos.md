@@ -21,3 +21,7 @@ Este arquivo define o contexto e as regras de negócio para a entidade "Grupo" (
 - `GroupContext` carrega todos os grupos (sem paginação) já com `members` embutidos — suficiente para descobrir a que grupo um atleta pertence sem chamada extra.
 - Tela de listagem (`/groups`) + detalhe (`/groups/:groupId`) para gerenciar grupo, membros e migração.
 - Formulário de atleta (criar/editar) e o dashboard do atleta também permitem atribuir/mover/remover grupo, reaproveitando o mesmo `addAthleteToGroup`/`removeAthleteFromGroup`.
+- Exportação de relatório em grupo possui flag para exibir/ocultar média do grupo nos cards.
+- Quando habilitada, a média é calculada por campo calculável somando os valores válidos dos atletas do grupo e dividindo pela quantidade de atletas com valor válido naquele campo.
+- No relatório individual, a flag de média só aparece quando o atleta pertence a um grupo; a média exibida é a do grupo atual do atleta.
+- A tela de detalhe do grupo permite filtros múltiplos por esporte, categoria e setor; a exportação em grupo deve respeitar exatamente os atletas visíveis após aplicar esses filtros.

@@ -78,6 +78,9 @@ export default function GroupDetail() {
   const [athleteTotalPages, setAthleteTotalPages] = useState(1);
   const [pickerValue, setPickerValue] = useState('');
   const [isAddingAthlete, setIsAddingAthlete] = useState(false);
+  const [selectedSports, setSelectedSports] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
 
   const fetchUngroupedAthletes = useCallback(async (page: number, fullName?: string) => {
     const response = await apiService.listAthletes({ page, pageSize: 20, fullName });
@@ -188,6 +191,58 @@ export default function GroupDetail() {
   }
 
   const otherGroups = groups.filter(g => g.id !== group.id);
+  const sportOptions = Array.from(new Set(group.members.map(member => member.sportName).filter(Boolean))) as string[];
+  const categoryOptions = Array.from(new Set(group.members.map(member => member.category).filter(Boolean))) as string[];
+  const sectorOptions = Array.from(new Set(group.members.map(member => member.sector).filter(Boolean))) as string[];
+
+  const toggleFilterValue = (
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    setter(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
+  };
+
+  const clearFilters = () => {
+    setSelectedSports([]);
+    setSelectedCategories([]);
+    setSelectedSectors([]);
+  };
+
+  const filteredMembers = group.members.filter(member => {
+    const matchesSport = selectedSports.length === 0 || (!!member.sportName && selectedSports.includes(member.sportName));
+    const matchesCategory = selectedCategories.length === 0 || (!!member.category && selectedCategories.includes(member.category));
+    const matchesSector = selectedSectors.length === 0 || (!!member.sector && selectedSectors.includes(member.sector));
+    return matchesSport && matchesCategory && matchesSector;
+  });
+
+  const hasActiveFilters = selectedSports.length > 0 || selectedCategories.length > 0 || selectedSectors.length > 0;
+
+  const renderFilterGroup = (
+    label: string,
+    options: string[],
+    selectedValues: string[],
+    setter: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    if (options.length === 0) return null;
+
+    return (
+      <div className="group-filter-block">
+        <span className="group-filter-label">{label}</span>
+        <div className="group-filter-options">
+          {options.map(option => (
+            <button
+              key={option}
+              type="button"
+              className={`group-filter-chip ${selectedValues.includes(option) ? 'active' : ''}`}
+              onClick={() => toggleFilterValue(option, setter)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="container group-detail-container">
@@ -237,7 +292,26 @@ export default function GroupDetail() {
             <Trash2 size={18} />
           </button>
         </div>
-        <p className="group-detail-subtitle">{group.members.length} {group.members.length === 1 ? 'atleta' : 'atletas'} neste grupo</p>
+        <p className="group-detail-subtitle">
+          {filteredMembers.length} de {group.members.length} {group.members.length === 1 ? 'atleta' : 'atletas'} neste grupo
+        </p>
+      </Card>
+
+      <Card className="group-filters-card">
+        <div className="group-filters-header">
+          <div>
+            <h3>Filtros dos atletas</h3>
+            <p>Combine filtros por esporte, categoria e setor. A exportação usa exatamente esta seleção.</p>
+          </div>
+          <button type="button" className="btn btn-secondary" onClick={clearFilters} disabled={!hasActiveFilters}>
+            Limpar filtros
+          </button>
+        </div>
+        <div className="group-filters-grid">
+          {renderFilterGroup('Esporte', sportOptions, selectedSports, setSelectedSports)}
+          {renderFilterGroup('Categoria', categoryOptions, selectedCategories, setSelectedCategories)}
+          {renderFilterGroup('Setor', sectorOptions, selectedSectors, setSelectedSectors)}
+        </div>
       </Card>
 
       <Card className="group-add-athlete-card">
@@ -262,6 +336,10 @@ export default function GroupDetail() {
           <div className="group-members-empty">
             <p>Nenhum atleta neste grupo ainda. Use o campo acima para adicionar.</p>
           </div>
+        ) : filteredMembers.length === 0 ? (
+          <div className="group-members-empty">
+            <p>Nenhum atleta corresponde aos filtros selecionados.</p>
+          </div>
         ) : (
           <table className="group-members-table">
             <thead>
@@ -271,10 +349,17 @@ export default function GroupDetail() {
               </tr>
             </thead>
             <tbody>
-              {group.members.map((member, index) => (
+              {filteredMembers.map((member, index) => (
                 <tr key={member.id} className="group-member-row" style={{ animationDelay: `${index * 30}ms` }}>
                   <td>
-                    <Link to={`/dashboard/${member.id}`} className="member-name-link">{member.fullName}</Link>
+                    <div className="member-info-cell">
+                      <Link to={`/dashboard/${member.id}`} className="member-name-link">{member.fullName}</Link>
+                      <div className="member-tags">
+                        {member.sportName && <span className="member-tag">{member.sportName}</span>}
+                        {member.category && <span className="member-tag">{member.category}</span>}
+                        {member.sector && <span className="member-tag">{member.sector}</span>}
+                      </div>
+                    </div>
                   </td>
                   <td>
                     <div className="member-actions">
@@ -387,6 +472,7 @@ export default function GroupDetail() {
           isOpen={isReportModalOpen}
           onClose={() => setIsReportModalOpen(false)}
           group={group}
+          filteredMembers={filteredMembers}
         />
       )}
     </div>

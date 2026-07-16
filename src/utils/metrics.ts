@@ -108,9 +108,10 @@ export function calculateMetrics(
   const mmTermo1 = relBraco > 0 ? 0.00744 * Math.pow(relBraco, 2) : 0;
   const mmTermo2 = ccBraco > 0 ? 0.00088 * Math.pow(ccBraco, 2) : 0;
   const mmTermo3 = diamTornozelo > 0 ? 0.00441 * Math.pow(diamTornozelo, 2) : 0;
+  const hasMuscleMassInput = mmTermo1 > 0 || mmTermo2 > 0 || mmTermo3 > 0;
 
   let massaMuscular = 0;
-  if (alturaM > 0 && idade > 0) {
+  if (alturaM > 0 && idade > 0 && hasMuscleMassInput) {
     massaMuscular = alturaM * (mmTermo1 + mmTermo2 + mmTermo3) + (2.4 * fatorSexo) - (0.048 * idade) + fatorRaca + 7.8;
   }
 

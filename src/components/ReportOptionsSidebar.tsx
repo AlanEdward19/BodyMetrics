@@ -5,6 +5,9 @@ import type { ReportSelections } from '../types/report';
 interface ReportOptionsSidebarProps {
   logos: string[];
   setLogos: React.Dispatch<React.SetStateAction<string[]>>;
+  showGroupAverageToggle?: boolean;
+  showGroupAverage: boolean;
+  setShowGroupAverage: React.Dispatch<React.SetStateAction<boolean>>;
   selections: ReportSelections;
   setSelections: React.Dispatch<React.SetStateAction<ReportSelections>>;
   expandedSections: Record<string, boolean>;
@@ -58,7 +61,7 @@ const SECTION_ITEMS: Record<keyof ReportSelections, { id: string; label: string 
 };
 
 export function ReportOptionsSidebar({
-  logos, setLogos, selections, setSelections, expandedSections, setExpandedSections, footer
+  logos, setLogos, showGroupAverageToggle = true, showGroupAverage, setShowGroupAverage, selections, setSelections, expandedSections, setExpandedSections, footer
 }: ReportOptionsSidebarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -151,6 +154,19 @@ export function ReportOptionsSidebar({
       </div>
 
       <div className="report-sections-manager">
+        {showGroupAverageToggle && (
+          <div className="report-option-toggle">
+            <label className="item-checkbox">
+              <input
+                type="checkbox"
+                checked={showGroupAverage}
+                onChange={() => setShowGroupAverage(prev => !prev)}
+              />
+              Mostrar media do grupo nos cards
+            </label>
+          </div>
+        )}
+
         <h3>Conteúdo do Relatório</h3>
 
         {(Object.keys(SECTION_LABELS) as (keyof ReportSelections)[]).map(section => (

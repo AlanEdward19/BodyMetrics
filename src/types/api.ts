@@ -154,6 +154,9 @@ export interface AthleteSpreadsheetImportViewModel {
 export interface AthleteGroupMemberViewModel {
   id: string;
   fullName: string;
+  sportName?: string;
+  category?: string;
+  sector?: string;
 }
 
 export interface AthleteGroupViewModel {
