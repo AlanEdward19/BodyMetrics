@@ -165,6 +165,7 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                   {[
                     { id: 'peso', label: 'Peso Corporal', key: 'peso', unit: 'kg', icon: <Scale size={18} />, inverseGood: true, showTrend: true },
                     { id: 'altura', label: 'Altura', key: 'altura', unit: 'cm', icon: <Ruler size={18} />, inverseGood: false, showTrend: false },
+                    { id: 'alturaPrevista', label: 'Altura Prevista', key: 'alturaPrevista', unit: 'cm', icon: <Ruler size={18} />, inverseGood: false, showTrend: false },
                     { id: 'percentualGordura', label: '% Gordura', key: 'percentualGordura', unit: '%', icon: <Percent size={18} />, inverseGood: true, showTrend: true },
                     { id: 'sumDobras', label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm', icon: <Activity size={18} />, inverseGood: true, showTrend: true },
                     { id: 'gordura', label: 'Massa Gorda', key: 'gordura', unit: 'kg', icon: <Shield size={18} />, inverseGood: true, showTrend: true },

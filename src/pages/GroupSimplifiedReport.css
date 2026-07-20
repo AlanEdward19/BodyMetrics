@@ -418,26 +418,6 @@
   margin-left: 2px;
 }
 
-/* Average row */
-
-.sr-table-avg-row {
-  background: #e8f5ed;
-}
-
-.sr-table-avg-row td {
-  padding: 0.6rem 1rem;
-  border-bottom: 2px solid #c6e6d3;
-  font-size: 0.8rem;
-}
-
-.sr-avg-label {
-  font-weight: 700;
-  font-size: 0.78rem;
-  color: var(--color-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
 /* Data rows */
 
 .sr-table-row {
@@ -483,6 +463,14 @@
   white-space: nowrap;
 }
 
+.sr-cell-numeric-inner {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
 /* ── Fat color badges ────────────────────────────────────────────────────── */
 
 .sr-fat-badge {
@@ -520,6 +508,13 @@
   background-color: #fee2e2;
   color: #b91c1c;
   border-color: #fca5a5;
+}
+
+.sr-avg-inline {
+  margin-left: 4px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Back link (reuse global back-link style + override) ─────────────────── */

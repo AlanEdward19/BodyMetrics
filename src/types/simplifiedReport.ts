@@ -2,6 +2,7 @@ export type SimplifiedReportColumnKey =
   | 'categoria'
   | 'idade'
   | 'altura'
+  | 'alturaPrevista'
   | 'peso'
   | 'sumDobras'
   | 'faulkner'
@@ -24,6 +25,7 @@ export const SIMPLIFIED_REPORT_COLUMNS: SimplifiedReportColumnMeta[] = [
   { key: 'categoria', label: 'Categoria', hasAverage: false },
   { key: 'idade', label: 'Idade', unit: 'anos', hasAverage: false },
   { key: 'altura', label: 'Altura', unit: 'cm', hasAverage: false },
+  { key: 'alturaPrevista', label: 'Altura Prevista', unit: 'cm', hasAverage: false },
   { key: 'peso', label: 'Peso', unit: 'kg', hasAverage: false },
   { key: 'sumDobras', label: 'Soma das Dobras', unit: 'mm', hasAverage: true },
   { key: 'faulkner', label: '% Gordura (Faulkner)', unit: '%', hasAverage: true },
@@ -39,6 +41,7 @@ export function createDefaultSimplifiedReportSelections(): SimplifiedReportSelec
     categoria: true,
     idade: true,
     altura: true,
+    alturaPrevista: true,
     peso: true,
     sumDobras: true,
     faulkner: true,

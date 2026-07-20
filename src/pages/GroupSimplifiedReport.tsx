@@ -28,6 +28,7 @@ interface SimplifiedReportRow {
   categoria: string;
   idade: number;
   altura: number;
+  alturaPrevista: number;
   peso: number;
   sumDobras: number;
   faulkner: number;
@@ -53,6 +54,7 @@ const FAT_LEGEND: { key: FatColorKey; label: string }[] = [
 
 const COLUMN_ICONS: Partial<Record<SimplifiedReportColumnKey, React.ReactNode>> = {
   altura: <Ruler size={14} />,
+  alturaPrevista: <Ruler size={14} />,
   peso: <Scale size={14} />,
   sumDobras: <Activity size={14} />,
   faulkner: <Percent size={14} />,
@@ -85,7 +87,7 @@ const formatNumber = (val: number | undefined, decimals = 1) => {
 };
 
 function decimalsFor(key: SimplifiedReportColumnKey) {
-  return key === 'sumDobras' || key === 'altura' || key === 'peso' ? 1 : 2;
+  return key === 'sumDobras' || key === 'altura' || key === 'alturaPrevista' || key === 'peso' ? 1 : 2;
 }
 
 function sanitizeFileName(name: string) {
@@ -174,6 +176,7 @@ export default function GroupSimplifiedReport() {
             categoria: mappedAthlete.category || member.category || '-',
             idade: calculateAge(mappedAthlete.birthDate, currentEval.date),
             altura: base.altura,
+            alturaPrevista: base.alturaPrevista,
             peso: base.peso,
             sumDobras: base.sumDobras,
             faulkner: faulknerPct,
@@ -208,6 +211,14 @@ export default function GroupSimplifiedReport() {
   const showCategoria = selections.categoria;
   const showIdade = selections.idade;
 
+  const avgValues = useMemo(() => {
+    const map: Partial<Record<SimplifiedReportColumnKey, number>> = {};
+    avgMetricColumns.forEach(col => {
+      map[col.key] = average(rows.map(r => r[col.key] as number));
+    });
+    return map;
+  }, [avgMetricColumns, rows]);
+
   const allSelected = SIMPLIFIED_REPORT_COLUMNS.every(c => selections[c.key]);
   const toggleAll = () => {
     const next = !allSelected;
@@ -235,31 +246,18 @@ export default function GroupSimplifiedReport() {
     const formatted = formatNumber(val, decimalsFor(col.key));
     const isFat = FAT_COLUMN_KEYS.includes(col.key);
     const colorKey = isFat ? getFatColorKey(val) : null;
+    const unitSuffix = col.unit && formatted !== '-' ? ` ${col.unit}` : '';
+    const avgVal = col.hasAverage ? avgValues[col.key] : undefined;
+    const avgFormatted = avgVal !== undefined ? formatNumber(avgVal, decimalsFor(col.key)) : null;
     return (
-      <span className={colorKey ? `sr-fat-badge sr-fat-${colorKey}` : ''}>
-        {formatted}{col.unit && formatted !== '-' ? ` ${col.unit}` : ''}
+      <span className="sr-cell-numeric-inner">
+        <span className={colorKey ? `sr-fat-badge sr-fat-${colorKey}` : ''}>
+          {formatted}{unitSuffix}
+        </span>
+        {avgFormatted && (
+          <span className="sr-avg-inline">({avgFormatted}{unitSuffix})</span>
+        )}
       </span>
-    );
-  };
-
-  const renderAvgRow = () => {
-    if (avgMetricColumns.length === 0 || rows.length === 0) return null;
-    return (
-      <tr className="sr-table-avg-row">
-        <td className="sr-cell-name">
-          <span className="sr-avg-label">Média do Grupo</span>
-        </td>
-        <td className="sr-cell-posicao">—</td>
-        {showCategoria && <td className="sr-cell-categoria">—</td>}
-        {showIdade && <td className="sr-cell-numeric">—</td>}
-        {visibleMetricColumns.map(col => (
-          <td key={col.key} className="sr-cell-numeric">
-            {col.hasAverage
-              ? renderFatCell(average(rows.map(r => r[col.key] as number)), col)
-              : '—'}
-          </td>
-        ))}
-      </tr>
     );
   };
 
@@ -401,7 +399,6 @@ export default function GroupSimplifiedReport() {
                     </tr>
                   </thead>
                   <tbody>
-                    {renderAvgRow()}
                     {rows.map((row, idx) => (
                       <tr
                         key={row.memberId}

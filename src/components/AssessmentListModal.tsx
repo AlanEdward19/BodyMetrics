@@ -82,6 +82,7 @@ export function AssessmentListModal({
         {renderDetail('Braço D.', fmt(c?.armRight))}
         {renderDetail('Braço E.', fmt(c?.armLeft))}
         {renderDetail('Cintura', fmt(c?.waist))}
+        {renderDetail('Abdômen', fmt(c?.abdomen))}
         {renderDetail('Quadril', fmt(c?.hip))}
         {renderDetail('Medial D.', fmt(c?.thighMidRight))}
         {renderDetail('Medial E.', fmt(c?.thighMidLeft))}

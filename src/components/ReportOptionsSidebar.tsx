@@ -26,6 +26,7 @@ const SECTION_LABELS: Record<keyof ReportSelections, string> = {
 const SECTION_ITEMS: Record<keyof ReportSelections, { id: string; label: string }[]> = {
   composition: [
     { id: 'peso', label: 'Peso' }, { id: 'altura', label: 'Altura' },
+    { id: 'alturaPrevista', label: 'Altura Prevista' },
     { id: 'percentualGordura', label: '% Gordura' }, { id: 'sumDobras', label: 'Soma Dobras' },
     { id: 'gordura', label: 'Massa Gorda' }, { id: 'mlg', label: 'MLG' },
     { id: 'ossos', label: 'Massa Óssea' }, { id: 'massaMuscular', label: 'Massa Muscular' },

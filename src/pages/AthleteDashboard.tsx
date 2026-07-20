@@ -531,6 +531,12 @@ export default function AthleteDashboard() {
                           unit="cm"
                         />
                         <MetricCard
+                          icon={<Ruler size={24} />}
+                          title="ALTURA PREVISTA"
+                          value={formatNumber(currentMetrics.alturaPrevista)}
+                          unit="cm"
+                        />
+                        <MetricCard
                           icon={<Percent size={24} />}
                           title="% GORDURA"
                           value={formatNumber(currentMetrics.percentualGordura)}
@@ -667,6 +673,7 @@ export default function AthleteDashboard() {
                           { label: 'Braço Dir.', cur: currentEval?.circumferences?.armRight, cmp: compareEval?.circumferences?.armRight, unit: 'cm' },
                           { label: 'Braço Esq.', cur: currentEval?.circumferences?.armLeft, cmp: compareEval?.circumferences?.armLeft, unit: 'cm' },
                           { label: 'Cintura', cur: currentEval?.circumferences?.waist, cmp: compareEval?.circumferences?.waist, unit: 'cm', inverseGood: true },
+                          { label: 'Abdômen', cur: currentEval?.circumferences?.abdomen, cmp: compareEval?.circumferences?.abdomen, unit: 'cm', inverseGood: true },
                           { label: 'Quadril', cur: currentEval?.circumferences?.hip, cmp: compareEval?.circumferences?.hip, unit: 'cm' },
                           { label: 'Medial Dir.', cur: currentEval?.circumferences?.thighMidRight, cmp: compareEval?.circumferences?.thighMidRight, unit: 'cm' },
                           { label: 'Medial Esq.', cur: currentEval?.circumferences?.thighMidLeft, cmp: compareEval?.circumferences?.thighMidLeft, unit: 'cm' },

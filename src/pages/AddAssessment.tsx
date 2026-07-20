@@ -81,7 +81,7 @@ export default function AddAssessment() {
     // Circunferencias
     shoulder: '', chest: '',
     armRight: '', armLeft: '',
-    waist: '', hip: '',
+    waist: '', abdomen: '', hip: '',
     thighMidRight: '', thighMidLeft: '',
     calfRight: '', calfLeft: '',
     wristRight: '', kneeRight: '',
@@ -131,6 +131,7 @@ export default function AddAssessment() {
       case 'armRight': return previousAssessment.circumferences?.armRight ?? null;
       case 'armLeft': return previousAssessment.circumferences?.armLeft ?? null;
       case 'waist': return previousAssessment.circumferences?.waist ?? null;
+      case 'abdomen': return previousAssessment.circumferences?.abdomen ?? null;
       case 'hip': return previousAssessment.circumferences?.hip ?? null;
       case 'thighMidRight': return previousAssessment.circumferences?.thighMidRight ?? null;
       case 'thighMidLeft': return previousAssessment.circumferences?.thighMidLeft ?? null;
@@ -212,6 +213,7 @@ export default function AddAssessment() {
           armRight: existing.circumferences?.armRight?.toString() || '',
           armLeft: existing.circumferences?.armLeft?.toString() || '',
           waist: existing.circumferences?.waist?.toString() || '',
+          abdomen: existing.circumferences?.abdomen?.toString() || '',
           hip: existing.circumferences?.hip?.toString() || '',
           thighMidRight: existing.circumferences?.thighMidRight?.toString() || '',
           thighMidLeft: existing.circumferences?.thighMidLeft?.toString() || '',
@@ -327,6 +329,7 @@ export default function AddAssessment() {
           rightArmCm: parseNum(formData.armRight),
           leftArmCm: parseNum(formData.armLeft),
           waistCm: parseNum(formData.waist),
+          abdominalCm: parseNum(formData.abdomen),
           hipCm: parseNum(formData.hip),
           rightMidThighCm: parseNum(formData.thighMidRight),
           leftMidThighCm: parseNum(formData.thighMidLeft),
@@ -581,6 +584,7 @@ export default function AddAssessment() {
               {renderInput('armRight', 'Braço Dir.', 'cm')}
               {renderInput('armLeft', 'Braço Esq.', 'cm')}
               {renderInput('waist', 'Cintura', 'cm')}
+              {renderInput('abdomen', 'Abdômen', 'cm')}
               {renderInput('hip', 'Quadril', 'cm')}
               {renderInput('thighMidRight', 'Medial Dir.', 'cm')}
               {renderInput('thighMidLeft', 'Medial Esq.', 'cm')}

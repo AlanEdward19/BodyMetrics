@@ -75,6 +75,7 @@ export interface Circumferences {
   rightArmCm: number;
   leftArmCm: number;
   waistCm: number;
+  abdominalCm: number;
   hipCm: number;
   rightMidThighCm: number;
   leftMidThighCm: number;
