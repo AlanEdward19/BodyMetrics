@@ -7,7 +7,6 @@ import { Card } from '../components/Card';
 import { Loading } from '../components/Loading';
 import { SearchableSelect } from '../components/SearchableSelect';
 import { GroupReportModal } from '../components/GroupReportModal';
-import { GroupSimplifiedReportModal } from '../components/GroupSimplifiedReportModal';
 import { useGroups } from '../hooks/useGroups';
 import apiService from '../services/api.service';
 import type { AthleteViewModel } from '../types/api';
@@ -33,7 +32,6 @@ export default function GroupDetail() {
   const [isSavingName, setIsSavingName] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isSimplifiedReportModalOpen, setIsSimplifiedReportModalOpen] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
   const [pendingMigrate, setPendingMigrate] = useState<{ athleteId: string; athleteName: string; targetGroupId: string; targetGroupName: string } | null>(null);
@@ -300,7 +298,7 @@ export default function GroupDetail() {
           </button>
           <button
             className="icon-btn"
-            onClick={() => setIsSimplifiedReportModalOpen(true)}
+            onClick={() => navigate(`/groups/${group.id}/simplified-report`, { state: { filteredMembers, groupName: group.name } })}
             title="Relatório resumido do grupo"
             disabled={group.members.length === 0}
           >
@@ -498,15 +496,6 @@ export default function GroupDetail() {
         <GroupReportModal
           isOpen={isReportModalOpen}
           onClose={() => setIsReportModalOpen(false)}
-          group={group}
-          filteredMembers={filteredMembers}
-        />
-      )}
-
-      {isSimplifiedReportModalOpen && (
-        <GroupSimplifiedReportModal
-          isOpen={isSimplifiedReportModalOpen}
-          onClose={() => setIsSimplifiedReportModalOpen(false)}
           group={group}
           filteredMembers={filteredMembers}
         />
