@@ -7,6 +7,7 @@ import AddAssessment from './pages/AddAssessment';
 import LoginPage from './pages/LoginPage';
 import GroupsList from './pages/GroupsList';
 import GroupDetail from './pages/GroupDetail';
+import GroupSimplifiedReport from './pages/GroupSimplifiedReport';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AthleteProvider } from './contexts/AthleteContext';
 import { SportProvider } from './contexts/SportContext';
@@ -42,6 +43,7 @@ function AppContent() {
           <Route path="/edit/:athleteId" element={<ProtectedRoute><AddAthlete /></ProtectedRoute>} />
           <Route path="/groups" element={<ProtectedRoute><GroupsList /></ProtectedRoute>} />
           <Route path="/groups/:groupId" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
+          <Route path="/groups/:groupId/simplified-report" element={<ProtectedRoute><GroupSimplifiedReport /></ProtectedRoute>} />
           <Route path="/add-assessment" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
           <Route path="/add-assessment/:athleteId" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />
           <Route path="/edit-assessment/:assessmentId" element={<ProtectedRoute><AddAssessment /></ProtectedRoute>} />

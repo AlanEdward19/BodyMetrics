@@ -238,6 +238,10 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                   const avgD = showGroupAverage ? getAverageText(groupAverageMetrics?.simetria?.[item.metricKey]?.d, 'cm') : null;
                   const avgE = showGroupAverage ? getAverageText(groupAverageMetrics?.simetria?.[item.metricKey]?.e, 'cm') : null;
                   const avgDiff = showGroupAverage ? getAverageText(groupAverageMetrics?.simetria?.[item.metricKey]?.diff, 'cm') : null;
+                  const cmpData = compareMetrics?.simetria?.[item.metricKey];
+                  const trendD = getTrendState(item.data?.d, cmpData?.d, false);
+                  const trendE = getTrendState(item.data?.e, cmpData?.e, false);
+                  const trendDiff = getTrendState(item.data?.diff, cmpData?.diff, true);
 
                   return (
                     <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
@@ -250,7 +254,15 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-value">{formatNumber(item.data?.d)}</span>
                           <span className="report-metric-unit">cm</span>
                         </div>
-                        <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Direito</span></div>
+                        <div className="report-metric-footer">
+                          {trendD ? (
+                            <span className={`report-metric-trend ${trendD.className}`}>
+                              {trendD.direction === 'neutral' ? <Minus size={12} /> : trendD.direction === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                              {trendD.value}
+                            </span>
+                          ) : <span />}
+                          <span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Direito</span>
+                        </div>
                         {avgD && <div className="report-metric-average">{avgD}</div>}
                       </div>
 
@@ -263,7 +275,15 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-value">{formatNumber(item.data?.e)}</span>
                           <span className="report-metric-unit">cm</span>
                         </div>
-                        <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Esquerdo</span></div>
+                        <div className="report-metric-footer">
+                          {trendE ? (
+                            <span className={`report-metric-trend ${trendE.className}`}>
+                              {trendE.direction === 'neutral' ? <Minus size={12} /> : trendE.direction === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                              {trendE.value}
+                            </span>
+                          ) : <span />}
+                          <span style={{ fontSize: '6pt', color: '#94a3b8' }}>Lado Esquerdo</span>
+                        </div>
                         {avgE && <div className="report-metric-average">{avgE}</div>}
                       </div>
 
@@ -276,7 +296,15 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-value">{(item.data?.d ?? 0) > (item.data?.e ?? 0) ? '+' : ''}{formatNumber(item.data?.diff)}</span>
                           <span className="report-metric-unit">cm</span>
                         </div>
-                        <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Assimetria</span></div>
+                        <div className="report-metric-footer">
+                          {trendDiff ? (
+                            <span className={`report-metric-trend ${trendDiff.className}`}>
+                              {trendDiff.direction === 'neutral' ? <Minus size={12} /> : trendDiff.direction === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                              {trendDiff.value}
+                            </span>
+                          ) : <span />}
+                          <span style={{ fontSize: '6pt', color: '#94a3b8' }}>Assimetria</span>
+                        </div>
                         {avgDiff && <div className="report-metric-average">{avgDiff}</div>}
                       </div>
                     </div>
@@ -338,6 +366,8 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                   const avgMedia = showGroupAverage ? getAverageText(groupAverageMetrics?.relacao?.[item.mediaKey], 'cm') : null;
                   const avgOsso = showGroupAverage ? getAverageText(groupAverageMetrics?.relacao?.[item.ossoKey], 'cm') : null;
                   const avgRel = showGroupAverage ? getAverageText(groupAverageMetrics?.relacao?.[item.relacaoKey], 'indice') : null;
+                  const trendMedia = getTrendState(item.media, compareMetrics?.relacao?.[item.mediaKey], false);
+                  const trendRel = getTrendState(item.relacao, compareMetrics?.relacao?.[item.relacaoKey], false);
 
                   return (
                     <div key={idx} className="report-metrics-summary grid-3" style={{ marginBottom: idx === 2 ? 0 : '15px' }}>
@@ -350,7 +380,15 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-value">{formatNumber(item.media)}</span>
                           <span className="report-metric-unit">cm</span>
                         </div>
-                        <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Média Corrigida</span></div>
+                        <div className="report-metric-footer">
+                          {trendMedia ? (
+                            <span className={`report-metric-trend ${trendMedia.className}`}>
+                              {trendMedia.direction === 'neutral' ? <Minus size={12} /> : trendMedia.direction === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                              {trendMedia.value}
+                            </span>
+                          ) : <span />}
+                          <span style={{ fontSize: '6pt', color: '#94a3b8' }}>Média Corrigida</span>
+                        </div>
                         {avgMedia && <div className="report-metric-average">{avgMedia}</div>}
                       </div>
 
@@ -376,7 +414,15 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                           <span className="report-metric-value">{formatNumber(item.relacao)}</span>
                           <span className="report-metric-unit">índice</span>
                         </div>
-                        <div className="report-metric-footer"><span style={{ fontSize: '6pt', color: '#94a3b8' }}>Índice Cine.</span></div>
+                        <div className="report-metric-footer">
+                          {trendRel ? (
+                            <span className={`report-metric-trend ${trendRel.className}`}>
+                              {trendRel.direction === 'neutral' ? <Minus size={12} /> : trendRel.direction === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                              {trendRel.value}
+                            </span>
+                          ) : <span />}
+                          <span style={{ fontSize: '6pt', color: '#94a3b8' }}>Índice Cine.</span>
+                        </div>
                         {avgRel && <div className="report-metric-average">{avgRel}</div>}
                       </div>
                     </div>
