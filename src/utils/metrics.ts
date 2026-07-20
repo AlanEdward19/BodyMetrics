@@ -4,6 +4,7 @@ import type { Athlete } from '../types/athlete';
 export interface AthleteMetrics {
   peso: number;
   altura: number;
+  alturaPrevista: number;
   gordura: number;
   sumDobras: number;
   ossos: number;
@@ -58,6 +59,7 @@ export function calculateMetrics(
 
   const peso = evalData.weight;
   const altura = evalData.height;
+  const alturaPrevista = altura > 0 ? altura / 0.92 : 0;
 
   // Somatório das dobras
   const sf: Partial<Assessment['skinfolds']> = evalData.skinfolds || {};
@@ -98,7 +100,7 @@ export function calculateMetrics(
 
   // Fatores
   const fatorSexo = mappedAthlete?.gender === 'Feminino' ? 0 : 1;
-  const fatorRaca = mappedAthlete?.race === 'Negro' ? 1.1 : mappedAthlete?.race === 'Asiático' ? -2 : 0;
+  const fatorRaca = mappedAthlete?.race === 'Branco' ? 0 : mappedAthlete?.race === 'Negro' ? 1.1 : -2;
 
   // Medidas Corrigidas
   const coxaD_C = (circ.thighMidRight || 0) > 0 ? (circ.thighMidRight || 0) - (((sf.thighRight || 0) / 10) * 3.16) : 0;
@@ -112,12 +114,11 @@ export function calculateMetrics(
   const ccCoxa = (coxaD_C + coxaE_C) / 2;
   const ccPantu = (pantuD_C + pantuE_C) / 2;
 
-  const relBraco = (circ.wristRight || 0) > 0 ? ccBraco / (circ.wristRight || 0) : 0;
   const diamTornozelo = (circ as any).ankle || 0;
 
-  const mmTermo1 = relBraco > 0 ? 0.00744 * Math.pow(relBraco, 2) : 0;
-  const mmTermo2 = ccBraco > 0 ? 0.00088 * Math.pow(ccBraco, 2) : 0;
-  const mmTermo3 = diamTornozelo > 0 ? 0.00441 * Math.pow(diamTornozelo, 2) : 0;
+  const mmTermo1 = ccBraco > 0 ? 0.00744 * Math.pow(ccBraco, 2) : 0;
+  const mmTermo2 = ccCoxa > 0 ? 0.00088 * Math.pow(ccCoxa, 2) : 0;
+  const mmTermo3 = ccPantu > 0 ? 0.00441 * Math.pow(ccPantu, 2) : 0;
   const hasMuscleMassInput = mmTermo1 > 0 || mmTermo2 > 0 || mmTermo3 > 0;
 
   let massaMuscular = 0;
@@ -145,6 +146,7 @@ export function calculateMetrics(
   return {
     peso,
     altura,
+    alturaPrevista,
     gordura,
     sumDobras,
     ossos,

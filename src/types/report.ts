@@ -10,7 +10,7 @@ export function createDefaultReportSelections(): ReportSelections {
   return {
     composition: {
       items: {
-        peso: true, altura: true, percentualGordura: true, sumDobras: true,
+        peso: true, altura: true, alturaPrevista: true, percentualGordura: true, sumDobras: true,
         gordura: true, mlg: true, ossos: true, massaMuscular: true,
         relacaoMusculoOsso: true, relacaoMusculoGordura: true, pvc: true
       }

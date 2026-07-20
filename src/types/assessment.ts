@@ -24,6 +24,7 @@ export interface Assessment {
     armRight: number;
     armLeft: number;
     waist: number;
+    abdomen: number;
     hip: number;
     thighMidRight: number;
     thighMidLeft: number;

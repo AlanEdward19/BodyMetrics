@@ -51,6 +51,7 @@ const calculateGroupAverageMetrics = (metricsList: AthleteMetrics[]): AthleteMet
   return {
     peso: average(metricsList.map(m => m.peso)),
     altura: average(metricsList.map(m => m.altura)),
+    alturaPrevista: average(metricsList.map(m => m.alturaPrevista)),
     gordura: average(metricsList.map(m => m.gordura)),
     sumDobras: average(metricsList.map(m => m.sumDobras)),
     ossos: average(metricsList.map(m => m.ossos)),
