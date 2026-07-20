@@ -42,7 +42,6 @@ export async function generatePdfFromNode(node: HTMLElement): Promise<jsPDF> {
       onclone: freezeAnimations,
     });
 
-    const imgData = canvas.toDataURL('image/png');
     const totalImgHeight = (canvas.height * innerWidth) / canvas.width;
 
     let yPosition = margin;
