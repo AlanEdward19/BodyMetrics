@@ -11,7 +11,7 @@ import {
 } from '../types/simplifiedReport';
 import type { SimplifiedReportColumnKey, SimplifiedReportColumnMeta } from '../types/simplifiedReport';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { generatePdfFromNode } from '../utils/pdfReport';
+import { generateTableReportPdf } from '../utils/pdfReport';
 import { calculateMetrics, calculateAge } from '../utils/metrics';
 import * as Mapper from '../utils/mapper';
 import apiService from '../services/api.service';
@@ -220,7 +220,10 @@ export default function GroupSimplifiedReport() {
     if (!paperRef.current || rows.length === 0) return;
     setIsGenerating(true);
     try {
-      const pdf = await generatePdfFromNode(paperRef.current);
+      const pdf = await generateTableReportPdf(paperRef.current, {
+        headerSelector: '.sr-pdf-header',
+        tableSelector: '.sr-table'
+      });
       const fileName = `Relatorio_Resumido_${sanitizeFileName(group?.name ?? 'Grupo')}_${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
     } finally {
