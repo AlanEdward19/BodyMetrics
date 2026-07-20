@@ -114,8 +114,6 @@ export function calculateMetrics(
   const ccCoxa = (coxaD_C + coxaE_C) / 2;
   const ccPantu = (pantuD_C + pantuE_C) / 2;
 
-  const diamTornozelo = (circ as any).ankle || 0;
-
   const mmTermo1 = ccBraco > 0 ? 0.00744 * Math.pow(ccBraco, 2) : 0;
   const mmTermo2 = ccCoxa > 0 ? 0.00088 * Math.pow(ccCoxa, 2) : 0;
   const mmTermo3 = ccPantu > 0 ? 0.00441 * Math.pow(ccPantu, 2) : 0;
