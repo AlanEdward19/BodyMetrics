@@ -84,6 +84,7 @@ export interface Circumferences {
   rightWristCm: number;
   rightKneeCm: number;
   rightAnkleCm: number;
+  envergaduraCm: number;
 }
 
 export interface PhysicalAssessment {

@@ -4,7 +4,6 @@ import type { Athlete } from '../types/athlete';
 export interface AthleteMetrics {
   peso: number;
   altura: number;
-  alturaPrevista: number;
   gordura: number;
   sumDobras: number;
   ossos: number;
@@ -59,7 +58,6 @@ export function calculateMetrics(
 
   const peso = evalData.weight;
   const altura = evalData.height;
-  const alturaPrevista = altura > 0 ? altura / 0.92 : 0;
 
   // Somatório das dobras
   const sf: Partial<Assessment['skinfolds']> = evalData.skinfolds || {};
@@ -144,7 +142,6 @@ export function calculateMetrics(
   return {
     peso,
     altura,
-    alturaPrevista,
     gordura,
     sumDobras,
     ossos,

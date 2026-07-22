@@ -26,7 +26,6 @@ const SECTION_LABELS: Record<keyof ReportSelections, string> = {
 const SECTION_ITEMS: Record<keyof ReportSelections, { id: string; label: string }[]> = {
   composition: [
     { id: 'peso', label: 'Peso' }, { id: 'altura', label: 'Altura' },
-    { id: 'alturaPrevista', label: 'Altura Prevista' },
     { id: 'percentualGordura', label: '% Gordura' }, { id: 'sumDobras', label: 'Soma Dobras' },
     { id: 'gordura', label: 'Massa Gorda' }, { id: 'mlg', label: 'MLG' },
     { id: 'ossos', label: 'Massa Óssea' }, { id: 'massaMuscular', label: 'Massa Muscular' },
@@ -57,7 +56,7 @@ const SECTION_ITEMS: Record<keyof ReportSelections, { id: string; label: string 
     { id: 'thighMidRight', label: 'Medial D.' }, { id: 'thighMidLeft', label: 'Medial E.' },
     { id: 'calfRight', label: 'Pantu. D.' }, { id: 'calfLeft', label: 'Pantu. E.' },
     { id: 'wristRight', label: 'D. Punho' }, { id: 'kneeRight', label: 'D. Joelho' },
-    { id: 'ankle', label: 'D. Torno.' }
+    { id: 'ankle', label: 'D. Torno.' }, { id: 'envergadura', label: 'Envergadura' }
   ]
 };
 

@@ -165,7 +165,6 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
                   {[
                     { id: 'peso', label: 'Peso Corporal', key: 'peso', unit: 'kg', icon: <Scale size={18} />, inverseGood: true, showTrend: true },
                     { id: 'altura', label: 'Altura', key: 'altura', unit: 'cm', icon: <Ruler size={18} />, inverseGood: false, showTrend: false },
-                    { id: 'alturaPrevista', label: 'Altura Prevista', key: 'alturaPrevista', unit: 'cm', icon: <Ruler size={18} />, inverseGood: false, showTrend: false },
                     { id: 'percentualGordura', label: '% Gordura', key: 'percentualGordura', unit: '%', icon: <Percent size={18} />, inverseGood: true, showTrend: true },
                     { id: 'sumDobras', label: 'Soma das Dobras', key: 'sumDobras', unit: 'mm', icon: <Activity size={18} />, inverseGood: true, showTrend: true },
                     { id: 'gordura', label: 'Massa Gorda', key: 'gordura', unit: 'kg', icon: <Shield size={18} />, inverseGood: true, showTrend: true },
@@ -463,7 +462,8 @@ export const ReportPaper = forwardRef<HTMLDivElement, ReportPaperProps>(function
         { id: 'calfLeft', label: 'Panturrilha Esq.', cur: currentEval?.circumferences?.calfLeft, cmp: compareEval?.circumferences?.calfLeft, unit: 'cm' },
         { id: 'wristRight', label: 'D. Punho', cur: currentEval?.circumferences?.wristRight, cmp: compareEval?.circumferences?.wristRight, unit: 'cm' },
         { id: 'kneeRight', label: 'D. Joelho', cur: currentEval?.circumferences?.kneeRight, cmp: compareEval?.circumferences?.kneeRight, unit: 'cm' },
-        { id: 'ankle', label: 'D. Tornozelo', cur: (currentEval?.circumferences as any)?.ankle, cmp: (compareEval?.circumferences as any)?.ankle, unit: 'cm' }
+        { id: 'ankle', label: 'D. Tornozelo', cur: (currentEval?.circumferences as any)?.ankle, cmp: (compareEval?.circumferences as any)?.ankle, unit: 'cm' },
+        { id: 'envergadura', label: 'Envergadura', cur: (currentEval?.circumferences as any)?.envergadura, cmp: (compareEval?.circumferences as any)?.envergadura, unit: 'cm' }
       ].filter(item => (selections.circumferences.items as any)[item.id]))}
 
     </div>
