@@ -85,7 +85,7 @@ export default function AddAssessment() {
     thighMidRight: '', thighMidLeft: '',
     calfRight: '', calfLeft: '',
     wristRight: '', kneeRight: '',
-    ankle: ''
+    ankle: '', envergadura: ''
   });
 
   const athlete = selectedAthleteId ? getAthleteById(selectedAthleteId) : null;
@@ -140,6 +140,7 @@ export default function AddAssessment() {
       case 'wristRight': return previousAssessment.circumferences?.wristRight ?? null;
       case 'kneeRight': return previousAssessment.circumferences?.kneeRight ?? null;
       case 'ankle': return previousAssessment.circumferences?.ankle ?? null;
+      case 'envergadura': return previousAssessment.circumferences?.envergadura ?? null;
       default: return null;
     }
   };
@@ -221,7 +222,8 @@ export default function AddAssessment() {
           calfLeft: existing.circumferences?.calfLeft?.toString() || '',
           wristRight: existing.circumferences?.wristRight?.toString() || '',
           kneeRight: existing.circumferences?.kneeRight?.toString() || '',
-          ankle: existing.circumferences?.ankle?.toString() || ''
+          ankle: existing.circumferences?.ankle?.toString() || '',
+          envergadura: existing.circumferences?.envergadura?.toString() || ''
         });
       }
     }
@@ -337,7 +339,8 @@ export default function AddAssessment() {
           leftCalfCm: parseNum(formData.calfLeft),
           rightWristCm: parseNum(formData.wristRight),
           rightKneeCm: parseNum(formData.kneeRight),
-          rightAnkleCm: parseNum(formData.ankle)
+          rightAnkleCm: parseNum(formData.ankle),
+          envergaduraCm: parseNum(formData.envergadura)
         }
       };
 
@@ -593,6 +596,7 @@ export default function AddAssessment() {
               {renderInput('wristRight', 'D. Punho', 'cm')}
               {renderInput('kneeRight', 'D. Joelho', 'cm')}
               {renderInput('ankle', 'D. Tornozelo', 'cm')}
+              {renderInput('envergadura', 'Envergadura', 'cm')}
             </div>
           </Card>
         </div>

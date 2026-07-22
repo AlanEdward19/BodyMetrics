@@ -33,5 +33,6 @@ export interface Assessment {
     wristRight: number;
     kneeRight: number;
     ankle: number;
+    envergadura: number;
   };
 }

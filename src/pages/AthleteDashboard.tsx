@@ -531,12 +531,6 @@ export default function AthleteDashboard() {
                           unit="cm"
                         />
                         <MetricCard
-                          icon={<Ruler size={24} />}
-                          title="ALTURA PREVISTA"
-                          value={formatNumber(currentMetrics.alturaPrevista)}
-                          unit="cm"
-                        />
-                        <MetricCard
                           icon={<Percent size={24} />}
                           title="% GORDURA"
                           value={formatNumber(currentMetrics.percentualGordura)}
@@ -680,7 +674,8 @@ export default function AthleteDashboard() {
                           { label: 'Panturrilha Dir.', cur: currentEval?.circumferences?.calfRight, cmp: compareEval?.circumferences?.calfRight, unit: 'cm' },
                           { label: 'Panturrilha Esq.', cur: currentEval?.circumferences?.calfLeft, cmp: compareEval?.circumferences?.calfLeft, unit: 'cm' },
                           { label: 'D. Punho', cur: currentEval?.circumferences?.wristRight, cmp: compareEval?.circumferences?.wristRight, unit: 'cm' },
-                          { label: 'D. Joelho', cur: currentEval?.circumferences?.kneeRight, cmp: compareEval?.circumferences?.kneeRight, unit: 'cm' }
+                          { label: 'D. Joelho', cur: currentEval?.circumferences?.kneeRight, cmp: compareEval?.circumferences?.kneeRight, unit: 'cm' },
+                          { label: 'Envergadura', cur: currentEval?.circumferences?.envergadura, cmp: compareEval?.circumferences?.envergadura, unit: 'cm' }
                         ])}
                       </div>
                     </Card>

@@ -28,7 +28,6 @@ interface SimplifiedReportRow {
   categoria: string;
   idade: number;
   altura: number;
-  alturaPrevista: number;
   peso: number;
   sumDobras: number;
   faulkner: number;
@@ -54,7 +53,6 @@ const FAT_LEGEND: { key: FatColorKey; label: string }[] = [
 
 const COLUMN_ICONS: Partial<Record<SimplifiedReportColumnKey, React.ReactNode>> = {
   altura: <Ruler size={14} />,
-  alturaPrevista: <Ruler size={14} />,
   peso: <Scale size={14} />,
   sumDobras: <Activity size={14} />,
   faulkner: <Percent size={14} />,
@@ -87,7 +85,7 @@ const formatNumber = (val: number | undefined, decimals = 1) => {
 };
 
 function decimalsFor(key: SimplifiedReportColumnKey) {
-  return key === 'sumDobras' || key === 'altura' || key === 'alturaPrevista' || key === 'peso' ? 1 : 2;
+  return key === 'sumDobras' || key === 'altura' || key === 'peso' ? 1 : 2;
 }
 
 function sanitizeFileName(name: string) {
@@ -176,7 +174,6 @@ export default function GroupSimplifiedReport() {
             categoria: mappedAthlete.category || member.category || '-',
             idade: calculateAge(mappedAthlete.birthDate, currentEval.date),
             altura: base.altura,
-            alturaPrevista: base.alturaPrevista,
             peso: base.peso,
             sumDobras: base.sumDobras,
             faulkner: faulknerPct,

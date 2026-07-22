@@ -31,7 +31,6 @@ interface SimplifiedReportRow {
   categoria: string;
   idade: number;
   altura: number;
-  alturaPrevista: number;
   peso: number;
   sumDobras: number;
   faulkner: number;
@@ -187,7 +186,6 @@ export function GroupSimplifiedReportModal({ isOpen, onClose, group, filteredMem
             categoria: mappedAthlete.category || member.category || '-',
             idade: calculateAge(mappedAthlete.birthDate, currentEval.date),
             altura: base.altura,
-            alturaPrevista: base.alturaPrevista,
             peso: base.peso,
             sumDobras: base.sumDobras,
             faulkner: faulknerPct,

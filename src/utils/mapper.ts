@@ -137,7 +137,8 @@ export const mapAssessmentToPhysicalAssessment = (assessment: Assessment): ApiTy
       leftCalfCm: assessment.circumferences.calfLeft,
       rightWristCm: assessment.circumferences.wristRight,
       rightKneeCm: assessment.circumferences.kneeRight,
-      rightAnkleCm: assessment.circumferences.ankle
+      rightAnkleCm: assessment.circumferences.ankle,
+      envergaduraCm: assessment.circumferences.envergadura
     } : null
   };
 };
@@ -179,9 +180,10 @@ export const mapPhysicalAssessmentToAssessment = (pa: ApiTypes.PhysicalAssessmen
       calfLeft: pa.circumferences.leftCalfCm,
       wristRight: pa.circumferences.rightWristCm,
       kneeRight: pa.circumferences.rightKneeCm,
-      ankle: pa.circumferences.rightAnkleCm
+      ankle: pa.circumferences.rightAnkleCm,
+      envergadura: pa.circumferences.envergaduraCm
     } : {
-      shoulder: 0, chest: 0, armRight: 0, armLeft: 0, waist: 0, abdomen: 0, hip: 0, thighMidRight: 0, thighMidLeft: 0, calfRight: 0, calfLeft: 0, wristRight: 0, kneeRight: 0, ankle: 0
+      shoulder: 0, chest: 0, armRight: 0, armLeft: 0, waist: 0, abdomen: 0, hip: 0, thighMidRight: 0, thighMidLeft: 0, calfRight: 0, calfLeft: 0, wristRight: 0, kneeRight: 0, ankle: 0, envergadura: 0
     }
   };
 };
